@@ -186,3 +186,11 @@ input {
 .zh .grid3.g2 .card {
   height: 196px;
 }
+
+/* 2026-09-07：商品卡圖片放大，圖：文字 ≈ 6：4 */
+.grid3 .card { height: 264px; }
+.grid3 .thumb { height: 150px; }
+.grid3.g2 .card { height: 280px; }
+.grid3.g2 .thumb { height: 166px; }
+.zh .grid3 .card { height: 272px; }
+.zh .grid3.g2 .card { height: 288px; }
