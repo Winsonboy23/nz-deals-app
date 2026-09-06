@@ -194,3 +194,4 @@ input {
 .grid3.g2 .thumb { height: 166px; }
 .zh .grid3 .card { height: 272px; }
 .zh .grid3.g2 .card { height: 288px; }
+.thumb .tag.best { left: 6px; top: 6px; }   /* 圖片區有 overflow:hidden，徽章移進來才不會被切 */
