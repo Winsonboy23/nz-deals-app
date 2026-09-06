@@ -1,0 +1,188 @@
+/* App shell on top of the approved artboard styles. design.css is untouched except here. */
+@import './design.css';
+
+*,
+*::before,
+*::after {
+  -webkit-tap-highlight-color: transparent;
+}
+html,
+body,
+#app {
+  min-height: 100%;
+}
+html,
+body {
+  background: var(--paper);
+  overscroll-behavior-y: none;
+}
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--paper);
+  position: relative;
+}
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: inherit;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+input {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  outline: none;
+  min-width: 0;
+}
+
+/* The artboards nest .screen inside a fixed 393x852 phone; in the app it just scrolls. */
+.screen {
+  position: static;
+  overflow: visible;
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: calc(95px + env(safe-area-inset-bottom));
+}
+.screen.with-footbar {
+  padding-bottom: calc(135px + env(safe-area-inset-bottom));
+}
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  height: calc(83px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 30;
+}
+.footbar {
+  position: fixed;
+  bottom: calc(83px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  z-index: 29;
+}
+.home-indicator {
+  display: none;
+}
+
+/* Sheets */
+.dim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+.bsheet {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  bottom: 0;
+  z-index: 41;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding-bottom: calc(26px + env(safe-area-inset-bottom));
+}
+
+/* Horizontal rails scroll for real */
+.chips.nowrap,
+.hscroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-right: 20px;
+}
+.chips.nowrap::-webkit-scrollbar,
+.hscroll::-webkit-scrollbar {
+  display: none;
+}
+.pill,
+.iconbtn {
+  flex: none;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+}
+.pill .dots {
+  flex: none;
+}
+.chip.off {
+  background: var(--paper-2);
+  border-color: var(--paper-2);
+}
+
+/* Photos sit inside the tinted placeholder blocks from the boards */
+.thumb,
+.tn {
+  overflow: hidden;
+}
+.thumb img,
+.tn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  mix-blend-mode: multiply;
+}
+.tn.ph,
+.thumb.ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-align: center;
+  line-height: 1.1;
+  padding: 2px;
+}
+
+.lrow.dim-row {
+  opacity: 0.42;
+}
+.tap {
+  width: 100%;
+}
+.spin {
+  animation: sp 1s linear infinite;
+}
+@keyframes sp {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.seg > div {
+  cursor: pointer;
+}
+.strike {
+  text-decoration: line-through;
+  color: var(--ink-3);
+}
+.mini .was {
+  letter-spacing: 0;
+}
+.empty {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 26px 16px;
+  text-align: center;
+}
+
+/* Noto Sans TC runs a little taller than Inter, so the fixed-height cards need a few more px */
+.zh .grid3 .card {
+  height: 174px;
+}
+.zh .grid3.g2 .card {
+  height: 196px;
+}
