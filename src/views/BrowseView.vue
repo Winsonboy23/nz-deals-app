@@ -39,18 +39,21 @@ const level1 = computed<Array<{ id: string; n: number }>>(() => {
   return [...n.entries()].map(([id, count]) => ({ id, n: count })).sort((a, b) => rank(a.id) - rank(b.id) || b.n - a.n)
 })
 const l1 = ref('')
-const recent = ref<string[]>(readCache<string[]>('recentCats') ?? [])
+let recent: string[] = readCache<string[]>('recentCats') ?? []
+/** 「點過的排前面」只在換大類時重排，點的當下不動，不然被點的那顆會跳到最前面。 */
+const recentOrder = ref<string[]>(recent)
 const subs = computed(() => {
   const list = level2.value.filter((c) => c.id.startsWith(l1.value + '/'))
-  const rec = recent.value.filter((id) => list.some((c) => c.id === id))
+  const rec = recentOrder.value.filter((id) => list.some((c) => c.id === id))
   return [...rec.map((id) => list.find((c) => c.id === id)!), ...list.filter((c) => !rec.includes(c.id))]
 })
 watch(level1, (list) => { if (!list.some((c) => c.id === l1.value)) l1.value = list[0]?.id ?? '' }, { immediate: true })
+watch(l1, () => { recentOrder.value = recent })
 watch(subs, (list) => { if (!list.some((c) => c.id === cat.value)) cat.value = list[0]?.id ?? '' }, { immediate: true })
 function pickCat(id: string) {
   cat.value = id
-  recent.value = [id, ...recent.value.filter((x) => x !== id)].slice(0, 8)
-  writeCache('recentCats', recent.value)
+  recent = [id, ...recent.filter((x) => x !== id)].slice(0, 8)
+  writeCache('recentCats', recent)
 }
 watch([cat, chain, foodOnly], () => (shown.value = 6))
 
