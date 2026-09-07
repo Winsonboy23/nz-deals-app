@@ -62,6 +62,7 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
 </script>
 
 <template>
+  <div>
   <div class="dim" @click="emit('close')" />
   <div class="bsheet">
     <div class="grab" />
@@ -196,5 +197,6 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
         {{ t('common.done') }}
       </button>
     </template>
+  </div>
   </div>
 </template>

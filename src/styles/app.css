@@ -221,3 +221,20 @@ input {
 .cmp-flush .box{border-radius:0}
 /* 清單的小照片：比 44px 再小一點，留位置給數量按鈕 */
 .list-tn.tn.sq{width:36px;height:36px;border-radius:8px}
+
+/* 動效（2026-09-07）：點下去輕輕縮一下、狀態變化慢慢過去（呼吸感）；換頁淡入上滑；商品頁從底下滑上來。 */
+:root{--ease:cubic-bezier(.22,1,.36,1)}
+.chip,.pill,.btn,.lrow.tap,.card,.mini,.cb,.seg>div,.tg,.iconbtn,.link,.tabbar a,.tabbar button{
+  transition:transform .28s var(--ease),background-color .28s var(--ease),color .28s var(--ease),border-color .28s var(--ease),opacity .28s var(--ease),box-shadow .28s var(--ease);
+}
+.chip:active,.pill:active,.lrow.tap:active,.card:active,.mini:active,.iconbtn:active{transform:scale(.97)}
+.btn:active{transform:scale(.985)}
+.page-enter-active{transition:opacity .26s var(--ease),transform .26s var(--ease)}
+.page-leave-active{transition:opacity .16s var(--ease)}
+.page-enter-from{opacity:0;transform:translateY(10px)}
+.page-leave-to{opacity:0}
+.sheet-enter-active .bsheet,.sheet-leave-active .bsheet{transition:transform .34s var(--ease)}
+.sheet-enter-active .dim,.sheet-leave-active .dim{transition:opacity .3s var(--ease)}
+.sheet-enter-from .bsheet,.sheet-leave-to .bsheet{transform:translate(-50%,100%)}
+.sheet-enter-from .dim,.sheet-leave-to .dim{opacity:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

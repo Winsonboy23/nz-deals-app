@@ -46,7 +46,13 @@ function closeSheet() {
 </script>
 
 <template>
-  <RouterView :route="bg" />
-  <ProductSheet v-if="sheetKey" :pkey="sheetKey" @close="closeSheet" />
+  <RouterView v-slot="{ Component }" :route="bg">
+    <Transition name="page" mode="out-in">
+      <component :is="Component" />
+    </Transition>
+  </RouterView>
+  <Transition name="sheet">
+    <ProductSheet v-if="sheetKey" :pkey="sheetKey" @close="closeSheet" />
+  </Transition>
   <TabBar v-if="showTabs" />
 </template>
