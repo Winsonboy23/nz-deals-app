@@ -211,7 +211,7 @@ input {
 .thumb .tag.low{position:absolute;left:6px;bottom:6px;z-index:2}
 
 /* 文字對齊卡片（2026-09-07 使用者要求）：卡片格子維持貼滿螢幕，文字、標籤、小卡片的左邊線改成跟卡片裡的圖片／價格同一條（1px 框線 + 10px 內距 = 11px）。原設計是 20px。 */
-:root{--gutter:4px}   /* 2026-09-07 使用者選 4px：跟卡片外框幾乎齊 */
+:root{--gutter:11px}   /* 文字對齊卡片裡的圖片／價格（1px 框線 + 10px 內距）；試過 4px 使用者要改回來 */
 .pad{padding:0 var(--gutter)}
 .hscroll{padding-left:var(--gutter)}
 .chips.nowrap,.hscroll{padding-right:var(--gutter)}
