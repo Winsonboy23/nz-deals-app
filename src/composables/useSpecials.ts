@@ -71,7 +71,7 @@ const loading = ref(false)
 const thisWeek = ref(nzMonday())
 
 async function fetchStore(store: Store): Promise<StoreData> {
-  const cacheKey = `sp:${store.id}:${thisWeek.value}:f3`   // :f3 = 同類欄位填好之後的快取版本
+  const cacheKey = `sp:${store.id}:${thisWeek.value}:f4`   // :f4 = 同類 key 改成不帶分類之後
   const cached = readCache<Packed>(cacheKey)
   if (cached?.cols) {
     return {
