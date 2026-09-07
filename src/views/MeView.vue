@@ -62,10 +62,10 @@ function toggleFood() {
           <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.myStores') }}</div></div>
           <div class="link"><template v-if="town">{{ town }} · </template>{{ selectedStores.length }} ›</div>
         </RouterLink>
-        <div v-if="isIn" class="lrow" style="padding: 14px 12px">
+        <RouterLink v-if="isIn" class="lrow tap" to="/watching" style="padding: 14px 12px">
           <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.watching') }}</div></div>
-          <div class="link">{{ watched.size }}</div>
-        </div>
+          <div class="link">{{ watched.size }} ›</div>
+        </RouterLink>
         <div class="lrow" style="padding: 9px 12px">
           <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.language') }}</div></div>
           <div class="seg" style="width: 150px; flex: none">

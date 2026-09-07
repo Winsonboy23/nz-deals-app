@@ -94,10 +94,14 @@ function schedulePush(): void {
 async function toggleWatch(key: string): Promise<void> {
   const uid = user.value?.id
   if (!uid) return
+  // 先改畫面再打網路：連按兩個才不會互相蓋掉
   const next = new Set(watched.value)
-  if (next.has(key)) { next.delete(key); await supabase.from('watchlist').delete().eq('user_id', uid).eq('product_key', key) }
-  else { next.add(key); await supabase.from('watchlist').upsert({ user_id: uid, product_key: key }, { onConflict: 'user_id,product_key' }) }
+  const removing = next.has(key)
+  if (removing) next.delete(key)
+  else next.add(key)
   watched.value = next
+  if (removing) await supabase.from('watchlist').delete().eq('user_id', uid).eq('product_key', key)
+  else await supabase.from('watchlist').upsert({ user_id: uid, product_key: key }, { onConflict: 'user_id,product_key' })
 }
 const isWatched = (key: string) => watched.value.has(key)
 

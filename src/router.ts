@@ -13,6 +13,7 @@ export const router = createRouter({
     { path: '/recipes', name: 'recipes', component: () => import('./views/RecipesView.vue'), meta: { tab: 'recipes' } },
     { path: '/list', name: 'list', component: () => import('./views/ListView.vue'), meta: { tab: 'list' } },
     { path: '/me', name: 'me', component: () => import('./views/MeView.vue'), meta: { tab: 'me' } },
+    { path: '/watching', name: 'watching', component: () => import('./views/WatchingView.vue'), meta: { tab: 'me' } },
     { path: '/signin', name: 'signin', component: () => import('./views/SignInView.vue'), meta: { tab: 'me' } },
     { path: '/s/:token', name: 'shared', component: () => import('./views/SharedListView.vue'), meta: { tab: 'list' } },
     { path: '/top10', name: 'top10', component: () => import('./views/Top10View.vue'), meta: { tab: 'specials' } },
