@@ -27,6 +27,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        importScripts: ['push-sw.js'],   // 推播的 push / notificationclick 在 public/push-sw.js
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: 'index.html',
         runtimeCaching: [

@@ -21,15 +21,16 @@ watch(q, (v) => {
 const results = computed<Group[]>(() => {
   const needle = q.value.trim().toLowerCase()
   if (needle.length < 2) return []
+  // 整個字命中（\bbeef mince）排前面，只是字串裡剛好有的排後面；同分看幾家店有，再看價格。
+  const word = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`)
   const hits = new Map<string, number>()
   for (const { special } of rows.value) {
     const key = special.product_key
     if (!key) continue
     const hay = `${special.brand ?? ''} ${special.name}`.toLowerCase()
-    const at = hay.indexOf(needle)
-    if (at < 0) continue
-    const score = Math.min(hits.get(key) ?? 99, at)
-    hits.set(key, score)
+    if (!hay.includes(needle)) continue
+    const score = word.test(hay) ? 0 : 1
+    hits.set(key, Math.min(hits.get(key) ?? 99, score))
   }
   return [...hits.entries()]
     .map(([k, score]) => ({ g: groups.value.get(k), score }))
@@ -130,8 +131,8 @@ function missingClasses(g: Group): string[] {
               style="opacity: 0.42"
             />
           </span>
-          <span style="font-size: 12px; font-weight: 600; color: var(--ink-2); line-height: 1.35">
-            {{ t('cmp.noSpecialAt', { s: missing(g).join(', ') }) }}
+          <span class="ell" style="font-size: 12px; font-weight: 600; color: var(--ink-2)">
+            {{ t('cmp.noSpecialCount', { n: missing(g).length }) }}
           </span>
         </div>
         <RouterLink
