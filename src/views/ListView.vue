@@ -12,7 +12,13 @@ import { useSync } from '../composables/useSync'
 const { items, addFreeText, remove, setQty, toggle, split, oneStop, oneStopFrom } = useList()
 const { activeStores, groups, familyAlt } = useSpecials()
 /** One stop：這家沒有這樣東西時，推薦它最便宜的同類（§8）。只是建議，不算進總價。 */
-const alt = (storeId: string, key: string | null) => (key ? familyAlt(groups.value.get(key), storeId) : null)
+function altText(storeId: string, key: string | null): string | null {
+  const g = key ? groups.value.get(key) : undefined
+  const o = g ? familyAlt(g, storeId) : null
+  if (!g || !o) return null
+  const same = !!o.unitUnit && o.unitUnit === g.best.unitUnit   // 單位一樣才寫單價
+  return t('cmp.familyAlt', { n: displayName(o.special), v: (same && unitLabel(o.special)) || money(dealPrice(o.special)) })
+}
 /** 清單照片：One stop 這家沒特價時，拿同一樣商品在別家的資料來顯示圖（圖是跟商品走的）。 */
 const thumbFor = (key: string | null) => (key ? groups.value.get(key)?.best.special ?? null : null)
 
@@ -150,8 +156,8 @@ function submit() {
             <div class="grow" style="min-width: 0">
               <div class="t ell" style="font-size: 13.5px">{{ l.item.name }} × {{ l.item.qty }}</div>
               <div v-if="!l.special" class="s ell">{{ t('cmp.noSpecial') }}</div>
-              <div v-if="!l.special && alt(c.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">
-                {{ t('cmp.familyAlt', { n: displayName(alt(c.store.id, l.item.key)!.special), v: unitLabel(alt(c.store.id, l.item.key)!.special) ?? money(dealPrice(alt(c.store.id, l.item.key)!.special)) }) }}
+              <div v-if="!l.special && altText(c.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">
+                {{ altText(c.store.id, l.item.key) }}
               </div>
             </div>
             <div v-if="l.special" class="p" style="font-size: 17px">{{ money(l.total) }}</div>

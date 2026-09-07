@@ -120,6 +120,8 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'cmp.byUnit': { en: 'compared by unit price', zh: '用單價比' },
   'cmp.dealPrice': { en: 'compared at deal price', zh: '用湊滿價比' },
   'cmp.familyAlt': { en: 'Similar: {n} {v}', zh: '同類：{n} {v}' },
+  'cmp.familyAltAt': { en: 'Similar · {s}: {n} {v}', zh: '同類 · {s}：{n} {v}' },
+  'cmp.familyAltMany': { en: 'Similar · {k} stores: {n} from {v}', zh: '同類 · {k} 家：{n} 最低 {v}' },
   'p.family': { en: 'Similar items · compare by unit price', zh: '同類可比 · 用單價比' },
   'p.familyNamed': { en: 'Similar · {n} · by unit price', zh: '同類可比 · {n} · 用單價比' },
 

@@ -6,7 +6,7 @@ import { useSpecials } from '../composables/useSpecials'
 import { chainClass, displayName, money, unitLabel } from '../lib/format'
 import { dealPrice } from '../lib/compare'
 import { t } from '../composables/useI18n'
-import type { Group } from '../lib/types'
+import type { Group, Offer } from '../lib/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -47,12 +47,27 @@ function missing(g: Group): string[] {
     .filter((d) => !g.offers.some((o) => o.store.id === d.store.id))
     .map((d) => d.store.name)
 }
-/** 沒特價的店：有同類就列出來（同類可比，用單價）。 */
-function alts(g: Group) {
-  return activeStores.value
-    .filter((d) => !g.offers.some((o) => o.store.id === d.store.id))
-    .map((d) => familyAlt(g, d.store.id))
-    .filter((o): o is NonNullable<typeof o> => !!o)
+/** 沒特價的店：各列一個最便宜的同類；同一樣東西在幾家店就合成一行（最便宜的那家）。 */
+function alts(g: Group): Array<{ best: Offer; n: number }> {
+  const byKey = new Map<string, Offer[]>()
+  for (const d of activeStores.value) {
+    if (g.offers.some((o) => o.store.id === d.store.id)) continue
+    const o = familyAlt(g, d.store.id)
+    if (!o) continue
+    const k = o.special.product_key ?? o.special.product_id
+    const list = byKey.get(k)
+    if (list) list.push(o)
+    else byKey.set(k, [o])
+  }
+  return [...byKey.values()].map((offers) => {
+    offers.sort((a, b) => a.deal - b.deal)
+    return { best: offers[0], n: offers.length }
+  })
+}
+/** 單位一樣才寫每公斤／每公升價（$20/kg 對 $2.47 ea 比不了）；不一樣只寫價格。 */
+function altPrice(g: Group, o: Offer): string {
+  const same = !!o.unitUnit && o.unitUnit === g.best.unitUnit
+  return (same && unitLabel(o.special)) || money(dealPrice(o.special))
 }
 function missingClasses(g: Group): string[] {
   return activeStores.value
@@ -120,15 +135,17 @@ function missingClasses(g: Group): string[] {
           </span>
         </div>
         <RouterLink
-          v-for="o in alts(g)"
-          :key="o.store.id + o.special.product_id"
+          v-for="a in alts(g)"
+          :key="a.best.special.product_key ?? a.best.special.product_id"
           class="note"
-          :to="`/p/${encodeURIComponent(o.special.product_key ?? '')}`"
+          :to="`/p/${encodeURIComponent(a.best.special.product_key ?? '')}`"
           style="margin-top: 6px; display: flex; align-items: center; gap: 10px"
         >
-          <span class="dot" :class="chainClass(o.store.id)" />
+          <span class="dot" :class="chainClass(a.best.store.id)" />
           <span class="ell" style="font-size: 12px; font-weight: 600; color: var(--ink-2)">
-            {{ t('cmp.familyAlt', { n: displayName(o.special), v: unitLabel(o.special) ?? money(dealPrice(o.special)) }) }}
+            {{ a.n > 1
+              ? t('cmp.familyAltMany', { k: a.n, n: displayName(a.best.special), v: altPrice(g, a.best) })
+              : t('cmp.familyAltAt', { s: a.best.store.name, n: displayName(a.best.special), v: altPrice(g, a.best) }) }}
           </span>
         </RouterLink>
       </div>
