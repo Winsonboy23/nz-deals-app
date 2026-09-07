@@ -128,6 +128,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'cmp.noSpecialCount': { en: '{n} other stores — no special this week', zh: '另外 {n} 家本週無特價' },
   'cmp.only': { en: 'ONLY STORE ON SPECIAL', zh: '只有這家特價' },
   'cmp.same': { en: 'SAME ITEM · {n} STORES', zh: '同一樣 · {n} 家' },
+  'cmp.nStores': { en: '{c} · {n} stores', zh: '{c} · {n} 家店' },
   'cmp.gap': { en: '{v} gap', zh: '價差 {v}' },
   'cmp.others': { en: 'Others {v}', zh: '其他店 {v}' },
   'cmp.cheapest': { en: 'Cheapest · {s}', zh: '最便宜 · {s}' },
@@ -149,8 +150,8 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'browse.title': { en: 'Browse', zh: '分類瀏覽' },
   'browse.foodOnly': { en: 'Food only', zh: '只看食品' },
   'browse.all': { en: 'All', zh: '全部' },
-  'browse.byKg': { en: 'by $/kg ▾', zh: '依每公斤 ▾' },
-  'browse.byPrice': { en: 'by price ▾', zh: '依價格 ▾' },
+  'browse.byKg': { en: 'by $/kg', zh: '依每公斤' },
+  'browse.byPrice': { en: 'by price', zh: '依價格' },
   'browse.empty': { en: 'Nothing on special here this week.', zh: '這個分類本週沒有特價。' },
 
   'search.placeholder': { en: "Search this week's specials", zh: '搜尋本週特價' },

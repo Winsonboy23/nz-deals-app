@@ -71,7 +71,7 @@ const loading = ref(false)
 const thisWeek = ref(nzMonday())
 
 async function fetchStore(store: Store): Promise<StoreData> {
-  const cacheKey = `sp:${store.id}:${thisWeek.value}:f4`   // :f4 = 同類 key 改成不帶分類之後
+  const cacheKey = `sp:${store.id}:${thisWeek.value}:f5`   // :f4 = 同類 key 改成不帶分類之後；:f5 = Woolworths 分類改第三層對照（2026-09-08 回填）
   const cached = readCache<Packed>(cacheKey)
   if (cached?.cols) {
     return {
