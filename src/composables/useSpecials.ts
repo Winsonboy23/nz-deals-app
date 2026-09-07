@@ -1,10 +1,10 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import { supabase } from '../lib/supabase'
 import { readCache, writeCache } from '../lib/cache'
-import { nzMonday } from '../lib/week'
+import { nzMonday, weeksBack } from '../lib/week'
 import { buildGroup, discountDepth, toOffer } from '../lib/compare'
 import { catLevel, isFood, isFresh } from '../lib/format'
-import type { Group, Offer, Special, Store } from '../lib/types'
+import type { Group, MultiBuy, Offer, Special, Store } from '../lib/types'
 import { useStores } from './useStores'
 import { useSettings } from './useSettings'
 
@@ -228,6 +228,63 @@ const top = computed<Group[]>(() =>
   }),
 )
 
+export interface WhereToGo {
+  cat: string
+  store: Store
+  wins: number
+  total: number
+}
+/**
+ * §10 首頁「這週去哪家」：兩家以上都有的商品，按第一層分類算哪家最常最便宜。
+ * 少於 5 樣、或贏家不到一半的分類不講（不然是在瞎猜）。
+ */
+const whereToGo = computed<WhereToGo[]>(() => {
+  const tally = new Map<string, { total: number; wins: Map<string, number> }>()
+  for (const g of comparable.value) {
+    const c1 = catLevel(g.best.special.category_id, 1)
+    if (!c1) continue
+    let t = tally.get(c1)
+    if (!t) tally.set(c1, (t = { total: 0, wins: new Map() }))
+    t.total += 1
+    t.wins.set(g.best.store.id, (t.wins.get(g.best.store.id) ?? 0) + 1)
+  }
+  const out: WhereToGo[] = []
+  for (const [cat, t] of tally) {
+    if (t.total < 5) continue
+    const [storeId, wins] = [...t.wins.entries()].sort((a, b) => b[1] - a[1])[0]
+    const store = activeStores.value.find((d) => d.store.id === storeId)?.store
+    if (!store || wins * 2 < t.total) continue
+    out.push({ cat, store, wins, total: t.total })
+  }
+  return out.sort((a, b) => b.total - a.total).slice(0, 4)
+})
+
+export interface HistoryRow {
+  store_id: string
+  week_start: string
+  price: number
+  multi_buy: MultiBuy | null
+}
+const historyCache = new Map<string, Promise<HistoryRow[]>>()
+/** Phase 4：近 8 週這個商品在你選的店的價格。同店同週可能多筆（不同包裝），畫面上取最便宜。 */
+function history(key: string): Promise<HistoryRow[]> {
+  const ids = selectedStores.value.map((s) => s.id)
+  const cacheKey = `${key}|${ids.join(',')}|${thisWeek.value}`
+  const cached = historyCache.get(cacheKey)
+  if (cached) return cached
+  const p = (async () => {
+    const { data } = await supabase
+      .from('specials')
+      .select('store_id,week_start,price,multi_buy')
+      .eq('product_key', key)
+      .in('store_id', ids)
+      .in('week_start', weeksBack(8, thisWeek.value))
+    return (data ?? []) as HistoryRow[]
+  })()
+  historyCache.set(cacheKey, p)
+  return p
+}
+
 /** Half price and 40%+ off. Needs a was-price, so PAK'nSAVE never appears. */
 const deepDiscounts = computed(() =>
   rows.value
@@ -294,6 +351,8 @@ export function useSpecials() {
     freshByKg,
     biggestSaving,
     level2,
+    whereToGo,
+    history,
     groupFor,
     load,
   }

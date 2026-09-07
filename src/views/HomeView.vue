@@ -8,13 +8,15 @@ import { useSpecials } from '../composables/useSpecials'
 import { toOffer } from '../lib/compare'
 import { chainClass, displayName, money } from '../lib/format'
 import { daysLeft } from '../lib/week'
-import { t } from '../composables/useI18n'
+import { catName, chainBadge, t } from '../composables/useI18n'
+import { useCategories } from '../composables/useCategories'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
 import { dealPrice } from '../lib/compare'
 
-const { loading, activeStores, totalSpecials, top, deepDiscounts, freshByKg, biggestSaving } =
+const { loading, activeStores, totalSpecials, top, deepDiscounts, freshByKg, biggestSaving, whereToGo } =
   useSpecials()
+const { nameOf } = useCategories()
 const { isIn, name, avatar } = useAuth()
 const { watched } = useSync()
 const { groups } = useSpecials()
@@ -84,6 +86,22 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
       <div v-else class="pad">
         <div class="note sub">{{ t('home.noCompare') }}</div>
       </div>
+
+      <!-- §10 這週去哪家：一句話結論，按第一層分類 -->
+      <template v-if="whereToGo.length">
+        <div class="pad" style="margin-top: 22px"><div class="h2">{{ t('home.where') }}</div></div>
+        <div class="pad" style="margin-top: 8px">
+          <div class="box">
+            <div v-for="w in whereToGo" :key="w.cat" class="lrow" style="padding: 10px 12px">
+              <div class="grow" style="min-width: 0">
+                <div class="t ell" style="font-size: 15px">{{ catName(nameOf(w.cat)) }}</div>
+                <div class="s ell">{{ t('home.whereWins', { w: w.wins, n: w.total }) }}</div>
+              </div>
+              <span class="tag best" :class="chainClass(w.store.id)" style="flex: none">✓ {{ chainBadge(w.store.id) }}</span>
+            </div>
+          </div>
+        </div>
+      </template>
 
       <template v-if="isIn && watchedHits.length">
         <div class="pad hrow" style="margin-top: 22px">

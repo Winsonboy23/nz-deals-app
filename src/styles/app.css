@@ -238,3 +238,6 @@ input {
 .sheet-enter-from .bsheet,.sheet-leave-to .bsheet{transform:translate(-50%,100%)}
 .sheet-enter-from .dim,.sheet-leave-to .dim{opacity:0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* 搜尋頁「同類」列：圓點不能被長文字擠扁 */
+.note .dot{flex:none}

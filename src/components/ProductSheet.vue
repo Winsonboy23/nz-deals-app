@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import ProductThumb from './ProductThumb.vue'
 import TagChip from './TagChip.vue'
 import { dealPrice, tagsFor } from '../lib/compare'
@@ -18,12 +18,15 @@ import { useCategories } from '../composables/useCategories'
 import { useList } from '../composables/useList'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
-import { catName, chainBadge, t, useI18n } from '../composables/useI18n'
+import { catName, chainBadge, lang, t, useI18n } from '../composables/useI18n'
+import type { HistoryRow } from '../composables/useSpecials'
+import { shortDate } from '../lib/week'
+import type { Special } from '../lib/types'
 
 const props = defineProps<{ pkey: string }>()
 const emit = defineEmits<{ close: [] }>()
 
-const { groupFor, familyOffers } = useSpecials()
+const { groupFor, familyOffers, history, activeStores, thisWeek } = useSpecials()
 const { nameOf } = useCategories()
 const { add, has } = useList()
 const { isIn } = useAuth()
@@ -44,6 +47,34 @@ const crumb = computed(() => {
     .filter(Boolean)
     .join(' › ')
 })
+// Phase 4：近 8 週價格。同店同週多筆取最便宜；至少兩週資料才說「近 8 週最低」。
+const hist = ref<HistoryRow[]>([])
+watch(
+  () => props.pkey,
+  async (k) => {
+    hist.value = []
+    const rows = await history(k)
+    if (k === props.pkey) hist.value = rows
+  },
+  { immediate: true },
+)
+const weeksSeen = computed(() => [...new Set(hist.value.map((h) => h.week_start))].sort().reverse())
+const histStores = computed(() =>
+  activeStores.value.map((d) => d.store.id).filter((id) => hist.value.some((h) => h.store_id === id)),
+)
+const histDeal = (h: HistoryRow) => dealPrice({ price: h.price, multi_buy: h.multi_buy } as Special)
+function priceAt(week: string, storeId: string): number | null {
+  const rows = hist.value.filter((h) => h.week_start === week && h.store_id === storeId)
+  return rows.length ? Math.min(...rows.map(histDeal)) : null
+}
+const lowest8 = computed(() => {
+  const b = best.value
+  if (!b) return false
+  const weeks = weeksSeen.value.filter((w) => priceAt(w, b.store.id) != null)
+  if (weeks.length < 2) return false
+  return weeks.every((w) => dealPrice(b.special) <= (priceAt(w, b.store.id) as number) + 0.001)
+})
+
 const added = ref(false)
 function addToList() {
   if (!best.value) return
@@ -103,6 +134,7 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
             {{ t('cmp.gap', { v: money(group.payGap) }) }}
             <span v-if="group.unitDecided" class="muted"> · {{ t('cmp.byUnit') }}</span>
           </div>
+          <div v-if="lowest8" class="gap" style="margin-top: 3px">✓ {{ t('p.lowest8') }}</div>
         </div>
         <div class="price" style="font-size: 36px; margin-top: 0; flex: none">
           {{ money(dealPrice(best.special)) }}
@@ -131,6 +163,24 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
           <div class="p" style="font-size: 21px">{{ money(dealPrice(o.special)) }}</div>
         </div>
       </div>
+
+      <template v-if="weeksSeen.length >= 2">
+        <div class="sec" style="margin-top: 16px">{{ t('p.history') }}</div>
+        <div class="box" style="margin-top: 8px">
+          <div v-for="w in weeksSeen" :key="w" class="lrow" style="padding: 8px 12px; gap: 8px">
+            <div class="grow" style="font-size: 13px; color: var(--ink-2)">
+              {{ shortDate(w, lang) }}<b v-if="w === thisWeek" style="color: var(--ink)"> · {{ t('p.thisWeek') }}</b>
+            </div>
+            <span
+              v-for="st in histStores"
+              :key="st"
+              style="display: inline-flex; align-items: center; gap: 4px; font-weight: 800; font-size: 14px; min-width: 62px; justify-content: flex-end"
+            >
+              <span class="dot" :class="chainClass(st)" />{{ priceAt(w, st) != null ? money(priceAt(w, st)!) : '—' }}
+            </span>
+          </div>
+        </div>
+      </template>
 
       <template v-if="family.length">
         <div class="sec" style="margin-top: 16px">{{ familyName ? t('p.familyNamed', { n: familyName }) : t('p.family') }}</div>

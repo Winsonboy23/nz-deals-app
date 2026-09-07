@@ -130,7 +130,7 @@ function missingClasses(g: Group): string[] {
               style="opacity: 0.42"
             />
           </span>
-          <span class="ell" style="font-size: 12px; font-weight: 600; color: var(--ink-2)">
+          <span style="font-size: 12px; font-weight: 600; color: var(--ink-2); line-height: 1.35">
             {{ t('cmp.noSpecialAt', { s: missing(g).join(', ') }) }}
           </span>
         </div>

@@ -6,10 +6,11 @@ import { useSpecials } from '../composables/useSpecials'
 import { chainClass, chainName, displayName, money, unitLabel } from '../lib/format'
 import { dealPrice } from '../lib/compare'
 import { t } from '../composables/useI18n'
+import type { Group } from '../lib/types'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
 
-const { items, addFreeText, remove, setQty, toggle, split, oneStop, oneStopFrom } = useList()
+const { items, add, has, addFreeText, remove, setQty, toggle, split, oneStop, oneStopFrom } = useList()
 const { activeStores, groups, familyAlt } = useSpecials()
 /** One stop：這家沒有這樣東西時，推薦它最便宜的同類（§8）。只是建議，不算進總價。 */
 function altText(storeId: string, key: string | null): string | null {
@@ -24,7 +25,9 @@ const thumbFor = (key: string | null) => (key ? groups.value.get(key)?.best.spec
 
 const mode = ref<'split' | 'one'>('split')
 const { isIn } = useAuth()
-const { shareUrl } = useSync()
+const { shareUrl, watched } = useSync()
+/** 關注的商品這週有特價、又還沒在清單裡 → 頂部建議加入（app-features §6）。 */
+const suggest = computed(() => (isIn.value ? [...watched.value].map((k) => groups.value.get(k)).filter((g): g is Group => !!g && !has(g.key)).slice(0, 5) : []))
 const shared = ref<'idle' | 'copied' | 'failed'>('idle')
 async function share() {
   const url = await shareUrl()
@@ -76,6 +79,22 @@ function submit() {
       >
         {{ t('list.add') }}
       </button>
+    </div>
+
+    <div v-if="suggest.length" class="pad" style="margin-top: 12px">
+      <div class="sec">{{ t('home.watched') }}</div>
+      <div class="box" style="margin-top: 6px">
+        <div v-for="g in suggest" :key="g.key" class="lrow" style="padding: 8px 12px; gap: 8px">
+          <span class="dot" :class="chainClass(g.best.store.id)" />
+          <div class="grow" style="min-width: 0">
+            <div class="t ell" style="font-size: 13.5px">{{ displayName(g.best.special) }}</div>
+            <div class="s ell">{{ g.best.store.name }} · {{ money(dealPrice(g.best.special)) }}</div>
+          </div>
+          <button class="btn ghost" style="height: 34px; padding: 0 14px; font-size: 13px; flex: none" @click="add(g.key, displayName(g.best.special))">
+            {{ t('list.add') }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <div v-if="empty" class="pad" style="margin-top: 20px">

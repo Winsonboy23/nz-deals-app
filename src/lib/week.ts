@@ -27,6 +27,17 @@ export function nzMonday(iso = nzToday()): string {
   return toIso(d)
 }
 
+/** The n Mondays up to and including `from`, newest first. */
+export function weeksBack(n: number, from = nzMonday()): string[] {
+  const out: string[] = []
+  const d = parse(from)
+  for (let i = 0; i < n; i++) {
+    out.push(toIso(d))
+    d.setUTCDate(d.getUTCDate() - 7)
+  }
+  return out
+}
+
 /** Days remaining in the special week, counting today (Mon = 7, Sun = 1). */
 export function daysLeft(iso = nzToday()): number {
   return 7 - ((parse(iso).getUTCDay() + 6) % 7)
