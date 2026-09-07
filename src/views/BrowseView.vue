@@ -9,6 +9,7 @@ import { useCategories } from '../composables/useCategories'
 import { catLevel, chainClass, chainName, chainOf, isFresh } from '../lib/format'
 import { toOffer } from '../lib/compare'
 import { catName, t } from '../composables/useI18n'
+import { readCache, writeCache } from '../lib/cache'
 import type { ChainId, Group, Offer } from '../lib/types'
 
 const { rows, groups, level2 } = useSpecials()
@@ -26,13 +27,31 @@ const chains = computed(() => {
   return seen
 })
 
-watch(
-  level2,
-  (list) => {
-    if (!cat.value && list.length) cat.value = list[0].id
-  },
-  { immediate: true },
-)
+/** 兩層點選（2026-09-08）：第一排 8 個大類，點了第二排才出現它的小類；點過的小類記起來排前面。 */
+const L1_ORDER = ['fruit-and-vegetables', 'meat-poultry-and-seafood', 'fridge-deli-and-eggs', 'bakery', 'frozen', 'pantry', 'hot-and-cold-drinks', 'snacks-treats-and-easy-meals']
+const level1 = computed<Array<{ id: string; n: number }>>(() => {
+  const n = new Map<string, number>()
+  for (const c of level2.value) {
+    const id = c.id.split('/')[0]
+    n.set(id, (n.get(id) ?? 0) + c.n)
+  }
+  const rank = (id: string) => { const i = L1_ORDER.indexOf(id); return i < 0 ? 99 : i }
+  return [...n.entries()].map(([id, count]) => ({ id, n: count })).sort((a, b) => rank(a.id) - rank(b.id) || b.n - a.n)
+})
+const l1 = ref('')
+const recent = ref<string[]>(readCache<string[]>('recentCats') ?? [])
+const subs = computed(() => {
+  const list = level2.value.filter((c) => c.id.startsWith(l1.value + '/'))
+  const rec = recent.value.filter((id) => list.some((c) => c.id === id))
+  return [...rec.map((id) => list.find((c) => c.id === id)!), ...list.filter((c) => !rec.includes(c.id))]
+})
+watch(level1, (list) => { if (!list.some((c) => c.id === l1.value)) l1.value = list[0]?.id ?? '' }, { immediate: true })
+watch(subs, (list) => { if (!list.some((c) => c.id === cat.value)) cat.value = list[0]?.id ?? '' }, { immediate: true })
+function pickCat(id: string) {
+  cat.value = id
+  recent.value = [id, ...recent.value.filter((x) => x !== id)].slice(0, 8)
+  writeCache('recentCats', recent.value)
+}
 watch([cat, chain, foodOnly], () => (shown.value = 6))
 
 interface Section {
@@ -105,13 +124,24 @@ function toggleFood() {
       </button>
     </div>
 
+    <div class="chips nowrap" style="margin: 10px 0 0 var(--gutter)">
+      <button
+        v-for="c in level1"
+        :key="c.id"
+        class="chip"
+        :class="l1 === c.id ? 'on' : ''"
+        @click="l1 = c.id"
+      >
+        {{ catName(nameOf(c.id)) }}
+      </button>
+    </div>
     <div class="chips nowrap" style="margin: 8px 0 0 var(--gutter)">
       <button
-        v-for="c in level2"
+        v-for="c in subs"
         :key="c.id"
         class="chip"
         :class="cat === c.id ? 'on' : 'off'"
-        @click="cat = c.id"
+        @click="pickCat(c.id)"
       >
         {{ catName(nameOf(c.id)) }}
       </button>
