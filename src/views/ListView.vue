@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import ProductThumb from '../components/ProductThumb.vue'
 import { useList } from '../composables/useList'
 import { useSpecials } from '../composables/useSpecials'
 import { chainClass, chainName, displayName, money, unitLabel } from '../lib/format'
@@ -12,6 +13,8 @@ const { items, addFreeText, remove, setQty, toggle, split, oneStop, oneStopFrom 
 const { activeStores, groups, familyAlt } = useSpecials()
 /** One stop：這家沒有這樣東西時，推薦它最便宜的同類（§8）。只是建議，不算進總價。 */
 const alt = (storeId: string, key: string | null) => (key ? familyAlt(groups.value.get(key), storeId) : null)
+/** 清單照片：One stop 這家沒特價時，拿同一樣商品在別家的資料來顯示圖（圖是跟商品走的）。 */
+const thumbFor = (key: string | null) => (key ? groups.value.get(key)?.best.special ?? null : null)
 
 const mode = ref<'split' | 'one'>('split')
 const { isIn } = useAuth()
@@ -93,6 +96,7 @@ function submit() {
             >
               ✓
             </button>
+            <ProductThumb :special="l.offer.special" variant="sq" class="list-tn" />
             <div :style="{ opacity: l.item.checked ? 0.45 : 1, flex: 1, minWidth: 0 }">
               <div class="t ell" style="font-size: 13.5px">{{ l.item.name }}</div>
               <div class="s ell">
@@ -141,6 +145,8 @@ function submit() {
             </div>
           </div>
           <div v-for="l in c.lines" :key="l.item.id" class="lrow" style="padding: 7px 12px; gap: 7px">
+            <ProductThumb v-if="l.special ?? thumbFor(l.item.key)" :special="(l.special ?? thumbFor(l.item.key))!" variant="sq" class="list-tn" />
+            <div v-else class="tn sq list-tn" />
             <div class="grow" style="min-width: 0">
               <div class="t ell" style="font-size: 13.5px">{{ l.item.name }} × {{ l.item.qty }}</div>
               <div v-if="!l.special" class="s ell">{{ t('cmp.noSpecial') }}</div>

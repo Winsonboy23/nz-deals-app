@@ -211,7 +211,13 @@ input {
 .thumb .tag.low{position:absolute;left:6px;bottom:6px;z-index:2}
 
 /* 文字對齊卡片（2026-09-07 使用者要求）：卡片格子維持貼滿螢幕，文字、標籤、小卡片的左邊線改成跟卡片裡的圖片／價格同一條（1px 框線 + 10px 內距 = 11px）。原設計是 20px。 */
-:root{--gutter:11px}
+:root{--gutter:4px}   /* 2026-09-07 使用者選 4px：跟卡片外框幾乎齊 */
 .pad{padding:0 var(--gutter)}
 .hscroll{padding-left:var(--gutter)}
 .chips.nowrap,.hscroll{padding-right:var(--gutter)}
+
+/* Browse：比價框跟下面的格子一樣貼滿螢幕、同一條外框線（2026-09-07 使用者要求兩種排法同寬） */
+.cmp-flush{margin-bottom:8px}
+.cmp-flush .box{border-radius:0}
+/* 清單的小照片：比 44px 再小一點，留位置給數量按鈕 */
+.list-tn.tn.sq{width:36px;height:36px;border-radius:8px}

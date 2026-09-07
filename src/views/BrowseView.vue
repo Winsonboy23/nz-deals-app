@@ -128,7 +128,7 @@ function toggleFood() {
           {{ sec.fresh ? t('browse.byKg') : t('browse.byPrice') }}
         </div>
       </div>
-      <div v-for="g in sec.compare.slice(0, 4)" :key="g.key" class="pad" style="margin-bottom: 8px">
+      <div v-for="g in sec.compare.slice(0, 4)" :key="g.key" class="cmp-flush">
         <CompareBox :group="g" />
       </div>
       <div v-if="sec.singles.length" class="grid3">
