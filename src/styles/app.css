@@ -195,3 +195,23 @@ input {
 .zh .grid3 .card { height: 272px; }
 .zh .grid3.g2 .card { height: 288px; }
 .thumb .tag.best { left: 6px; top: 6px; }   /* 圖片區有 overflow:hidden，徽章移進來才不會被切 */
+
+/* 選店頁的三家標籤：點亮用店色 */
+.chip.on.nw{background:var(--nw);border-color:var(--nw);color:#fff}
+.chip.on.ww{background:var(--ww);border-color:var(--ww);color:#fff}
+.chip.on.pns{background:var(--pns);border-color:var(--pns);color:var(--ink)}
+.chip.on .dot{background:#fff}
+.chip.on.pns .dot{background:var(--ink)}
+
+/* 首頁半價／生鮮的小卡片：真實商品名很長，加寬並讓名字可以兩行（設計稿假設名字很短） */
+.mini{width:200px;height:auto;min-height:98px}
+.mini .name{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.25}
+
+/* 黃超卡片圖片區的「低價標籤」：放左下角（跟首頁卡片一樣） */
+.thumb .tag.low{position:absolute;left:6px;bottom:6px;z-index:2}
+
+/* 文字對齊卡片（2026-09-07 使用者要求）：卡片格子維持貼滿螢幕，文字、標籤、小卡片的左邊線改成跟卡片裡的圖片／價格同一條（1px 框線 + 10px 內距 = 11px）。原設計是 20px。 */
+:root{--gutter:11px}
+.pad{padding:0 var(--gutter)}
+.hscroll{padding-left:var(--gutter)}
+.chips.nowrap,.hscroll{padding-right:var(--gutter)}

@@ -22,6 +22,10 @@ export interface Special {
   store_id: string
   product_id: string
   product_key: string | null
+  /** 同類可比 key（products.family_key）；舊快取或欄位還沒加時是 null */
+  family_key: string | null
+  family_name_en: string | null
+  family_name_zh: string | null
   name: string
   brand: string | null
   size: string | null

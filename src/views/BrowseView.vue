@@ -90,7 +90,7 @@ function toggleFood() {
       </div>
     </div>
 
-    <div class="chips nowrap" style="margin: 8px 0 0 20px">
+    <div class="chips nowrap" style="margin: 8px 0 0 var(--gutter)">
       <button class="chip" :class="chain === 'all' ? 'on' : ''" @click="chain = 'all'">
         {{ t('browse.all') }}
       </button>
@@ -105,7 +105,7 @@ function toggleFood() {
       </button>
     </div>
 
-    <div class="chips nowrap" style="margin: 8px 0 0 20px">
+    <div class="chips nowrap" style="margin: 8px 0 0 var(--gutter)">
       <button
         v-for="c in level2"
         :key="c.id"

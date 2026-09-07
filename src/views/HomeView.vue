@@ -5,15 +5,21 @@ import ProductCard from '../components/ProductCard.vue'
 import MiniCard from '../components/MiniCard.vue'
 import StaleBanner from '../components/StaleBanner.vue'
 import { useSpecials } from '../composables/useSpecials'
-import { useStores } from '../composables/useStores'
 import { toOffer } from '../lib/compare'
-import { money } from '../lib/format'
+import { chainClass, displayName, money } from '../lib/format'
 import { daysLeft } from '../lib/week'
 import { t } from '../composables/useI18n'
+import { useAuth } from '../composables/useAuth'
+import { useSync } from '../composables/useSync'
+import { dealPrice } from '../lib/compare'
 
-const { selectedStores } = useStores()
 const { loading, activeStores, totalSpecials, top, deepDiscounts, freshByKg, biggestSaving } =
   useSpecials()
+const { isIn, name, avatar } = useAuth()
+const { watched } = useSync()
+const { groups } = useSpecials()
+/** J1 · 你關注的有特價：關注的 product_key 這週在你的店有特價的 */
+const watchedHits = computed(() => [...watched.value].map((k) => groups.value.get(k)).filter((g): g is NonNullable<typeof g> => !!g).slice(0, 8))
 
 // The headline highlights the saving, so we split the sentence around it.
 const MARK = '@@'
@@ -38,7 +44,11 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
         <RouterLink class="iconbtn" to="/search" aria-label="Search">
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
         </RouterLink>
-        <RouterLink class="pill soft" to="/me">{{ t('common.signIn') }}</RouterLink>
+        <RouterLink v-if="isIn" class="iconbtn" to="/me" aria-label="Me" style="padding: 0; overflow: hidden">
+          <img v-if="avatar" :src="avatar" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover" referrerpolicy="no-referrer" />
+          <span v-else style="font-weight: 800">{{ name.slice(0, 1) }}</span>
+        </RouterLink>
+        <RouterLink v-else class="pill soft" to="/signin">{{ t('common.signIn') }}</RouterLink>
       </div>
     </div>
 
@@ -75,6 +85,25 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
         <div class="note sub">{{ t('home.noCompare') }}</div>
       </div>
 
+      <template v-if="isIn && watchedHits.length">
+        <div class="pad hrow" style="margin-top: 22px">
+          <div class="h2">{{ t('home.watched') }}</div>
+          <div class="link">{{ watchedHits.length }}</div>
+        </div>
+        <div class="pad" style="margin-top: 8px">
+          <div class="box">
+            <RouterLink v-for="g in watchedHits" :key="g.key" class="lrow tap" :to="`/p/${encodeURIComponent(g.key)}`" style="padding: 10px 12px">
+              <span class="dot" :class="chainClass(g.best.store.id)" />
+              <div class="grow" style="min-width: 0">
+                <div class="t ell" style="font-size: 14px">{{ displayName(g.best.special) }}</div>
+                <div class="s ell">{{ g.best.store.name }}</div>
+              </div>
+              <div class="p" style="font-size: 17px">{{ money(dealPrice(g.best.special)) }}</div>
+            </RouterLink>
+          </div>
+        </div>
+      </template>
+
       <template v-if="half.length">
         <div class="pad row" style="margin-top: 16px; margin-bottom: 10px">
           <div class="h2">{{ t('home.half') }}</div>
@@ -108,7 +137,7 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
       </template>
 
       <div class="pad sub muted" style="margin-top: 18px; font-size: 12.5px">
-        {{ t('me.footnote') }} · {{ selectedStores.length }} / 5
+        {{ t('me.footnote') }}
       </div>
     </template>
   </div>

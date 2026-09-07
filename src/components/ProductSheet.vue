@@ -16,18 +16,25 @@ import {
 import { useSpecials } from '../composables/useSpecials'
 import { useCategories } from '../composables/useCategories'
 import { useList } from '../composables/useList'
-import { catName, chainBadge, t } from '../composables/useI18n'
+import { useAuth } from '../composables/useAuth'
+import { useSync } from '../composables/useSync'
+import { catName, chainBadge, t, useI18n } from '../composables/useI18n'
 
 const props = defineProps<{ pkey: string }>()
 const emit = defineEmits<{ close: [] }>()
 
-const { groupFor } = useSpecials()
+const { groupFor, familyOffers } = useSpecials()
 const { nameOf } = useCategories()
 const { add, has } = useList()
+const { isIn } = useAuth()
+const { isWatched, toggleWatch } = useSync()
 
 const group = computed(() => groupFor(props.pkey))
 const best = computed(() => group.value?.best)
 const rest = computed(() => group.value?.offers.slice(1) ?? [])
+const family = computed(() => (best.value ? familyOffers(best.value.special, 6) : []))
+const { isZh } = useI18n()
+const familyName = computed(() => (isZh.value ? best.value?.special.family_name_zh : best.value?.special.family_name_en) || '')
 const crumb = computed(() => {
   const id = best.value?.special.category_id
   if (!id) return ''
@@ -124,15 +131,41 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
         </div>
       </div>
 
+      <template v-if="family.length">
+        <div class="sec" style="margin-top: 16px">{{ familyName ? t('p.familyNamed', { n: familyName }) : t('p.family') }}</div>
+        <div class="box" style="margin-top: 8px">
+          <RouterLink
+            v-for="o in family"
+            :key="o.store.id + o.special.product_id"
+            class="lrow"
+            :to="`/p/${encodeURIComponent(o.special.product_key ?? '')}`"
+            style="padding: 10px 12px"
+          >
+            <span class="dot" :class="chainClass(o.store.id)" />
+            <div class="grow" style="min-width: 0">
+              <div class="t ell" style="font-size: 14px">{{ displayName(o.special) }}</div>
+              <div class="s ell">{{ o.store.name }}</div>
+            </div>
+            <div style="text-align: right; flex: none">
+              <div class="p" style="font-size: 17px">{{ unitLabel(o.special) ?? money(dealPrice(o.special)) }}</div>
+              <div v-if="unitLabel(o.special)" class="small muted">{{ money(dealPrice(o.special)) }}</div>
+            </div>
+          </RouterLink>
+        </div>
+      </template>
+
       <div style="display: flex; gap: 10px; margin-top: 14px">
         <button class="btn" style="flex: 1" :disabled="inList" @click="addToList">
           {{ inList ? t('p.added') : t('p.addToList') }}
         </button>
-        <button class="btn ghost" style="width: 126px; font-size: 16px; opacity: 0.45" disabled>
-          {{ t('p.follow') }}
+        <button v-if="isIn" class="btn ghost" style="width: 126px; font-size: 16px" @click="toggleWatch(pkey)">
+          {{ isWatched(pkey) ? t('p.followed') : t('p.follow') }}
         </button>
+        <RouterLink v-else class="btn ghost" to="/signin" style="width: 126px; font-size: 14px; display: flex; align-items: center; justify-content: center">
+          {{ t('p.followSignIn') }}
+        </RouterLink>
       </div>
-      <div class="sub muted" style="margin-top: 8px; font-size: 12px; text-align: center">
+      <div v-if="!isIn" class="sub muted" style="margin-top: 8px; font-size: 12px; text-align: center">
         {{ t('p.followNote') }}
       </div>
 

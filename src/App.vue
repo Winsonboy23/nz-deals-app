@@ -8,12 +8,14 @@ import { useStores } from './composables/useStores'
 import { useSpecials } from './composables/useSpecials'
 import { useCategories } from './composables/useCategories'
 import { lang } from './composables/useI18n'
+import { useSync } from './composables/useSync'
 
 const route = useRoute()
 const router = useRouter()
 const { loadStores, selectedIds } = useStores()
 const { load } = useSpecials()
 const { loadCategories } = useCategories()
+useSync()   // 登入後店／清單／關注跟帳號同步
 
 // The product sheet sits over the page you came from. useRoute() always points at the *current*
 // route, so we keep the path of the last non-sheet page rather than the route object.

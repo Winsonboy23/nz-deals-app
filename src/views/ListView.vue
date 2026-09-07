@@ -2,13 +2,27 @@
 import { computed, ref } from 'vue'
 import { useList } from '../composables/useList'
 import { useSpecials } from '../composables/useSpecials'
-import { chainClass, chainName, money, unitLabel } from '../lib/format'
+import { chainClass, chainName, displayName, money, unitLabel } from '../lib/format'
+import { dealPrice } from '../lib/compare'
 import { t } from '../composables/useI18n'
+import { useAuth } from '../composables/useAuth'
+import { useSync } from '../composables/useSync'
 
 const { items, addFreeText, remove, setQty, toggle, split, oneStop, oneStopFrom } = useList()
-const { activeStores } = useSpecials()
+const { activeStores, groups, familyAlt } = useSpecials()
+/** One stop：這家沒有這樣東西時，推薦它最便宜的同類（§8）。只是建議，不算進總價。 */
+const alt = (storeId: string, key: string | null) => (key ? familyAlt(groups.value.get(key), storeId) : null)
 
 const mode = ref<'split' | 'one'>('split')
+const { isIn } = useAuth()
+const { shareUrl } = useSync()
+const shared = ref<'idle' | 'copied' | 'failed'>('idle')
+async function share() {
+  const url = await shareUrl()
+  if (!url) { shared.value = 'failed'; return }
+  try { await navigator.clipboard.writeText(url); shared.value = 'copied' } catch { prompt('', url); shared.value = 'copied' }
+  setTimeout(() => (shared.value = 'idle'), 2500)
+}
 const draft = ref('')
 
 const empty = computed(() => items.value.length === 0)
@@ -130,6 +144,9 @@ function submit() {
             <div class="grow" style="min-width: 0">
               <div class="t ell" style="font-size: 13.5px">{{ l.item.name }} × {{ l.item.qty }}</div>
               <div v-if="!l.special" class="s ell">{{ t('cmp.noSpecial') }}</div>
+              <div v-if="!l.special && alt(c.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">
+                {{ t('cmp.familyAlt', { n: displayName(alt(c.store.id, l.item.key)!.special), v: unitLabel(alt(c.store.id, l.item.key)!.special) ?? money(dealPrice(alt(c.store.id, l.item.key)!.special)) }) }}
+              </div>
             </div>
             <div v-if="l.special" class="p" style="font-size: 17px">{{ money(l.total) }}</div>
             <div v-else class="small muted" style="flex: none">—</div>
@@ -143,7 +160,9 @@ function submit() {
 
     <div class="footbar">
       <span>{{ t('list.saved') }}</span>
-      <span>{{ t('common.items', { n: items.length }) }}</span>
+      <button v-if="isIn && items.length" class="link" @click="share">{{ shared === 'copied' ? t('list.shared') : t('list.share') }}</button>
+      <RouterLink v-else-if="!isIn && items.length" class="link" to="/signin">{{ t('list.shareSignIn') }}</RouterLink>
+      <span v-else>{{ t('common.items', { n: items.length }) }}</span>
     </div>
   </div>
 </template>

@@ -3,13 +3,14 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import StoreOfferCard from '../components/StoreOfferCard.vue'
 import { useSpecials } from '../composables/useSpecials'
-import { chainClass, displayName } from '../lib/format'
+import { chainClass, displayName, money, unitLabel } from '../lib/format'
+import { dealPrice } from '../lib/compare'
 import { t } from '../composables/useI18n'
 import type { Group } from '../lib/types'
 
 const route = useRoute()
 const router = useRouter()
-const { rows, groups, activeStores } = useSpecials()
+const { rows, groups, activeStores, familyAlt } = useSpecials()
 
 const q = ref(String(route.query.q ?? ''))
 watch(q, (v) => {
@@ -45,6 +46,13 @@ function missing(g: Group): string[] {
   return activeStores.value
     .filter((d) => !g.offers.some((o) => o.store.id === d.store.id))
     .map((d) => d.store.name)
+}
+/** 沒特價的店：有同類就列出來（同類可比，用單價）。 */
+function alts(g: Group) {
+  return activeStores.value
+    .filter((d) => !g.offers.some((o) => o.store.id === d.store.id))
+    .map((d) => familyAlt(g, d.store.id))
+    .filter((o): o is NonNullable<typeof o> => !!o)
 }
 function missingClasses(g: Group): string[] {
   return activeStores.value
@@ -111,6 +119,18 @@ function missingClasses(g: Group): string[] {
             {{ t('cmp.noSpecialAt', { s: missing(g).join(', ') }) }}
           </span>
         </div>
+        <RouterLink
+          v-for="o in alts(g)"
+          :key="o.store.id + o.special.product_id"
+          class="note"
+          :to="`/p/${encodeURIComponent(o.special.product_key ?? '')}`"
+          style="margin-top: 6px; display: flex; align-items: center; gap: 10px"
+        >
+          <span class="dot" :class="chainClass(o.store.id)" />
+          <span class="ell" style="font-size: 12px; font-weight: 600; color: var(--ink-2)">
+            {{ t('cmp.familyAlt', { n: displayName(o.special), v: unitLabel(o.special) ?? money(dealPrice(o.special)) }) }}
+          </span>
+        </RouterLink>
       </div>
     </template>
   </div>

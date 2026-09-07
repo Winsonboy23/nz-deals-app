@@ -14,7 +14,15 @@ export interface RankedStore {
   selected: boolean
 }
 
-const all = shallowRef<Store[]>(readCache<Store[]>('stores') ?? [])
+/** 目前只開北島（南島還沒抓，2026-09-07）。南島開了把 'SI' 加回來就好。 */
+const SHOW_ISLANDS = new Set<'NI' | 'SI'>(['NI'])
+const onlyShown = (list: Store[]): Store[] =>
+  list.filter((s) => {
+    const i = islandOf(s.region)
+    return !!i && SHOW_ISLANDS.has(i)
+  })
+
+const all = shallowRef<Store[]>(onlyShown(readCache<Store[]>('stores') ?? []))
 const loading = ref(false)
 const loaded = ref(all.value.length > 0)
 const selectedIds = ref<string[]>(readCache<string[]>('selected') ?? [])
@@ -31,7 +39,7 @@ async function loadStores(): Promise<void> {
     .order('name')
   loading.value = false
   if (error || !data) return
-  all.value = data as Store[]
+  all.value = onlyShown(data as Store[])
   loaded.value = true
   writeCache('stores', data)
 }

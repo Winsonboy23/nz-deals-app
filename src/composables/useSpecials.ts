@@ -28,6 +28,9 @@ const COL_LIST = [
   'product_url',
 ] as const
 const COLS = COL_LIST.join(',')
+/** 同類可比：順便帶 products.family_key。欄位還沒加的話 PostgREST 會報錯 → 退回 COLS（family_key 全 null）。 */
+const COLS_FAMILY = COLS + ',products(family_key,family_name_en,family_name_zh)'
+const PACK_COLS = [...COL_LIST, 'family_key', 'family_name_en', 'family_name_zh'] as const
 const PAGE = 1000
 
 // A week of specials is ~2,500 rows per store. Storing them as objects wastes about a third of
@@ -40,8 +43,8 @@ interface Packed {
 function pack(week: string | null, rows: Special[]): Packed {
   return {
     week,
-    cols: [...COL_LIST],
-    rows: rows.map((r) => COL_LIST.map((c) => (r as unknown as Record<string, unknown>)[c])),
+    cols: [...PACK_COLS],
+    rows: rows.map((r) => PACK_COLS.map((c) => (r as unknown as Record<string, unknown>)[c])),
   }
 }
 function unpack(p: Packed): Special[] {
@@ -68,7 +71,7 @@ const loading = ref(false)
 const thisWeek = ref(nzMonday())
 
 async function fetchStore(store: Store): Promise<StoreData> {
-  const cacheKey = `sp:${store.id}:${thisWeek.value}`
+  const cacheKey = `sp:${store.id}:${thisWeek.value}:f2`   // :f = 含 family_key 的快取版本
   const cached = readCache<Packed>(cacheKey)
   if (cached?.cols) {
     return {
@@ -92,16 +95,24 @@ async function fetchStore(store: Store): Promise<StoreData> {
   if (!week) return { store, week: null, stale: false, rows: [], error: null }
 
   const rows: Special[] = []
+  let cols: string = COLS_FAMILY
   for (let off = 0; ; off += PAGE) {
-    const page = await supabase
+    let page = await supabase
       .from('specials')
-      .select(COLS)
+      .select(cols)
       .eq('store_id', store.id)
       .eq('week_start', week)
       .range(off, off + PAGE - 1)
+    if (page.error && cols === COLS_FAMILY) {
+      cols = COLS
+      page = await supabase.from('specials').select(cols).eq('store_id', store.id).eq('week_start', week).range(off, off + PAGE - 1)
+    }
     if (page.error) return { store, week, stale: week !== thisWeek.value, rows, error: page.error.message }
-    const got = (page.data ?? []) as unknown as Special[]
-    rows.push(...got)
+    const got = (page.data ?? []) as unknown as Array<Special & { products?: { family_key: string | null; family_name_en: string | null; family_name_zh: string | null } | null }>
+    for (const r of got) {
+      const { products, ...rest } = r
+      rows.push({ ...rest, family_key: products?.family_key ?? null, family_name_en: products?.family_name_en ?? null, family_name_zh: products?.family_name_zh ?? null } as Special)
+    }
     if (got.length < PAGE) break
   }
   writeCache(cacheKey, pack(week, rows), 'sp:')
@@ -170,6 +181,39 @@ const groups = computed<Map<string, Group>>(() => {
   for (const [key, offers] of buckets) out.set(key, buildGroup(key, offers))
   return out
 })
+
+/** family_key → 同類的 offers（跨店、跨商品）。同類可比用單價比（§8）。 */
+const families = computed<Map<string, Offer[]>>(() => {
+  const out = new Map<string, Offer[]>()
+  for (const g of groups.value.values()) {
+    for (const o of g.offers) {
+      const f = o.special.family_key
+      if (!f) continue
+      const list = out.get(f)
+      if (list) list.push(o)
+      else out.set(f, [o])
+    }
+  }
+  return out
+})
+/** 同類但不是同一樣的 offers，單價低的在前（沒單價的排後面）。 */
+function familyOffers(special: Special, limit = 8): Offer[] {
+  if (!special.family_key) return []
+  const list = (families.value.get(special.family_key) ?? []).filter((o) => o.special.product_key !== special.product_key)
+  return list
+    .sort((a, b) => {
+      if (a.unit != null && b.unit != null && a.unitUnit === b.unitUnit) return a.unit - b.unit
+      if (a.unit != null && b.unit == null) return -1
+      if (a.unit == null && b.unit != null) return 1
+      return a.deal - b.deal
+    })
+    .slice(0, limit)
+}
+/** 某家店沒有這樣東西時，那家店最便宜的同類替代品（清單 One stop、搜尋用）。 */
+function familyAlt(g: Group | undefined, storeId: string): Offer | null {
+  if (!g) return null
+  return familyOffers(g.best.special, 50).find((o) => o.store.id === storeId) ?? null
+}
 
 const comparable = computed<Group[]>(() =>
   [...groups.value.values()].filter((g) => g.offers.length >= 2),
@@ -241,6 +285,9 @@ export function useSpecials() {
     totalSpecials,
     rows,
     groups,
+    families,
+    familyOffers,
+    familyAlt,
     comparable,
     top,
     deepDiscounts,

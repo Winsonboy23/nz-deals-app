@@ -32,8 +32,9 @@ watch(items, (v) => writeCache('list', v), { deep: true })
 
 const { groups, activeStores } = useSpecials()
 
+/** uuid：登入後清單會存進資料庫（list_items.id）。 */
 function newId(): string {
-  return Math.random().toString(36).slice(2, 10)
+  return crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(16)}-0000-4000-8000-${Math.random().toString(16).slice(2, 14).padEnd(12, '0')}`
 }
 
 function add(key: string, name: string): void {

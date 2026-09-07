@@ -2,11 +2,15 @@
 import { computed } from 'vue'
 import { useStores } from '../composables/useStores'
 import { useSettings } from '../composables/useSettings'
+import { useAuth } from '../composables/useAuth'
+import { useSync } from '../composables/useSync'
 import { lang, setLang, t } from '../composables/useI18n'
 import { chainName } from '../lib/format'
 
 const { selectedStores } = useStores()
 const { foodOnly } = useSettings()
+const { isIn, name, avatar, signOut } = useAuth()
+const { watched, merged } = useSync()
 
 const town = computed(() => {
   const first = selectedStores.value[0]
@@ -23,19 +27,32 @@ function toggleFood() {
   <div class="screen">
     <div class="pad" style="margin-top: 14px"><div class="h1">{{ t('me.title') }}</div></div>
 
+    <!-- E1 · Merged：剛登入、訪客資料合併進帳號 -->
+    <div v-if="merged" class="pad" style="margin-top: 12px">
+      <div class="note" style="display: flex; gap: 10px; align-items: center">
+        <span style="font-size: 18px">✓</span>
+        <span style="font-size: 13px; font-weight: 600">{{ t('auth.merged') }}</span>
+        <button class="link" style="margin-left: auto" @click="merged = false">×</button>
+      </div>
+    </div>
+
+    <!-- E3 · 登入後 / E4 · 訪客 -->
     <div class="pad" style="margin-top: 14px">
-      <div style="background: #111; border-radius: 18px; padding: 18px">
-        <div class="h2" style="color: #fff">{{ t('me.guest') }}</div>
-        <div style="margin-top: 8px; font-size: 14px; line-height: 1.45; color: #b9b9b9">
-          {{ t('me.guestBody') }}
+      <div v-if="isIn" style="background: #111; border-radius: 18px; padding: 18px; display: flex; gap: 14px; align-items: center">
+        <img v-if="avatar" :src="avatar" alt="" style="width: 52px; height: 52px; border-radius: 50%; flex: none" referrerpolicy="no-referrer" />
+        <div v-else style="width: 52px; height: 52px; border-radius: 50%; background: #333; flex: none" />
+        <div style="flex: 1; min-width: 0">
+          <div class="h2 ell" style="color: #fff; font-size: 20px">{{ name }}</div>
+          <div style="margin-top: 3px; font-size: 13px; color: #b9b9b9">{{ t('auth.signedInAs') }}</div>
         </div>
-        <button
-          class="btn"
-          style="margin-top: 16px; background: #fff; color: #111; height: 52px; width: 100%; opacity: 0.6"
-          disabled
-        >
-          {{ t('common.signIn') }} · {{ t('me.soon') }}
-        </button>
+        <button class="link" style="color: #fff; flex: none" @click="signOut()">{{ t('auth.signOut') }}</button>
+      </div>
+      <div v-else style="background: #111; border-radius: 18px; padding: 18px">
+        <div class="h2" style="color: #fff">{{ t('me.guest') }}</div>
+        <div style="margin-top: 8px; font-size: 14px; line-height: 1.45; color: #b9b9b9">{{ t('me.guestBody') }}</div>
+        <RouterLink class="btn" to="/signin" style="margin-top: 16px; background: #fff; color: #111; height: 52px; width: 100%; display: flex; align-items: center; justify-content: center">
+          {{ t('auth.google') }}
+        </RouterLink>
       </div>
     </div>
 
@@ -43,10 +60,12 @@ function toggleFood() {
       <div class="box">
         <RouterLink class="lrow tap" to="/stores" style="padding: 14px 12px">
           <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.myStores') }}</div></div>
-          <div class="link">
-            <template v-if="town">{{ town }} · </template>{{ selectedStores.length }} ›
-          </div>
+          <div class="link"><template v-if="town">{{ town }} · </template>{{ selectedStores.length }} ›</div>
         </RouterLink>
+        <div v-if="isIn" class="lrow" style="padding: 14px 12px">
+          <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.watching') }}</div></div>
+          <div class="link">{{ watched.size }}</div>
+        </div>
         <div class="lrow" style="padding: 9px 12px">
           <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.language') }}</div></div>
           <div class="seg" style="width: 150px; flex: none">

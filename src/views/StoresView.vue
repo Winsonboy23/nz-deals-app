@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStores, MAX_STORES } from '../composables/useStores'
 import { useSpecials } from '../composables/useSpecials'
@@ -28,13 +28,26 @@ function subtitle(r: RankedStore): string {
   return bits.join(' · ')
 }
 
+/** 三家超市標籤：點了只列那幾家，可同時點多家；都不點 = 全部。 */
+const CHAINS = [
+  { id: 'newworld', label: 'New World', cls: 'nw' },
+  { id: 'woolworths', label: 'Woolworths', cls: 'ww' },
+  { id: 'paknsave', label: "PAK'nSAVE", cls: 'pns' },
+] as const
+const chains = ref<string[]>([])
+function toggleChain(id: string) {
+  chains.value = chains.value.includes(id)
+    ? chains.value.filter((c) => c !== id)
+    : [...chains.value, id]
+}
+const matchChain = (r: RankedStore) => !chains.value.length || chains.value.includes(r.store.chain_id)
+
 const chosen = computed(() => ranked.value.filter((r) => r.selected))
+const candidates = computed(() => ranked.value.filter((r) => !r.selected && matchChain(r)))
 const nearby = computed(() =>
-  ranked.value.filter((r) => !r.selected).slice(0, query.value.trim() ? 60 : 20),
+  candidates.value.slice(0, query.value.trim() || chains.value.length ? 60 : 20),
 )
-const hidden = computed(
-  () => ranked.value.length - chosen.value.length - nearby.value.length,
-)
+const hidden = computed(() => candidates.value.length - nearby.value.length)
 
 function typeTownInstead() {
   locating.value = 'denied'
@@ -142,6 +155,18 @@ async function done() {
       <div class="note sub" style="font-size: 13px">⚠ {{ t('stores.islandWarn') }}</div>
     </div>
 
+    <div class="pad chips" style="margin-top: 14px">
+      <button
+        v-for="c in CHAINS"
+        :key="c.id"
+        class="chip"
+        :class="[c.cls, { on: chains.includes(c.id) }]"
+        @click="toggleChain(c.id)"
+      >
+        <span class="dot" :class="c.cls" />{{ c.label }}
+      </button>
+    </div>
+
     <div class="pad hrow" style="margin-top: 16px; margin-bottom: 8px">
       <div style="font-size: 13px; font-weight: 700; color: var(--ink-2)">
         {{ t('stores.nearestFirst') }}
@@ -212,7 +237,7 @@ async function done() {
         bottom: 0;
         width: 100%;
         max-width: 480px;
-        padding: 12px 20px calc(20px + env(safe-area-inset-bottom));
+        padding: 12px var(--gutter) calc(20px + env(safe-area-inset-bottom));
         background: var(--paper);
         border-top: 1px solid var(--line);
         z-index: 20;
