@@ -1,0 +1,1 @@
+import{l as r,c as s}from"./index-CGXdg_UD.js";const a=(t,e)=>{const c=t.__vccOpts||t;for(const[n,o]of e)c[n]=o;return c},_={};function f(t,e){return r(),s("span")}const l=a(_,[["render",f]]);export{l as default};
