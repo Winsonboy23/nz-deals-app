@@ -72,8 +72,8 @@ async function share() {
       <div class="pad" style="margin-top: 10px">
         <div class="h1">{{ bi(r.recipe.title) }}</div>
         <div class="sub" style="margin-top: 8px">
-          {{ t('recipes.meta', { serves: r.recipe.serves, min: r.recipe.minutes }) }}
-          · {{ t(r.recipe.difficulty === 'easy' ? 'recipes.easy' : 'recipes.medium') }}
+          <template v-if="r.recipe.cuisineName">{{ bi(r.recipe.cuisineName) }} · </template>{{ t('recipes.meta', { serves: r.recipe.serves, min: r.recipe.minutes }) }}
+          · {{ t('recipes.' + r.recipe.difficulty) }}
           <template v-if="r.recipe.kcal"> · {{ t('recipes.kcal', { n: r.recipe.kcal }) }}</template>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 16px">

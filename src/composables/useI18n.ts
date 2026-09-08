@@ -262,6 +262,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'recipes.back': { en: 'Back', zh: '返回' },
   'recipes.easy': { en: 'Easy', zh: '簡單' },
   'recipes.medium': { en: 'Medium', zh: '中等' },
+  'recipes.hard': { en: 'Involved', zh: '費工' },
   'recipes.kcal': { en: '{n} kcal / serve', zh: '每份 {n} kcal' },
   'recipes.add': { en: '+ Add {n} ingredients · ≈ {v}', zh: '+ 加入 {n} 樣食材 · 約 {v}' },
   'recipes.addNoPrice': { en: '+ Add {n} ingredients', zh: '+ 加入 {n} 樣食材' },

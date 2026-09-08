@@ -24,8 +24,10 @@ export interface Recipe {
   serves: number
   minutes: number
   kcal?: number
-  difficulty: 'easy' | 'medium'
+  difficulty: 'easy' | 'medium' | 'hard'
   cuisine: string
+  /** 料理分類的顯示名（日式／Japanese）。舊資料沒有就退回 cuisine。 */
+  cuisineName?: Bi
   /** Path under public/, e.g. recipes/bacon-carbonara.jpg */
   image: string
   credit: { photographer: string; url: string; source: string }

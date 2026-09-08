@@ -87,8 +87,8 @@ export class AiError extends Error {
 
 /** dev 時可以指到本機 deno（VITE_AI_RECIPE_URL=http://localhost:8000）。 */
 const DEV_URL = import.meta.env.VITE_AI_RECIPE_URL as string | undefined
-/** Edge Function 部署好了才把入口打開：VITE_AI_RECIPE=on。沒開就不顯示「用清單做菜」。 */
-export const aiEnabled = import.meta.env.VITE_AI_RECIPE === 'on' || !!DEV_URL
+/** 預設開著（Edge Function ai-recipe 2026-09-08 已上線）。要臨時關掉就 build 時給 VITE_AI_RECIPE=off。 */
+export const aiEnabled = import.meta.env.VITE_AI_RECIPE !== 'off'
 
 async function call<T>(body: Record<string, unknown>): Promise<T> {
   if (!localQuotaLeft()) throw new AiError('quota')

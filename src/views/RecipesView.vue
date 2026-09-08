@@ -41,7 +41,7 @@ const base = import.meta.env.BASE_URL
         <div class="rc-body">
           <div class="h3 ell">{{ bi(r.recipe.title) }}</div>
           <div class="s" style="margin-top: 3px">
-            {{ t('recipes.meta', { serves: r.recipe.serves, min: r.recipe.minutes }) }}<template v-if="Number.isFinite(r.perServe)"> · {{ t('recipes.perServe', { v: money(r.perServe) }) }}</template>
+            <template v-if="r.recipe.cuisineName"><b>{{ bi(r.recipe.cuisineName) }}</b> · </template>{{ t('recipes.meta', { serves: r.recipe.serves, min: r.recipe.minutes }) }} · {{ t('recipes.' + r.recipe.difficulty) }}<template v-if="Number.isFinite(r.perServe)"> · {{ t('recipes.perServe', { v: money(r.perServe) }) }}</template>
           </div>
           <div class="rc-bar">
             <div class="pbar"><i :style="{ width: (r.total ? (r.onSpecial / r.total) * 100 : 0) + '%' }" /></div>
