@@ -7,8 +7,8 @@ import { chainClass, displayName, money, priceSuffix, unitLabel, wasPriceOf } fr
 import { chainBadge, t } from '../composables/useI18n'
 import type { Group } from '../lib/types'
 
-const { top } = useSpecials()
-const rows = computed(() => top.value.slice(0, 10))
+const { topDeduped } = useSpecials()
+const rows = computed(() => topDeduped.value.slice(0, 10).map((x) => x.g))
 
 function detail(g: Group): string {
   const s = g.best.special

@@ -14,7 +14,7 @@ import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
 import { dealPrice } from '../lib/compare'
 
-const { loading, activeStores, totalSpecials, top, deepDiscounts, freshByKg, biggestSaving, whereToGo } =
+const { loading, activeStores, totalSpecials, topDeduped, deepDiscounts, freshByKg, biggestSaving, whereToGo } =
   useSpecials()
 const { nameOf } = useCategories()
 const { isIn, name, avatar } = useAuth()
@@ -33,7 +33,7 @@ const headline = computed(() => {
   return { a, b: b ?? '', save: money(biggestSaving.value) }
 })
 
-const top6 = computed(() => top.value.slice(0, 6))
+const top6 = computed(() => topDeduped.value.slice(0, 6))
 const half = computed(() => deepDiscounts.value.slice(0, 12))
 const fresh = computed(() => freshByKg.value.slice(0, 12))
 </script>
@@ -81,7 +81,7 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
         <RouterLink class="link" to="/top10">{{ t('home.top10') }}</RouterLink>
       </div>
       <div v-if="top6.length" class="grid3">
-        <ProductCard v-for="g in top6" :key="g.key" :offer="g.best" :group="g" />
+        <ProductCard v-for="x in top6" :key="x.g.key" :offer="x.g.best" :group="x.g" :variants="x.variants" />
       </div>
       <div v-else class="pad">
         <div class="note sub">{{ t('home.noCompare') }}</div>

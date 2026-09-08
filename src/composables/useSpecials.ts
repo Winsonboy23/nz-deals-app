@@ -199,7 +199,8 @@ const families = computed<Map<string, Offer[]>>(() => {
 /** 同類但不是同一樣的 offers，單價低的在前（沒單價的排後面）。 */
 function familyOffers(special: Special, limit = 8): Offer[] {
   if (!special.family_key) return []
-  const list = (families.value.get(special.family_key) ?? []).filter((o) => o.special.product_key !== special.product_key)
+  // 同品牌的口味在商品頁另外一排（variantsOf），這裡只列別的牌子
+  const list = (families.value.get(special.family_key) ?? []).filter((o) => o.special.product_key !== special.product_key && (!norm(special.brand) || norm(o.special.brand) !== norm(special.brand)))
   return list
     .sort((a, b) => {
       if (a.unit != null && b.unit != null && a.unitUnit === b.unitUnit) return a.unit - b.unit
@@ -209,6 +210,36 @@ function familyOffers(special: Special, limit = 8): Offer[] {
     })
     .slice(0, limit)
 }
+/** 同品牌、同類、不同口味／規格的其他商品（Moccona 三種咖啡）。沒品牌就沒有。 */
+const norm = (b: string | null | undefined) => (b ?? '').trim().toLowerCase()
+function variantsOf(special: Special): Group[] {
+  if (!special.family_key || !norm(special.brand)) return []
+  const seen = new Set<string>()
+  const out: Group[] = []
+  for (const o of families.value.get(special.family_key) ?? []) {
+    const k = o.special.product_key
+    if (!k || k === special.product_key || seen.has(k) || norm(o.special.brand) !== norm(special.brand)) continue
+    const g = groups.value.get(k)
+    if (!g) continue
+    seen.add(k)
+    out.push(g)
+  }
+  return out.sort((a, b) => a.best.special.name.localeCompare(b.best.special.name))
+}
+/** 這週最划算，但同品牌的口味只留最划算的一個，並附「還有幾種口味」（首頁六格才不會三格都是 Moccona）。 */
+const topDeduped = computed<Array<{ g: Group; variants: number }>>(() => {
+  const seen = new Set<string>()
+  const out: Array<{ g: Group; variants: number }> = []
+  for (const g of top.value) {
+    const sp = g.best.special
+    const fam = sp.family_key && norm(sp.brand) ? `${sp.family_key}|${norm(sp.brand)}` : g.key
+    if (seen.has(fam)) continue
+    seen.add(fam)
+    out.push({ g, variants: variantsOf(sp).length + 1 })
+  }
+  return out
+})
+
 /** 某家店沒有這樣東西時，那家店最便宜的同類替代品（清單 One stop、搜尋用）。 */
 function familyAlt(g: Group | undefined, storeId: string): Offer | null {
   if (!g) return null
@@ -347,6 +378,8 @@ export function useSpecials() {
     familyAlt,
     comparable,
     top,
+    topDeduped,
+    variantsOf,
     deepDiscounts,
     freshByKg,
     biggestSaving,

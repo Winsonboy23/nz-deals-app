@@ -7,7 +7,7 @@ import { chainClass, displayName, money, priceSuffix, unitLabel, wasPriceOf } fr
 import { chainBadge, t } from '../composables/useI18n'
 import type { Group, Offer } from '../lib/types'
 
-const props = defineProps<{ offer: Offer; group?: Group | null }>()
+const props = defineProps<{ offer: Offer; group?: Group | null; variants?: number }>()
 
 const s = computed(() => props.offer.special)
 const tag = computed(() => primaryTag(s.value))
@@ -34,6 +34,7 @@ const to = computed(() => (s.value.product_key ? `/p/${encodeURIComponent(s.valu
       </span>
       <span v-else class="dot" :class="chainClass(offer.store.id)" />
       <TagChip v-if="tag" :tag="tag" deal />
+      <span v-if="variants && variants > 1" class="tag variants">{{ t('card.variants', { n: variants }) }}</span>
     </ProductThumb>
     <div class="price">
       {{ money(s.price) }}<span v-if="priceSuffix(s)" class="unit">{{ priceSuffix(s) }}</span>

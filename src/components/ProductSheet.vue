@@ -36,6 +36,15 @@ const group = computed(() => groupFor(props.pkey))
 const best = computed(() => group.value?.best)
 const rest = computed(() => group.value?.offers.slice(1) ?? [])
 const family = computed(() => (best.value ? familyOffers(best.value.special, 6) : []))
+/** 口味／規格切換：同品牌同類的其他商品，標籤只寫「不一樣的字」（Classic Medium Roast / Caramel）。 */
+const variants = computed(() => {
+  if (!best.value) return []
+  const all = [group.value!, ...variantsOf(best.value.special)]
+  if (all.length < 2) return []
+  const words = all.map((g) => displayName(g.best.special).split(/\s+/))
+  const common = new Set(words[0].filter((w) => words.every((ws) => ws.includes(w))))
+  return all.map((g, i) => ({ key: g.key, label: words[i].filter((w) => !common.has(w)).join(' ') || displayName(g.best.special), current: g.key === group.value!.key }))
+})
 const { isZh } = useI18n()
 const familyName = computed(() => (isZh.value ? best.value?.special.family_name_zh : best.value?.special.family_name_en) || '')
 const crumb = computed(() => {
@@ -118,6 +127,13 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
             </span>
             <span v-else class="tag only">{{ t('cmp.only') }}</span>
           </div>
+        </div>
+      </div>
+
+      <div v-if="variants.length" style="margin-top: 14px">
+        <div class="sec">{{ t('p.variants') }}</div>
+        <div class="chips" style="margin-top: 6px">
+          <RouterLink v-for="v in variants" :key="v.key" class="chip" :class="{ on: v.current }" :to="`/p/${encodeURIComponent(v.key)}`" replace>{{ v.label }}</RouterLink>
         </div>
       </div>
 

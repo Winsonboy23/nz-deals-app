@@ -241,3 +241,6 @@ input {
 
 /* 搜尋頁「同類」列：圓點不能被長文字擠扁 */
 .note .dot{flex:none}
+
+/* 首頁卡片右下角「3 種口味」 */
+.thumb .tag.variants{position:absolute;right:6px;bottom:6px;z-index:2;background:#111;color:#fff}
