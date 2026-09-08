@@ -30,6 +30,25 @@ export interface OneStopCard {
 const items = ref<ListItem[]>(readCache<ListItem[]>('list') ?? [])
 watch(items, (v) => writeCache('list', v), { deep: true })
 
+/** 「用清單做菜」的挑食材模式。跟 checked（在店裡買到了）是兩回事，所以另存一份，也不進 localStorage。 */
+const picking = ref(false)
+const picked = ref<Set<string>>(new Set())
+function startPicking(): void {
+  picked.value = new Set()
+  picking.value = true
+}
+function stopPicking(): void {
+  picking.value = false
+  picked.value = new Set()
+}
+function togglePick(id: string): void {
+  const next = new Set(picked.value)
+  next.has(id) ? next.delete(id) : next.add(id)
+  picked.value = next
+}
+/** 選到的品名，順序照清單。給 AI 的就是這些字。 */
+const pickedNames = computed(() => items.value.filter((i) => picked.value.has(i.id)).map((i) => i.name))
+
 const { groups, activeStores } = useSpecials()
 
 /** uuid：登入後清單會存進資料庫（list_items.id）。 */
@@ -135,6 +154,12 @@ const oneStopFrom = computed(() => (oneStop.value.length ? oneStop.value[0].tota
 export function useList() {
   return {
     items,
+    picking,
+    picked,
+    pickedNames,
+    startPicking,
+    stopPicking,
+    togglePick,
     add,
     addFreeText,
     remove,

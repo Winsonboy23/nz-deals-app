@@ -252,3 +252,8 @@ input {
 .grid3 .expand{grid-column:1/-1;background:var(--paper-2);border-bottom:1px solid var(--line);padding:10px 0}
 .stackitem{flex:none;width:106px;display:block}
 .stackitem .s{font-size:11.5px;color:var(--ink-2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+
+/* AI 食譜底頁：跟商品底頁一樣蓋在整頁上 */
+.sheetwrap{position:fixed;inset:0;z-index:60}
+.sheetwrap .dim{position:fixed}
+.sheetwrap .bsheet{position:fixed}

@@ -9,8 +9,11 @@ import { t } from '../composables/useI18n'
 import type { Group } from '../lib/types'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
+import AiDirectionsSheet from '../components/AiDirectionsSheet.vue'
+import { aiEnabled } from '../lib/aiRecipe'
 
-const { items, add, has, addFreeText, remove, setQty, toggle, split, oneStop, oneStopFrom } = useList()
+const { items, add, has, addFreeText, remove, setQty, toggle, split, oneStop, oneStopFrom,
+  picking, picked, pickedNames, startPicking, stopPicking, togglePick } = useList()
 const { activeStores, groups, familyAlt } = useSpecials()
 /** One stop：這家沒有這樣東西時，推薦它最便宜的同類（§8）。只是建議，不算進總價。 */
 function altText(storeId: string, key: string | null): string | null {
@@ -38,6 +41,11 @@ async function share() {
 const draft = ref('')
 
 const empty = computed(() => items.value.length === 0)
+/** 挑食材 → AI 食譜。第一層是底頁，第二層才換頁。 */
+const sheet = ref(false)
+function openSheet() {
+  if (pickedNames.value.length) sheet.value = true
+}
 
 function submit() {
   addFreeText(draft.value)
@@ -49,10 +57,12 @@ function submit() {
   <div class="screen with-footbar">
     <div class="pad hrow" style="margin-top: 8px">
       <div class="h1">{{ t('list.title') }}</div>
-      <div class="link">{{ t('common.items', { n: items.length }) }}</div>
+      <button v-if="picking" class="link" @click="stopPicking()">{{ t('common.done') }}</button>
+      <button v-else-if="aiEnabled && items.length >= 2" class="link" @click="startPicking()">{{ t('ai.cookFromList') }}</button>
+      <div v-else class="link">{{ t('common.items', { n: items.length }) }}</div>
     </div>
 
-    <div class="pad" style="margin-top: 8px">
+    <div v-if="!picking" class="pad" style="margin-top: 8px">
       <div class="seg">
         <div :class="{ on: mode === 'split' }" @click="mode = 'split'">
           {{ t('list.split', { v: money(split.total) }) }}
@@ -63,7 +73,7 @@ function submit() {
       </div>
     </div>
 
-    <div class="pad" style="margin-top: 10px; display: flex; gap: 10px">
+    <div v-if="!picking" class="pad" style="margin-top: 10px; display: flex; gap: 10px">
       <div class="field" style="flex: 1">
         <input
           v-model="draft"
@@ -81,7 +91,7 @@ function submit() {
       </button>
     </div>
 
-    <div v-if="suggest.length" class="pad" style="margin-top: 12px">
+    <div v-if="!picking && suggest.length" class="pad" style="margin-top: 12px">
       <div class="sec">{{ t('home.watched') }}</div>
       <div class="box" style="margin-top: 6px">
         <div v-for="g in suggest" :key="g.key" class="lrow" style="padding: 8px 12px; gap: 8px">
@@ -97,7 +107,17 @@ function submit() {
       </div>
     </div>
 
-    <div v-if="empty" class="pad" style="margin-top: 20px">
+    <div v-if="picking" class="pad" style="margin-top: 12px">
+      <div class="sub">{{ t('ai.pickSub') }}</div>
+      <div class="box" style="margin-top: 10px">
+        <button v-for="i in items" :key="i.id" class="lrow tap pickrow" @click="togglePick(i.id)">
+          <span class="rb" :class="{ on: picked.has(i.id) }" />
+          <span class="t grow ell">{{ i.name }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div v-else-if="empty" class="pad" style="margin-top: 20px">
       <div class="empty">
         <div style="font-size: 22px; color: #c4c4c0; line-height: 1">☰</div>
         <div class="h3" style="margin-top: 9px; font-size: 15.5px">{{ t('list.empty') }}</div>
@@ -189,11 +209,57 @@ function submit() {
       </div>
     </template>
 
-    <div class="footbar">
+    <div v-if="picking" class="footbar pickbar">
+      <span>{{ t('ai.picked', { n: pickedNames.length }) }}</span>
+      <button class="link" :disabled="!pickedNames.length" :style="{ opacity: pickedNames.length ? 1 : 0.4 }" @click="openSheet">
+        {{ t('ai.go') }}
+      </button>
+    </div>
+    <div v-else class="footbar">
       <span>{{ t('list.saved') }}</span>
       <button v-if="isIn && items.length" class="link" @click="share">{{ shared === 'copied' ? t('list.shared') : t('list.share') }}</button>
       <RouterLink v-else-if="!isIn && items.length" class="link" to="/signin">{{ t('list.shareSignIn') }}</RouterLink>
       <span v-else>{{ t('common.items', { n: items.length }) }}</span>
     </div>
+
+    <Teleport to="body">
+      <Transition name="sheet">
+        <div v-if="sheet" class="sheetwrap">
+          <AiDirectionsSheet :items="pickedNames" @close="sheet = false" />
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.pickrow {
+  width: 100%;
+  text-align: left;
+  background: var(--paper);
+  color: inherit;
+}
+.rb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  flex: none;
+  position: relative;
+}
+.rb.on {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+.rb.on::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: var(--paper);
+}
+.pickbar .link {
+  font-weight: 800;
+  color: var(--ink);
+}
+</style>
