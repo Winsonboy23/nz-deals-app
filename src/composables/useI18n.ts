@@ -139,7 +139,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'cmp.familyAltMany': { en: 'Similar · {k} stores: {n} from {v}', zh: '同類 · {k} 家：{n} 最低 {v}' },
   'p.family': { en: 'Similar items · compare by unit price', zh: '同類可比 · 用單價比' },
   'p.variants': { en: 'Flavours & sizes', zh: '口味 / 規格' },
-  'card.variants': { en: '{n} options', zh: '{n} 種口味' },
+  'card.variants': { en: '{n} options', zh: '{n} 款' },
   'p.familyNamed': { en: 'Similar · {n} · by unit price', zh: '同類可比 · {n} · 用單價比' },
 
   'tag.half': { en: 'HALF PRICE', zh: '半價' },

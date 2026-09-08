@@ -43,7 +43,8 @@ const variants = computed(() => {
   if (all.length < 2) return []
   const words = all.map((g) => displayName(g.best.special).split(/\s+/))
   const common = new Set(words[0].filter((w) => words.every((ws) => ws.includes(w))))
-  return all.map((g, i) => ({ key: g.key, label: words[i].filter((w) => !common.has(w)).join(' ') || displayName(g.best.special), current: g.key === group.value!.key }))
+  const rows = all.map((g, i) => ({ key: g.key, label: words[i].filter((w) => !common.has(w)).join(' ') || displayName(g.best.special), current: g.key === group.value!.key }))
+  return rows.slice(0, 8)   // Moccona 有 20 幾款，最多列 8 個
 })
 const { isZh } = useI18n()
 const familyName = computed(() => (isZh.value ? best.value?.special.family_name_zh : best.value?.special.family_name_en) || '')

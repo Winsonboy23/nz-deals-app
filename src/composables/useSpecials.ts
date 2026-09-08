@@ -226,16 +226,18 @@ function variantsOf(special: Special): Group[] {
   }
   return out.sort((a, b) => a.best.special.name.localeCompare(b.best.special.name))
 }
-/** 這週最划算，但同品牌的口味只留最划算的一個，並附「還有幾種口味」（首頁六格才不會三格都是 Moccona）。 */
+/** 這週最划算，但「同品牌 + 同第二層分類」只留最划算的一個（Woolworths 起司、Moccona 咖啡、Angel Bay 漢堡排各一格），並附「還有幾款」。 */
 const topDeduped = computed<Array<{ g: Group; variants: number }>>(() => {
+  const keyOf = (g: Group) => { const sp = g.best.special; const b = norm(sp.brand); const c = catLevel(sp.category_id, 2); return b && c ? `${b}|${c}` : g.key }
+  const count = new Map<string, number>()
+  for (const g of top.value) { const k = keyOf(g); count.set(k, (count.get(k) ?? 0) + 1) }
   const seen = new Set<string>()
   const out: Array<{ g: Group; variants: number }> = []
   for (const g of top.value) {
-    const sp = g.best.special
-    const fam = sp.family_key && norm(sp.brand) ? `${sp.family_key}|${norm(sp.brand)}` : g.key
-    if (seen.has(fam)) continue
-    seen.add(fam)
-    out.push({ g, variants: variantsOf(sp).length + 1 })
+    const k = keyOf(g)
+    if (seen.has(k)) continue
+    seen.add(k)
+    out.push({ g, variants: count.get(k) ?? 1 })
   }
   return out
 })
