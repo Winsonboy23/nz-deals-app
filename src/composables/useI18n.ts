@@ -223,7 +223,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'ai.picked': { en: '{n} picked', zh: '已選 {n} 樣' },
   'ai.go': { en: 'AI recipe ›', zh: 'AI 食譜 ›' },
   'ai.dirTitle': { en: 'What to cook', zh: '可以做什麼' },
-  'ai.dirSub': { en: 'Four directions from your {n} picked items. Pick one to get the full recipe.', zh: '用你選的 {n} 樣想出四個方向。點一個看完整食譜。' },
+  'ai.dirSub': { en: 'A few directions from your {n} picked items. Pick one to get the full recipe.', zh: '用你選的 {n} 樣想出幾個方向。點一個看完整食譜。' },
   'ai.serves': { en: '{n} people', zh: '{n} 人份' },
   'ai.under': { en: 'Under {m} min', zh: '{m} 分內' },
   'ai.spice.mild': { en: 'Not spicy', zh: '不辣' },
