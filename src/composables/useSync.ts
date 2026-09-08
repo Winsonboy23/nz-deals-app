@@ -3,7 +3,7 @@
 import { ref, watch } from 'vue'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './useAuth'
-import { useStores, MAX_STORES } from './useStores'
+import { useStores, MAX_STORES, onePerChain } from './useStores'
 import { useList, type ListItem } from './useList'
 
 const { user } = useAuth()
@@ -30,12 +30,13 @@ async function pull(uid: string): Promise<void> {
   pulling = true
   try {
     let didMerge = false
-    // 店：帳號的在前，本機沒在帳號裡的補上，最多 5 間
+    // 店：帳號的在前，本機沒在帳號裡的補上；每家超市只留一間、最多 3 間
     const us = await supabase.from('user_stores').select('store_id,position').eq('user_id', uid).order('position')
     const accountStores = (us.data ?? []).map((r) => r.store_id as string)
-    const union = [...accountStores, ...selectedIds.value.filter((id) => !accountStores.includes(id))].slice(0, MAX_STORES)
-    if (union.length !== accountStores.length) {
-      await supabase.from('user_stores').upsert(union.map((store_id, position) => ({ user_id: uid, store_id, position })), { onConflict: 'user_id,store_id' })
+    const union = onePerChain([...accountStores, ...selectedIds.value]).slice(0, MAX_STORES)
+    if (union.join() !== accountStores.join()) {
+      await supabase.from('user_stores').delete().eq('user_id', uid)
+      if (union.length) await supabase.from('user_stores').insert(union.map((store_id, position) => ({ user_id: uid, store_id, position })))
       if (accountStores.length) didMerge = true
     }
     if (union.join() !== selectedIds.value.join()) { selectedIds.value = union; if (accountStores.length) didMerge = true }

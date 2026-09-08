@@ -95,7 +95,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'stores.typeTown': { en: 'Type my town instead', zh: '改用鎮名搜尋' },
   'stores.placeholder': { en: 'town or store', zh: '鎮名或店名' },
   'stores.nearestFirst': { en: 'Nearest first', zh: '由近到遠' },
-  'stores.selected': { en: '{n} of 5 selected', zh: '已選 {n} / 5' },
+  'stores.selected': { en: '{n} of 3 selected', zh: '已選 {n} / 3' },
   'stores.cta': { en: "Show this week's specials", zh: '看本週特價' },
   'stores.noData': { en: 'no data', zh: '此店無資料' },
   'stores.noWeekData': { en: 'no data this week', zh: '此店本週無資料' },
@@ -107,7 +107,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'stores.island.NI': { en: 'NORTH ISLAND', zh: '北島' },
   'stores.island.SI': { en: 'SOUTH ISLAND', zh: '南島' },
   'stores.islandNote': { en: 'Prices differ a lot between islands.', zh: '兩島價格差很多。' },
-  'stores.maxWarn': { en: 'Up to 5 stores.', zh: '最多 5 間。' },
+  'stores.maxWarn': { en: 'One store per chain. Tap another to swap it.', zh: '每家超市各一間，再點同一家的另一間會換掉。' },
   'stores.denied': {
     en: "Location is off — type a town instead.",
     zh: '定位沒開 —— 直接打鎮名。',

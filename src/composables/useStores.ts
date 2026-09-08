@@ -2,9 +2,22 @@ import { computed, ref, shallowRef } from 'vue'
 import { supabase } from '../lib/supabase'
 import { readCache, writeCache } from '../lib/cache'
 import { haversineKm, islandOf } from '../lib/geo'
+import { chainOf } from '../lib/format'
 import type { Store } from '../lib/types'
 
-export const MAX_STORES = 5
+/** 每家超市只能選一間（2026-09-08 決定，原本最多 5 間隨便選），所以上限就是三家。 */
+export const MAX_STORES = 3
+
+/** 同一家出現第二間就丟掉，順序照舊。舊資料（裝置或帳號裡存了兩間 Woolworths）靠這個清。 */
+export function onePerChain(ids: string[]): string[] {
+  const seen = new Set<string>()
+  return ids.filter((id) => {
+    const c = chainOf(id)
+    if (seen.has(c)) return false
+    seen.add(c)
+    return true
+  })
+}
 
 export interface RankedStore {
   store: Store
@@ -25,7 +38,7 @@ const onlyShown = (list: Store[]): Store[] =>
 const all = shallowRef<Store[]>(onlyShown(readCache<Store[]>('stores') ?? []))
 const loading = ref(false)
 const loaded = ref(all.value.length > 0)
-const selectedIds = ref<string[]>(readCache<string[]>('selected') ?? [])
+const selectedIds = ref<string[]>(onePerChain(readCache<string[]>('selected') ?? []))
 const coords = ref<{ lat: number; lng: number } | null>(readCache('coords'))
 const query = ref('')
 const locating = ref<'idle' | 'busy' | 'ok' | 'denied'>(coords.value ? 'ok' : 'idle')
@@ -115,13 +128,17 @@ function persist(): void {
 }
 
 function toggle(id: string): void {
-  const i = selectedIds.value.indexOf(id)
-  if (i >= 0) selectedIds.value = selectedIds.value.filter((x) => x !== id)
-  else if (selectedIds.value.length < MAX_STORES) selectedIds.value = [...selectedIds.value, id]
+  const cur = selectedIds.value
+  if (cur.includes(id)) selectedIds.value = cur.filter((x) => x !== id)
+  else {
+    // 同一家已經選了一間 → 原位換掉；還沒有 → 加在最後
+    const i = cur.findIndex((x) => chainOf(x) === chainOf(id))
+    selectedIds.value = i >= 0 ? cur.map((x, j) => (j === i ? id : x)) : [...cur, id]
+  }
   persist()
 }
 
-/** Pre-tick the nearest store of each chain that has data, up to 5. */
+/** Pre-tick the nearest store of each chain that has data, one per chain. */
 function preselect(): void {
   if (selectedIds.value.length) return
   const picked: string[] = []

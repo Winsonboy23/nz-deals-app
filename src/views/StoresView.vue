@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useStores, MAX_STORES } from '../composables/useStores'
+import { useStores } from '../composables/useStores'
 import { useSpecials } from '../composables/useSpecials'
 import { chainClass, chainOf } from '../lib/format'
 import { t } from '../composables/useI18n'
@@ -220,11 +220,7 @@ async function done() {
           {{ t('stores.more', { n: hidden }) }}
         </div>
       </template>
-      <div
-        v-if="selectedIds.length >= MAX_STORES"
-        class="sub muted"
-        style="margin-top: 8px; font-size: 12.5px"
-      >
+      <div class="sub muted" style="margin-top: 8px; font-size: 12.5px">
         {{ t('stores.maxWarn') }}
       </div>
     </div>
