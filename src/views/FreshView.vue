@@ -4,6 +4,7 @@ import { useSpecials } from '../composables/useSpecials'
 import { useCategories } from '../composables/useCategories'
 import { catLevel, chainClass, chainName, chainOf, displayName, money, wasPriceOf } from '../lib/format'
 import { catName, t } from '../composables/useI18n'
+import { catRank } from '../lib/catOrder'
 import type { ChainId, Special, Store } from '../lib/types'
 
 const { freshByKg } = useSpecials()
@@ -51,7 +52,7 @@ const sections = computed<Array<{ id: string; label: string; total: number; rows
   }
   return [...map.entries()]
     .map(([id, rows]) => ({ id, label: catName(nameOf(id)), total: rows.length, rows: rows.slice(0, 8) }))
-    .sort((a, b) => a.rows[0].special.unit_price! - b.rows[0].special.unit_price!)
+    .sort((a, b) => catRank(a.id) - catRank(b.id))   // 超市自己的順序（雞肉→牛肉→…→植物替代），不按最便宜
 })
 
 const shown = computed(() => (cat.value === 'all' ? sections.value : sections.value.filter((s) => s.id === cat.value)))

@@ -172,6 +172,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   },
   'p.listedAs': { en: 'Listed as', zh: '各店品名' },
   'p.open': { en: 'open ↗', zh: '前往 ↗' },
+  'p.openNote': { en: 'Pick your store on their site first, or the price shown there will be for a different store.', zh: '到超市網站要先選店，才看得到這家店的價格。' },
   'p.clubNeeded': { en: 'Clubcard needed (free)', zh: '需 Clubcard（免費）' },
   'p.lowPrice': { en: 'Low price label · no was-price', zh: '低價標籤 · 沒有原價' },
   'p.notFound': { en: 'Not on special at your stores.', zh: '你的店本週沒有這項特價。' },

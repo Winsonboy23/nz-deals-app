@@ -10,6 +10,7 @@ import { catLevel, chainClass, chainName, chainOf, isFresh } from '../lib/format
 import { toOffer } from '../lib/compare'
 import { catName, t } from '../composables/useI18n'
 import { readCache, writeCache } from '../lib/cache'
+import { catRank } from '../lib/catOrder'
 import type { ChainId, Group, Offer } from '../lib/types'
 
 const { rows, groups, level2 } = useSpecials()
@@ -43,7 +44,7 @@ let recent: string[] = readCache<string[]>('recentCats') ?? []
 /** 「點過的排前面」只在換大類時重排，點的當下不動，不然被點的那顆會跳到最前面。 */
 const recentOrder = ref<string[]>(recent)
 const subs = computed(() => {
-  const list = level2.value.filter((c) => c.id.startsWith(l1.value + '/'))
+  const list = level2.value.filter((c) => c.id.startsWith(l1.value + '/')).sort((a, b) => catRank(a.id) - catRank(b.id))
   const rec = recentOrder.value.filter((id) => list.some((c) => c.id === id))
   return [...rec.map((id) => list.find((c) => c.id === id)!), ...list.filter((c) => !rec.includes(c.id))]
 })
@@ -90,7 +91,7 @@ const sections = computed<Section[]>(() => {
       fresh,
     })
   }
-  return out.sort((a, b) => b.compare.length + b.singles.length - (a.compare.length + a.singles.length))
+  return out.sort((a, b) => catRank(a.id) - catRank(b.id))   // 超市自己的順序，不是筆數
 })
 
 const visible = computed(() => sections.value.slice(0, shown.value))
