@@ -26,7 +26,7 @@ import type { Special } from '../lib/types'
 const props = defineProps<{ pkey: string }>()
 const emit = defineEmits<{ close: [] }>()
 
-const { groupFor, familyOffers, history, activeStores, thisWeek } = useSpecials()
+const { groupFor, familyOffers, variantsOf, history, activeStores, thisWeek } = useSpecials()
 const { nameOf } = useCategories()
 const { add, has } = useList()
 const { isIn } = useAuth()
