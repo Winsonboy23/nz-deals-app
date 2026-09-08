@@ -214,6 +214,11 @@ const DICT: Record<string, { en: string; zh: string }> = {
   },
 
   'ai.cookFromList': { en: 'Cook from list', zh: '用清單做菜' },
+  'ai.cookSignIn': { en: 'Cook from list · sign in', zh: '用清單做菜 · 需登入' },
+  'ai.needSignIn': {
+    en: 'AI recipes need you signed in. It costs real money per recipe, so we cap it per account.',
+    zh: 'AI 食譜要登入才能用。每寫一道都真的要付費，所以是照帳號算次數的。',
+  },
   'ai.pickSub': { en: 'Tick what you want to cook with. Two or more works best.', zh: '勾要拿來做菜的食材，兩樣以上比較好發揮。' },
   'ai.picked': { en: '{n} picked', zh: '已選 {n} 樣' },
   'ai.go': { en: 'AI recipe ›', zh: 'AI 食譜 ›' },
@@ -237,8 +242,8 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'ai.addBuys': { en: '+ Add {n} to list · ≈ {v}', zh: '+ 把 {n} 樣加進清單 · 約 {v}' },
   'ai.backList': { en: '‹ List', zh: '‹ 清單' },
   'ai.quota': {
-    en: "That's all the AI recipes for today. Sign in for more, or come back tomorrow.",
-    zh: '今天的 AI 食譜用完了。登入可以用更多次，或明天再來。',
+    en: "That's all the AI recipes for today. Come back tomorrow.",
+    zh: '今天的 AI 食譜用完了，明天再來。',
   },
   'ai.failed': { en: "Couldn't think of anything just now. Try again.", zh: '現在想不出來，再試一次。' },
   'ai.lost': { en: 'Lost track of that one. Pick it again from your list.', zh: '找不到剛才選的，回清單重選一次。' },

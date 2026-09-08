@@ -58,7 +58,8 @@ function submit() {
     <div class="pad hrow" style="margin-top: 8px">
       <div class="h1">{{ t('list.title') }}</div>
       <button v-if="picking" class="link" @click="stopPicking()">{{ t('common.done') }}</button>
-      <button v-else-if="aiEnabled && items.length >= 2" class="link" @click="startPicking()">{{ t('ai.cookFromList') }}</button>
+      <button v-else-if="aiEnabled && isIn && items.length >= 2" class="link" @click="startPicking()">{{ t('ai.cookFromList') }}</button>
+      <RouterLink v-else-if="aiEnabled && items.length >= 2" class="link" to="/signin">{{ t('ai.cookSignIn') }}</RouterLink>
       <div v-else class="link">{{ t('common.items', { n: items.length }) }}</div>
     </div>
 

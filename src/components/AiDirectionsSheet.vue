@@ -12,7 +12,7 @@ const router = useRouter()
 const prefs = ref<Prefs>(loadPrefs())
 const dirs = ref<Direction[]>([])
 const loading = ref(false)
-const error = ref<'quota' | 'failed' | null>(null)
+const error = ref<'quota' | 'failed' | 'signIn' | null>(null)
 const zh = computed(() => lang.value === 'zh')
 
 async function load(fresh = false) {
@@ -21,7 +21,7 @@ async function load(fresh = false) {
   try {
     dirs.value = await fetchDirections(props.items, prefs.value, fresh)
   } catch (e) {
-    error.value = e instanceof AiError && e.code === 'quota' ? 'quota' : 'failed'
+    error.value = e instanceof AiError && (e.code === 'quota' || e.code === 'signIn') ? e.code : 'failed'
   } finally {
     loading.value = false
   }
@@ -90,9 +90,12 @@ function pick(d: Direction) {
     </div>
 
     <div v-else-if="error" class="empty sub" style="margin-top: 14px">
-      {{ error === 'quota' ? t('ai.quota') : t('ai.failed') }}
-      <div v-if="error !== 'quota'" style="margin-top: 10px">
-        <button class="btn ghost" style="height: 42px; font-size: 15px" @click="load(true)">{{ t('ai.retry') }}</button>
+      {{ error === 'quota' ? t('ai.quota') : error === 'signIn' ? t('ai.needSignIn') : t('ai.failed') }}
+      <div style="margin-top: 10px">
+        <RouterLink v-if="error === 'signIn'" class="btn ghost" to="/signin" style="height: 42px; font-size: 15px" @click="emit('close')">
+          {{ t('common.signIn') }}
+        </RouterLink>
+        <button v-else-if="error !== 'quota'" class="btn ghost" style="height: 42px; font-size: 15px" @click="load(true)">{{ t('ai.retry') }}</button>
       </div>
     </div>
 

@@ -14,7 +14,7 @@ const { add, addFreeText } = useList()
 
 const recipe = ref<AiRecipe | null>(null)
 const loading = ref(true)
-const error = ref<'quota' | 'failed' | 'lost' | null>(null)
+const error = ref<'quota' | 'failed' | 'lost' | 'signIn' | null>(null)
 const added = ref(false)
 const zh = computed(() => lang.value === 'zh')
 
@@ -38,7 +38,7 @@ async function load(fresh = false) {
     recipe.value = await fetchRecipe(c.items, c.prefs, c.direction, fresh)
     added.value = false
   } catch (e) {
-    error.value = e instanceof AiError && e.code === 'quota' ? 'quota' : 'failed'
+    error.value = e instanceof AiError && (e.code === 'quota' || e.code === 'signIn') ? e.code : 'failed'
   } finally {
     loading.value = false
   }
@@ -129,9 +129,12 @@ function addBuys() {
 
     <div v-else-if="error" class="pad" style="margin-top: 18px">
       <div class="empty sub">
-        {{ error === 'quota' ? t('ai.quota') : error === 'lost' ? t('ai.lost') : t('ai.failed') }}
+        {{ error === 'quota' ? t('ai.quota') : error === 'signIn' ? t('ai.needSignIn') : error === 'lost' ? t('ai.lost') : t('ai.failed') }}
         <div style="margin-top: 12px">
-          <RouterLink v-if="error === 'lost'" class="btn ghost" to="/list" style="height: 42px; font-size: 15px">
+          <RouterLink v-if="error === 'signIn'" class="btn ghost" to="/signin" style="height: 42px; font-size: 15px">
+            {{ t('common.signIn') }}
+          </RouterLink>
+          <RouterLink v-else-if="error === 'lost'" class="btn ghost" to="/list" style="height: 42px; font-size: 15px">
             {{ t('ai.backList') }}
           </RouterLink>
           <button v-else-if="error !== 'quota'" class="btn ghost" style="height: 42px; font-size: 15px" @click="load(true)">
@@ -147,7 +150,7 @@ function addBuys() {
         <div class="h1" style="margin-top: 8px">{{ zh ? recipe.title_zh : recipe.title_en }}</div>
         <div class="sub" style="margin-top: 8px">
           {{ t('recipes.meta', { serves: recipe.serves, min: recipe.minutes }) }} ·
-          {{ t(recipe.difficulty === 'easy' ? 'recipes.easy' : 'recipes.medium') }}
+          {{ t('recipes.' + recipe.difficulty) }}
         </div>
       </div>
 

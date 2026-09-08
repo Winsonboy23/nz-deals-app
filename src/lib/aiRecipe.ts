@@ -80,7 +80,7 @@ export function localQuotaLeft(): number {
 }
 
 export class AiError extends Error {
-  constructor(public code: 'quota' | 'offline' | 'failed', message?: string) {
+  constructor(public code: 'quota' | 'signIn' | 'offline' | 'failed', message?: string) {
     super(message ?? code)
   }
 }
@@ -115,6 +115,7 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
       data = r.data
     }
   }
+  if (status === 401) throw new AiError('signIn')
   if (status === 429) throw new AiError('quota')
   if (status !== 200 || !data) throw new AiError('failed', `status ${status}`)
   bumpLocal()
