@@ -44,7 +44,7 @@ const empty = computed(() => items.value.length === 0)
 /** 挑食材 → AI 食譜。第一層是底頁，第二層才換頁。 */
 const sheet = ref(false)
 function openSheet() {
-  if (pickedNames.value.length) sheet.value = true
+  if (pickedNames.value.length >= 2) sheet.value = true
 }
 
 function submit() {
@@ -212,7 +212,7 @@ function submit() {
 
     <div v-if="picking" class="footbar pickbar">
       <span>{{ t('ai.picked', { n: pickedNames.length }) }}</span>
-      <button class="link" :disabled="!pickedNames.length" :style="{ opacity: pickedNames.length ? 1 : 0.4 }" @click="openSheet">
+      <button class="link" :disabled="pickedNames.length < 2" :style="{ opacity: pickedNames.length >= 2 ? 1 : 0.4 }" @click="openSheet">
         {{ t('ai.go') }}
       </button>
     </div>

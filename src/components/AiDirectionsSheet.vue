@@ -100,6 +100,10 @@ function pick(d: Direction) {
     </div>
 
     <template v-else>
+      <div v-if="!dirs.length" class="empty sub" style="margin-top: 14px">
+        {{ t('ai.none') }}
+        <div style="margin-top: 10px"><button class="btn ghost" style="height: 42px; font-size: 15px" @click="emit('close')">{{ t('ai.pickMore') }}</button></div>
+      </div>
       <button v-for="d in dirs" :key="d.dish_en" class="dcard" @click="pick(d)">
         <div class="hrow">
           <span class="tag low">{{ zh ? d.cuisine_zh : d.cuisine_en }}</span>
@@ -112,7 +116,7 @@ function pick(d: Direction) {
           <template v-if="d.missing_en.length"> · {{ t('ai.missing', { s: d.missing_en.join(', ') }) }}</template>
         </div>
       </button>
-      <button class="btn ghost" style="height: 46px; font-size: 15px; margin-top: 12px" @click="load(true)">
+      <button v-if="dirs.length" class="btn ghost" style="height: 46px; font-size: 15px; margin-top: 12px" @click="load(true)">
         {{ t('ai.another') }}
       </button>
     </template>
