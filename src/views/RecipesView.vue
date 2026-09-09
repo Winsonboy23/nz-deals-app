@@ -33,10 +33,10 @@ const base = import.meta.env.BASE_URL
     </div>
 
     <div class="pad" style="margin-top: 6px">
-      <RouterLink v-for="r in list" :key="r.recipe.id" class="rc" :to="`/recipes/${r.recipe.id}`">
+      <RouterLink v-for="(r, i) in list" :key="r.recipe.id" class="rc" :to="`/recipes/${r.recipe.id}`">
         <div class="rc-img">
           <img :src="base + r.recipe.image" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" />
-          <span class="rc-rank">{{ r.rank }}</span>
+          <span class="rc-rank">{{ i + 1 }}</span>
         </div>
         <div class="rc-body">
           <div class="h3 ell">{{ bi(r.recipe.title) }}</div>
