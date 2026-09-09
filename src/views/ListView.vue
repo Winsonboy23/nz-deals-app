@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import ProductThumb from '../components/ProductThumb.vue'
 import { useList } from '../composables/useList'
 import { useSpecials } from '../composables/useSpecials'
@@ -9,11 +10,11 @@ import { t } from '../composables/useI18n'
 import type { Group } from '../lib/types'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
-import AiDirectionsSheet from '../components/AiDirectionsSheet.vue'
 import { aiEnabled } from '../lib/aiRecipe'
 
 const { items, add, has, addFreeText, remove, setQty, toggle, split, oneStop, oneStopFrom,
-  picking, picked, pickedNames, startPicking, stopPicking, togglePick } = useList()
+  picking, picked, pickedItems, startPicking, stopPicking, togglePick } = useList()
+const router = useRouter()
 const { activeStores, groups, familyAlt } = useSpecials()
 /** One stop：這家沒有這樣東西時，推薦它最便宜的同類（§8）。只是建議，不算進總價。 */
 function altText(storeId: string, key: string | null): string | null {
@@ -41,10 +42,16 @@ async function share() {
 const draft = ref('')
 
 const empty = computed(() => items.value.length === 0)
-/** 挑食材 → AI 食譜。第一層是底頁，第二層才換頁。 */
-const sheet = ref(false)
-function openSheet() {
-  if (pickedNames.value.length >= 2) sheet.value = true
+/** 挑食材 → AI 食譜頁。勾的東西放 sessionStorage，網址乾淨、重整也還在。 */
+function goCook() {
+  if (!pickedItems.value.length) return
+  try {
+    sessionStorage.setItem('ai:picked', JSON.stringify(pickedItems.value.map((i) => ({ key: i.key, name: i.name }))))
+  } catch {
+    /* 隱私模式 */
+  }
+  stopPicking()
+  void router.push('/ai-recipes')
 }
 
 function submit() {
@@ -58,8 +65,8 @@ function submit() {
     <div class="pad hrow" style="margin-top: 8px">
       <div class="h1">{{ t('list.title') }}</div>
       <button v-if="picking" class="link" @click="stopPicking()">{{ t('common.done') }}</button>
-      <button v-else-if="aiEnabled && isIn && items.length >= 2" class="link" @click="startPicking()">{{ t('ai.cookFromList') }}</button>
-      <RouterLink v-else-if="aiEnabled && items.length >= 2" class="link" to="/signin">{{ t('ai.cookSignIn') }}</RouterLink>
+      <button v-else-if="aiEnabled && isIn && items.length" class="link" @click="startPicking()">{{ t('ai.cookFromList') }}</button>
+      <RouterLink v-else-if="aiEnabled && items.length" class="link" to="/signin">{{ t('ai.cookSignIn') }}</RouterLink>
       <div v-else class="link">{{ t('common.items', { n: items.length }) }}</div>
     </div>
 
@@ -211,8 +218,8 @@ function submit() {
     </template>
 
     <div v-if="picking" class="footbar pickbar">
-      <span>{{ t('ai.picked', { n: pickedNames.length }) }}</span>
-      <button class="link" :disabled="pickedNames.length < 2" :style="{ opacity: pickedNames.length >= 2 ? 1 : 0.4 }" @click="openSheet">
+      <span>{{ t('ai.picked', { n: pickedItems.length }) }}</span>
+      <button class="link" :disabled="!pickedItems.length" :style="{ opacity: pickedItems.length ? 1 : 0.4 }" @click="goCook">
         {{ t('ai.go') }}
       </button>
     </div>
@@ -222,14 +229,6 @@ function submit() {
       <RouterLink v-else-if="!isIn && items.length" class="link" to="/signin">{{ t('list.shareSignIn') }}</RouterLink>
       <span v-else>{{ t('common.items', { n: items.length }) }}</span>
     </div>
-
-    <Teleport to="body">
-      <Transition name="sheet">
-        <div v-if="sheet" class="sheetwrap">
-          <AiDirectionsSheet :items="pickedNames" @close="sheet = false" />
-        </div>
-      </Transition>
-    </Teleport>
   </div>
 </template>
 

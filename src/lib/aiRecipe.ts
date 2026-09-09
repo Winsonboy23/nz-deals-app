@@ -1,7 +1,11 @@
-// AI 食譜前端：呼叫 Edge Function、快取、本機每日額度、把「要買」的食材對到本週特價。
+// AI 食譜前端（v2，docs/recipes-ai-design.md §5）：挑候選池、呼叫 Edge Function、快取、本機每日額度。
+// 模型只能從「錨」（你勾的食材）和「池」（你的店這週的特價）裡挑，回的是編號，所以價格和加清單都精確。
 import { supabase } from './supabase'
 import { readCache, writeCache } from './cache'
 import { nzMonday } from './week'
+import { discountDepth } from './compare'
+import { catLevel, chainShort, displayName } from './format'
+import type { Group } from './types'
 
 export interface Prefs {
   serves: number
@@ -9,38 +13,34 @@ export interface Prefs {
   spice: 'mild' | 'medium' | 'hot'
   avoid: string
 }
-export interface Direction {
-  cuisine_en: string
-  cuisine_zh: string
-  dish_en: string
-  dish_zh: string
-  why_en: string
-  why_zh: string
-  /** 0-based indexes into the items we sent */
-  uses: number[]
-  missing_en: string[]
-  minutes: number
+/** 你已經有的東西：清單裡勾的。id 是 product_key，自由輸入的用 free:<名字>。 */
+export interface Anchor {
+  id: string
+  name: string
+}
+/** 候選池的一樣：你的店這週的特價。id 是 product_key。 */
+export interface PoolItem {
+  id: string
+  name: string
+  price: number
+  store: string
 }
 export interface AiIngredient {
-  name_en: string
-  name_zh: string
-  qty_en: string
-  qty_zh: string
-  from: 'list' | 'buy' | 'staple'
-  /** index into the items we sent, or -1 */
-  list_index: number
+  /** 錨或池的編號；常備品和池外食材是 null */
+  id: string | null
+  name: string
+  qty: string
+  staple: boolean
 }
 export interface AiRecipe {
-  title_en: string
-  title_zh: string
+  title: string
+  cuisine: string
   serves: number
   minutes: number
-  difficulty: 'easy' | 'medium'
+  difficulty: 'easy' | 'medium' | 'hard'
   ingredients: AiIngredient[]
-  steps_en: string[]
-  steps_zh: string[]
-  tip_en: string
-  tip_zh: string
+  steps: string[]
+  tip: string
 }
 
 export const DEFAULT_PREFS: Prefs = { serves: 4, maxMinutes: 40, spice: 'mild', avoid: '' }
@@ -51,16 +51,6 @@ export function loadPrefs(): Prefs {
 }
 export function savePrefs(p: Prefs): void {
   writeCache('ai:prefs', p)
-}
-
-/** 裝置 id：訪客的額度算在這上面。清掉瀏覽器資料就重來，所以後端另外有一層。 */
-function deviceId(): string {
-  let id = readCache<string>('ai:device')
-  if (!id) {
-    id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
-    writeCache('ai:device', id)
-  }
-  return id
 }
 
 /** 本機每日次數。只是防手滑連按，真正的額度在 Edge Function（見 src/db/schema-ai-recipe.sql）。 */
@@ -80,31 +70,26 @@ export function localQuotaLeft(): number {
 }
 
 export class AiError extends Error {
-  constructor(public code: 'quota' | 'signIn' | 'offline' | 'failed', message?: string) {
+  constructor(public code: 'quota' | 'signIn' | 'few' | 'failed', message?: string) {
     super(message ?? code)
   }
 }
 
 /** dev 時可以指到本機 deno（VITE_AI_RECIPE_URL=http://localhost:8000）。 */
 const DEV_URL = import.meta.env.VITE_AI_RECIPE_URL as string | undefined
-/** 預設開著（Edge Function ai-recipe 2026-09-08 已上線）。要臨時關掉就 build 時給 VITE_AI_RECIPE=off。 */
+/** 預設開著。要臨時關掉就 build 時給 VITE_AI_RECIPE=off。 */
 export const aiEnabled = import.meta.env.VITE_AI_RECIPE !== 'off'
 
 async function call<T>(body: Record<string, unknown>): Promise<T> {
   if (!localQuotaLeft()) throw new AiError('quota')
-  const payload = { ...body, deviceId: deviceId() }
-  let data: unknown
+  let data: { error?: string } | null = null
   let status = 0
   if (DEV_URL) {
-    const r = await fetch(DEV_URL, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
+    const r = await fetch(DEV_URL, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
     status = r.status
     data = await r.json().catch(() => null)
   } else {
-    const r = await supabase.functions.invoke('ai-recipe', { body: payload })
+    const r = await supabase.functions.invoke('ai-recipe', { body })
     // supabase-js 把非 2xx 當錯誤，錯誤內容在 context.json()
     if (r.error) {
       const ctx = (r.error as { context?: Response }).context
@@ -117,34 +102,92 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
   }
   if (status === 401) throw new AiError('signIn')
   if (status === 429) throw new AiError('quota')
+  if (status === 400 && data?.error === 'too_few_items') throw new AiError('few')
   if (status !== 200 || !data) throw new AiError('failed', `status ${status}`)
   bumpLocal()
   return data as T
 }
 
-/** 同一組食材 + 偏好，這一週內只問一次。特價一週換一次，快取跟著換。 */
-const cacheKey = (kind: string, items: string[], prefs: Prefs, extra = '') =>
-  `ai:${kind}:${nzMonday()}:${items.join('|')}|${prefs.serves}|${prefs.maxMinutes}|${prefs.spice}|${prefs.avoid}|${extra}`
-
-export async function fetchDirections(items: string[], prefs: Prefs, fresh = false): Promise<Direction[]> {
-  const key = cacheKey('dir', items, prefs)
-  if (!fresh) {
-    const hit = readCache<Direction[]>(key)
-    if (hit?.length) return hit
-  }
-  const out = await call<{ directions: Direction[] }>({ layer: 'directions', items, prefs })
-  const list = out.directions ?? []
-  if (list.length) writeCache(key, list, 'ai:dir:')
-  return list
+/** 只有這幾個第一層分類算「食材」。飲料、零食、非食品不送給 AI（咖啡粉不是晚餐）。 */
+const COOKING_L1 = new Set(['fruit-and-vegetables', 'meat-poultry-and-seafood', 'fridge-deli-and-eggs', 'bakery', 'frozen', 'pantry'])
+export function isCookingCategory(categoryId: string | null): boolean {
+  const l1 = catLevel(categoryId, 1)
+  return !!l1 && COOKING_L1.has(l1)
 }
 
-export async function fetchRecipe(items: string[], prefs: Prefs, direction: Direction, fresh = false): Promise<AiRecipe> {
-  const key = cacheKey('rec', items, prefs, direction.dish_en + (fresh ? Date.now() : ''))
-  if (!fresh) {
-    const hit = readCache<AiRecipe>(key)
-    if (hit) return hit
+/** 池的配額：每個第一層分類最多幾樣，加起來 40。 */
+const POOL_QUOTA: Array<[string, number]> = [
+  ['fruit-and-vegetables', 10],
+  ['meat-poultry-and-seafood', 8],
+  ['fridge-deli-and-eggs', 8],
+  ['pantry', 10],
+  ['frozen', 2],
+  ['bakery', 2],
+]
+const rank = (a: Group, b: Group) => discountDepth(b.best.special) - discountDepth(a.best.special) || a.best.deal - b.best.deal
+
+/**
+ * 候選池：從你的店這週的特價挑約 40 樣。只挑烹飪分類；每個同類（family_key）只留最便宜的一樣；
+ * 每個大類有配額，大類裡按小分類輪流挑（雞、牛、魚都會有，不會 8 樣全是雞）。
+ */
+export function buildPool(groups: Map<string, Group>, exclude: Set<string>): PoolItem[] {
+  const byFamily = new Map<string, Group>()
+  const loose: Group[] = []
+  for (const g of groups.values()) {
+    if (exclude.has(g.key) || !isCookingCategory(g.best.special.category_id)) continue
+    const f = g.best.special.family_key
+    if (!f) {
+      loose.push(g)
+      continue
+    }
+    const have = byFamily.get(f)
+    if (!have || g.best.deal < have.best.deal) byFamily.set(f, g)
   }
-  const out = await call<{ recipe: AiRecipe }>({ layer: 'recipe', items, prefs, direction })
-  if (out.recipe) writeCache(key, out.recipe, 'ai:rec:')
-  return out.recipe
+  const buckets = new Map<string, Map<string, Group[]>>()
+  for (const g of [...byFamily.values(), ...loose]) {
+    const l1 = catLevel(g.best.special.category_id, 1) as string
+    const l2 = catLevel(g.best.special.category_id, 2) ?? l1
+    let m = buckets.get(l1)
+    if (!m) buckets.set(l1, (m = new Map()))
+    const list = m.get(l2)
+    if (list) list.push(g)
+    else m.set(l2, [g])
+  }
+  const out: PoolItem[] = []
+  for (const [l1, quota] of POOL_QUOTA) {
+    const lists = [...(buckets.get(l1)?.values() ?? [])].map((l) => l.sort(rank))
+    let n = 0
+    for (let i = 0; n < quota && lists.some((l) => i < l.length); i++) {
+      for (const l of lists) {
+        if (n >= quota) break
+        const g = l[i]
+        if (g) {
+          out.push({ id: g.key, name: displayName(g.best.special), price: Math.round(g.best.deal * 100) / 100, store: chainShort(g.best.store.id) })
+          n += 1
+        }
+      }
+    }
+  }
+  return out
+}
+
+/** 短雜湊，讓快取 key 不要一公里長。 */
+function hash(s: string): string {
+  let h = 5381
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0
+  return (h >>> 0).toString(36)
+}
+
+/** 同一組錨 + 池 + 偏好 + 語言，這一週內只問一次；「換 3 道」才重問。 */
+export async function fetchRecipes(anchors: Anchor[], pool: PoolItem[], prefs: Prefs, lang: string, fresh = false): Promise<AiRecipe[]> {
+  const sig = [...anchors.map((a) => a.id)].sort().join('|') + '#' + pool.map((p) => p.id).join('|') + '#' + `${prefs.serves}|${prefs.maxMinutes}|${prefs.spice}|${prefs.avoid}`
+  const key = `ai:rec:${nzMonday()}:${lang}:${hash(sig)}`
+  if (!fresh) {
+    const hit = readCache<AiRecipe[]>(key)
+    if (hit?.length) return hit
+  }
+  const out = await call<{ recipes: AiRecipe[] }>({ layer: 'recipes', anchors, pool, prefs, lang })
+  const list = out.recipes ?? []
+  if (list.length) writeCache(key, list, 'ai:rec:')
+  return list
 }

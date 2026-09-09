@@ -46,8 +46,8 @@ function togglePick(id: string): void {
   next.has(id) ? next.delete(id) : next.add(id)
   picked.value = next
 }
-/** 選到的品名，順序照清單。給 AI 的就是這些字。 */
-const pickedNames = computed(() => items.value.filter((i) => picked.value.has(i.id)).map((i) => i.name))
+/** 選到的項目，順序照清單。送去 AI 食譜頁的就是這些。 */
+const pickedItems = computed(() => items.value.filter((i) => picked.value.has(i.id)))
 
 const { groups, activeStores } = useSpecials()
 
@@ -156,7 +156,7 @@ export function useList() {
     items,
     picking,
     picked,
-    pickedNames,
+    pickedItems,
     startPicking,
     stopPicking,
     togglePick,
