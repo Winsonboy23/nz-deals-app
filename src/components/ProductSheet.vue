@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import ProductThumb from './ProductThumb.vue'
 import TagChip from './TagChip.vue'
 import { dealPrice, tagsFor } from '../lib/compare'
@@ -46,6 +46,24 @@ const variants = computed(() => {
   const rows = all.map((g, i) => ({ key: g.key, label: words[i].filter((w) => !common.has(w)).join(' ') || displayName(g.best.special), current: g.key === group.value!.key }))
   return rows.slice(0, 8)   // Moccona 有 20 幾款，最多列 8 個
 })
+// 換口味／規格後，讓那排按鈕留在螢幕原位；面板不要跳回最上面（iOS Safari 沒有 scroll anchoring）。
+const sheetEl = ref<HTMLElement>()
+const variantsEl = ref<HTMLElement>()
+watch(
+  () => props.pkey,
+  async () => {
+    const sheet = sheetEl.value
+    const top = variantsEl.value?.getBoundingClientRect().top
+    if (!sheet || top == null) return
+    const keep = () => {
+      const now = variantsEl.value?.getBoundingClientRect().top
+      if (now != null) sheet.scrollTop += now - top
+    }
+    await nextTick()
+    keep()
+    requestAnimationFrame(keep)
+  },
+)
 const { isZh } = useI18n()
 const familyName = computed(() => (isZh.value ? best.value?.special.family_name_zh : best.value?.special.family_name_en) || '')
 const crumb = computed(() => {
@@ -105,7 +123,7 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
 <template>
   <div>
   <div class="dim" @click="emit('close')" />
-  <div class="bsheet">
+  <div ref="sheetEl" class="bsheet">
     <div class="grab" />
     <template v-if="group && best">
       <div style="display: flex; gap: 14px; align-items: flex-start">
@@ -131,7 +149,7 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
         </div>
       </div>
 
-      <div v-if="variants.length" style="margin-top: 14px">
+      <div v-if="variants.length" ref="variantsEl" style="margin-top: 14px">
         <div class="sec">{{ t('p.variants') }}</div>
         <div class="chips" style="margin-top: 6px">
           <RouterLink v-for="v in variants" :key="v.key" class="chip" :class="{ on: v.current }" :to="`/p/${encodeURIComponent(v.key)}`" replace>{{ v.label }}</RouterLink>
