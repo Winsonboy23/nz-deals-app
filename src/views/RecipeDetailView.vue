@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import TagChip from '../components/TagChip.vue'
-import { bi, toAdd, useRecipes, type IngredientMatch } from '../composables/useRecipes'
+import { bi, useRecipes, type IngredientMatch } from '../composables/useRecipes'
 import { useList } from '../composables/useList'
 import { lang, t } from '../composables/useI18n'
 import { dealPrice, primaryTag } from '../lib/compare'
@@ -16,11 +16,15 @@ const base = import.meta.env.BASE_URL
 const added = ref(false)
 watch(() => route.params.id, () => (added.value = false))
 
-const adding = computed(() => (r.value ? toAdd(r.value) : []))
+/** 同一家買齊（預設）／每樣各挑最便宜 */
+const mode = ref<'one' | 'cheap'>('one')
+const view = computed<IngredientMatch[]>(() => (r.value ? (mode.value === 'one' && r.value.oneStore ? r.value.oneStore.matches : r.value.matches) : []))
+const adding = computed(() => view.value.filter((m) => !m.ingredient.optional || m.offer))
 const priced = computed(() => adding.value.filter((m) => m.offer).length)
+const estCost = computed(() => adding.value.reduce((s, m) => s + (m.offer ? dealPrice(m.offer.special) : 0), 0))
 const addLabel = computed(() =>
   priced.value
-    ? t('recipes.add', { n: adding.value.length, v: money(r.value?.estCost ?? 0) })
+    ? t('recipes.add', { n: adding.value.length, v: money(estCost.value) })
     : t('recipes.addNoPrice', { n: adding.value.length }),
 )
 
@@ -76,6 +80,10 @@ async function share() {
           · {{ t('recipes.' + r.recipe.difficulty) }}
           <template v-if="r.recipe.kcal"> · {{ t('recipes.kcal', { n: r.recipe.kcal }) }}</template>
         </div>
+        <div v-if="r.oneStore" class="seg" style="margin-top: 12px">
+          <div :class="{ on: mode === 'one' }" @click="mode = 'one'">{{ t('recipes.oneStore', { s: chainName(r.oneStore.store.id), n: r.oneStore.onSpecial, m: r.total }) }}</div>
+          <div :class="{ on: mode === 'cheap' }" @click="mode = 'cheap'">{{ t('recipes.cheapestSplit', { k: r.chains.length }) }}</div>
+        </div>
         <div style="display: flex; gap: 10px; margin-top: 16px">
           <RouterLink v-if="added" class="btn ghost" to="/list" style="flex: 1; font-size: 16px">{{ t('recipes.added') }}</RouterLink>
           <button v-else class="btn" style="flex: 1; font-size: 16px" @click="addAll">{{ addLabel }}</button>
@@ -85,13 +93,13 @@ async function share() {
 
       <div class="pad hrow" style="margin-top: 22px">
         <div class="h2">{{ t('recipes.ingredients') }}</div>
-        <div class="s muted" style="font-size: 12.5px">{{ t('recipes.cheapest') }}</div>
+        <div class="s muted" style="font-size: 12.5px">{{ mode === 'one' && r.oneStore ? t('recipes.oneStoreSub', { s: chainName(r.oneStore.store.id) }) : t('recipes.cheapest') }}</div>
       </div>
       <div class="pad" style="margin-top: 10px">
         <div class="box">
           <component
             :is="m.offer ? 'RouterLink' : 'div'"
-            v-for="m in r.matches"
+            v-for="m in view"
             :key="bi(m.ingredient.name)"
             class="lrow"
             :class="{ tap: m.offer, 'dim-row': !m.offer }"

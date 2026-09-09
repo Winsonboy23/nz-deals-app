@@ -252,3 +252,7 @@ input {
 .grid3 .expand{grid-column:1/-1;background:var(--paper-2);border-bottom:1px solid var(--line);padding:10px 0}
 .stackitem{flex:none;width:106px;display:block}
 .stackitem .s{font-size:11.5px;color:var(--ink-2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+
+/* 按鈕：Safari 的 <button> 不會像 <a> 一樣自己撐滿，文字也要有左右留白（2026-09-10 測試者截圖） */
+.btn{padding:0 18px;box-sizing:border-box}
+button.btn{width:100%}

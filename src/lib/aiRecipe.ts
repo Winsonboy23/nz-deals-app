@@ -48,6 +48,8 @@ export interface AiRecipe {
   ingredients: AiIngredient[]
   steps: string[]
   tip: string
+  /** Pexels 照片（後端搜的）；沒有就 null */
+  image?: { url: string; photographer: string; link: string } | null
 }
 
 export const DEFAULT_PREFS: Prefs = { serves: 4, maxMinutes: 40, spice: 'mild', notes: '' }
@@ -198,8 +200,10 @@ interface Row {
   ingredients: AiIngredient[] | null
   steps: string[] | null
   tip: string | null
+  image_url: string | null
+  image_credit: { photographer?: string; link?: string } | null
 }
-const COLS = 'id,created_at,title,cuisine,serves,minutes,kcal,difficulty,ingredients,steps,tip'
+const COLS = 'id,created_at,title,cuisine,serves,minutes,kcal,difficulty,ingredients,steps,tip,image_url,image_credit'
 const fromRow = (r: Row): AiRecipe => ({
   dbId: r.id,
   createdAt: r.created_at,
@@ -212,6 +216,7 @@ const fromRow = (r: Row): AiRecipe => ({
   ingredients: r.ingredients ?? [],
   steps: r.steps ?? [],
   tip: r.tip ?? '',
+  image: r.image_url ? { url: r.image_url, photographer: r.image_credit?.photographer ?? '', link: r.image_credit?.link ?? '' } : null,
 })
 export async function historyList(): Promise<AiRecipe[]> {
   const { data } = await supabase.from('ai_recipes').select(COLS).order('created_at', { ascending: false }).limit(100)

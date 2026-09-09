@@ -13,6 +13,8 @@ import { useCategories } from '../composables/useCategories'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
 import { dealPrice } from '../lib/compare'
+import { bi, useRecipes } from '../composables/useRecipes'
+import { chainName } from '../lib/format'
 
 const { loading, activeStores, totalSpecials, topDeduped, deepDiscounts, freshByKg, biggestSaving, whereToGo } =
   useSpecials()
@@ -34,6 +36,10 @@ const headline = computed(() => {
 })
 
 const top6 = computed(() => topDeduped.value.slice(0, 6))
+/** 這週煮什麼：食譜頁排好的前 3 道（食材特價最多、每份最便宜） */
+const { ranked } = useRecipes()
+const top3 = computed(() => ranked.value.filter((r) => r.onSpecial > 0).slice(0, 3))
+const base = import.meta.env.BASE_URL
 const half = computed(() => deepDiscounts.value.slice(0, 12))
 const fresh = computed(() => freshByKg.value.slice(0, 12))
 </script>
@@ -88,6 +94,26 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
       </div>
 
       <!-- §10 這週去哪家：一句話結論，按第一層分類 -->
+      <template v-if="top3.length">
+        <div class="pad hrow" style="margin-top: 22px">
+          <div class="h2">{{ t('home.recipes') }}</div>
+          <RouterLink class="link" to="/recipes">{{ t('home.allRecipes', { n: ranked.length }) }}</RouterLink>
+        </div>
+        <div class="pad" style="margin-top: 8px">
+          <div class="box">
+            <RouterLink v-for="r in top3" :key="r.recipe.id" class="lrow tap" :to="`/recipes/${r.recipe.id}`" style="padding: 10px 12px; gap: 10px; color: inherit; text-decoration: none">
+              <img :src="base + r.recipe.image" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" style="width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex: none; background: var(--paper-2)" />
+              <div class="grow" style="min-width: 0">
+                <div class="t ell">{{ bi(r.recipe.title) }}</div>
+                <div class="s ell"><template v-if="r.recipe.cuisineName">{{ bi(r.recipe.cuisineName) }} · </template>{{ r.recipe.minutes }} min · {{ t('recipes.onSpecial', { n: r.onSpecial, m: r.total }) }}</div>
+                <div v-if="r.oneStore" class="s ell" style="font-weight: 700">{{ t('recipes.oneStore', { s: chainName(r.oneStore.store.id), n: r.oneStore.onSpecial, m: r.total }) }}</div>
+              </div>
+              <div class="link" style="flex: none">›</div>
+            </RouterLink>
+          </div>
+        </div>
+      </template>
+
       <template v-if="whereToGo.length">
         <div class="pad" style="margin-top: 22px"><div class="h2">{{ t('home.where') }}</div></div>
         <div class="pad" style="margin-top: 8px">

@@ -12,6 +12,7 @@ import type { Group } from '../lib/types'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
 import { aiEnabled } from '../lib/aiRecipe'
+import GradientButton from '../components/GradientButton.vue'
 
 const { items, add, has, addFreeText, remove, setQty, rename, setPrice, toggle, split, oneStop, oneStopFrom } = useList()
 const { activeStores, groups, familyAlt } = useSpecials()
@@ -186,9 +187,8 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
 
     <!-- AI 食譜：清單最下面 -->
     <div v-if="!empty && aiEnabled" class="pad" style="margin-top: 20px">
-      <RouterLink class="btn" :class="{ ghost: !isIn }" :to="isIn ? '/ai-recipes' : '/signin'" style="font-size: 17px">
-        {{ isIn ? t('list.aiBtn') : t('list.aiBtnSignIn') }}
-      </RouterLink>
+      <GradientButton v-if="isIn" to="/ai-recipes">{{ t('list.aiBtn') }}</GradientButton>
+      <RouterLink v-else class="btn ghost" to="/signin" style="font-size: 17px">{{ t('list.aiBtnSignIn') }}</RouterLink>
       <div class="s muted" style="margin-top: 8px; text-align: center; font-size: 12.5px; line-height: 1.4">{{ t('list.aiSub') }}</div>
     </div>
 

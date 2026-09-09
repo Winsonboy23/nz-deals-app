@@ -47,7 +47,8 @@ const base = import.meta.env.BASE_URL
             <div class="pbar"><i :style="{ width: (r.total ? (r.onSpecial / r.total) * 100 : 0) + '%' }" /></div>
             <div class="rc-onsp">{{ t('recipes.onSpecial', { n: r.onSpecial, m: r.total }) }}</div>
           </div>
-          <div v-if="r.chains.length" class="s rc-stores">
+          <div v-if="r.oneStore" class="s" style="margin-top: 3px; font-weight: 700">{{ t('recipes.oneStore', { s: chainName(r.oneStore.store.id), n: r.oneStore.onSpecial, m: r.total }) }}</div>
+          <div v-else-if="r.chains.length" class="s rc-stores">
             <span class="dots"><span v-for="c in r.chains" :key="c" class="dot" :class="chainClass(c + ':x')" /></span>
             <span class="ell">{{ r.chains.map((c) => (r.chains.length > 2 ? chainShort(c + ':x') : chainName(c + ':x'))).join(' · ') }}</span>
           </div>
