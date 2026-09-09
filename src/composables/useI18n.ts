@@ -244,6 +244,8 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'ai.reselect': { en: '‹ Change picks', zh: '‹ 重新選' },
   'ai.thinkingTitle': { en: 'Thinking…', zh: '想菜中…' },
   'ai.resultTitle': { en: '{n} dishes for you', zh: '幫你想了 {n} 道' },
+  'ai.staplesTitle': { en: 'Pantry staples', zh: '常備品' },
+  'ai.staplesSub': { en: 'Usually at home · not added to your list', zh: '家裡通常有 · 不加進清單' },
   'ai.oneStore': { en: 'One store · {s} {n}/{m}', zh: '同一家 · {s} {n}/{m}' },
   'ai.cheapest': { en: 'Cheapest', zh: '最便宜' },
   'ai.otherStore': { en: 'only at {s}', zh: '只有 {s} 有' },

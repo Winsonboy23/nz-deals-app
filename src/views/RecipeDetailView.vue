@@ -119,9 +119,17 @@ async function share() {
             </div>
           </component>
         </div>
-        <div v-if="r.recipe.staples" class="s muted" style="margin-top: 10px; font-size: 13px; line-height: 1.4">
-          {{ t('recipes.staples', { s: bi(r.recipe.staples) }) }}
-        </div>
+        <template v-if="r.recipe.staples">
+          <div class="hrow" style="margin-top: 14px">
+            <div class="h2" style="font-size: 15px">{{ t('ai.staplesTitle') }}</div>
+            <div class="s muted" style="font-size: 12.5px">{{ t('ai.staplesSub') }}</div>
+          </div>
+          <div class="box stbox" style="margin-top: 8px">
+            <div class="lrow" style="padding: 10px 12px">
+              <div class="grow"><div class="t" style="font-weight: 600; color: var(--ink-2); line-height: 1.4">{{ bi(r.recipe.staples) }}</div></div>
+            </div>
+          </div>
+        </template>
       </div>
 
       <div class="pad" style="margin-top: 24px">
@@ -186,6 +194,7 @@ async function share() {
 .credit { margin-top: 6px; font-size: 11px; color: var(--ink-3); }
 .credit a { color: inherit; text-decoration: none; }
 .rbar { width: 6px; height: 36px; border-radius: 3px; flex: none; background: var(--line); }
+.stbox { background: var(--paper-2); border-style: dashed; }
 .rbar.nw { background: var(--nw); }
 .rbar.ww { background: var(--ww); }
 .rbar.pns { background: var(--pns); }

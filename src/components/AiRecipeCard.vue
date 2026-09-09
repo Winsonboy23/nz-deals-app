@@ -157,9 +157,18 @@ function addBuys() {
           <span v-else-if="l.kind !== 'have'" class="tag low">{{ t('recipes.notOnSpecial') }}</span>
         </component>
       </div>
-      <div v-if="staples.length" class="s muted" style="margin-top: 8px; font-size: 13px; line-height: 1.4">
-        {{ t('recipes.staples', { s: staples.map((l) => l.name).join('、') }) }}
-      </div>
+      <template v-if="staples.length">
+        <div class="hrow" style="margin-top: 14px">
+          <div class="h2" style="font-size: 15px">{{ t('ai.staplesTitle') }}</div>
+          <div class="s muted" style="font-size: 12.5px">{{ t('ai.staplesSub') }}</div>
+        </div>
+        <div class="box stbox" style="margin-top: 8px">
+          <div v-for="(l, j) in staples" :key="j" class="lrow" style="padding: 8px 12px">
+            <span class="pin st">·</span>
+            <div class="grow" style="min-width: 0"><div class="t">{{ l.name }}<span class="qty">{{ l.qty }}</span></div></div>
+          </div>
+        </div>
+      </template>
       <div v-if="buys.length" style="margin-top: 12px">
         <RouterLink v-if="added" class="btn ghost" to="/list" style="font-size: 16px">{{ t('recipes.added') }}</RouterLink>
         <button v-else class="btn" style="font-size: 16px" @click="addBuys">
@@ -187,6 +196,9 @@ button.rhead:active { background: var(--paper-2); }
 .pin { width: 24px; height: 24px; border-radius: 8px; flex: none; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; }
 .pin.have { background: var(--ink); color: #fff; }
 .pin.buy { border: 1.5px dashed #b5b5b0; color: var(--ink-2); }
+.pin.st { background: var(--paper-2); color: var(--ink-3); }
+.stbox { background: var(--paper-2); border-style: dashed; }
+.stbox .t { font-weight: 600; color: var(--ink-2); }
 .qty { margin-left: 8px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
 .rstep { display: flex; gap: 12px; margin-top: 12px; font-size: 15.5px; line-height: 1.45; }
 .rstep b { flex: none; width: 16px; font-family: 'Inter Tight', Inter, sans-serif; font-weight: 900; }
