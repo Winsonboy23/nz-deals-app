@@ -8,8 +8,7 @@ import { useSpecials } from '../composables/useSpecials'
 import { toOffer } from '../lib/compare'
 import { chainClass, displayName, money } from '../lib/format'
 import { daysLeft } from '../lib/week'
-import { catName, chainBadge, t } from '../composables/useI18n'
-import { useCategories } from '../composables/useCategories'
+import { t } from '../composables/useI18n'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
 import { dealPrice } from '../lib/compare'
@@ -17,7 +16,6 @@ import { bi, useRecipes } from '../composables/useRecipes'
 import { chainName } from '../lib/format'
 
 const { loading, activeStores, totalSpecials, topDeduped, deepDiscounts, freshByKg, biggestSaving } = useSpecials()
-const { nameOf } = useCategories()
 const { isIn, name, avatar } = useAuth()
 const { watched } = useSync()
 const { groups } = useSpecials()
