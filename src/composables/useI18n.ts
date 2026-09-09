@@ -239,7 +239,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'ai.q2': { en: 'Ready within?', zh: '多久內做好？' },
   'ai.q3': { en: 'Spicy?', zh: '辣不辣？' },
   'ai.q4': { en: "Likes, or things you don't eat?", zh: '喜好或不吃什麼？' },
-  'ai.people': { en: '{n}', zh: '{n} 人' },
+  'ai.personUnit': { en: 'people', zh: '人' },
   'ai.mins': { en: '{m} min', zh: '{m} 分' },
   'ai.reselect': { en: '‹ Change picks', zh: '‹ 重新選' },
   'ai.thinkingTitle': { en: 'Thinking…', zh: '想菜中…' },

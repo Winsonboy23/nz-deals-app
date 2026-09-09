@@ -57,6 +57,11 @@ function setPref<K extends keyof Prefs>(k: K, v: Prefs[K]) {
   prefs.value = { ...prefs.value, [k]: v }
   savePrefs(prefs.value)
 }
+/** 幾人份：1–12，可以按 −/＋ 也可以直接打 */
+function setServes(n: number) {
+  const v = Math.round(n)
+  setPref('serves', Number.isFinite(v) ? Math.min(12, Math.max(1, v)) : prefs.value.serves)
+}
 
 const anchors = computed<Anchor[]>(() => [
   ...rows.value.filter((r) => sel.value.has(r.id)).map((r) => (r.key && groups.value.has(r.key) ? { id: r.key, name: r.name } : { id: `free:${r.name}`, name: r.name })),
@@ -171,8 +176,11 @@ function backToForm() {
         <div class="box">
           <div class="lrow q">
             <div class="ql"><b>1</b>{{ t('ai.q1') }}</div>
-            <div class="seg qs">
-              <div v-for="n in [2, 4]" :key="n" :class="{ on: prefs.serves === n }" @click="setPref('serves', n)">{{ t('ai.people', { n }) }}</div>
+            <div class="step qstep">
+              <button :disabled="prefs.serves <= 1" @click="setServes(prefs.serves - 1)"><i>−</i></button>
+              <input class="qnum" type="number" inputmode="numeric" min="1" max="12" :value="prefs.serves" @change="setServes(Number(($event.target as HTMLInputElement).value))" />
+              <span class="qunit">{{ t('ai.personUnit') }}</span>
+              <button :disabled="prefs.serves >= 12" @click="setServes(prefs.serves + 1)"><i>+</i></button>
             </div>
           </div>
           <div class="lrow q">
@@ -215,5 +223,11 @@ function backToForm() {
 .ql { flex: 1; min-width: 0; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .ql b { width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 12px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .qs { width: 132px; flex: none; }
+.qstep { height: 34px; padding: 0 6px; gap: 2px; }
+.qstep button { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 16px; background: none; }
+.qstep button:disabled { opacity: 0.3; }
+.qnum { width: 34px; text-align: center; border: 0; background: none; font: inherit; font-weight: 800; font-size: 15px; padding: 0; -moz-appearance: textfield; }
+.qnum::-webkit-outer-spin-button, .qnum::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.qunit { font-size: 13px; color: var(--ink-2); margin-right: 2px; }
 .qs > div { padding: 8px 4px; font-size: 13.5px; }
 </style>
