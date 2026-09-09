@@ -279,6 +279,9 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'ai.savedNote': { en: 'Saved to Me → Recipe history ›', zh: '已存到「我的 → 食譜紀錄」›' },
   'ai.historyEmpty': { en: 'No AI recipes yet. Tap "AI recipe" at the bottom of your list.', zh: '還沒有 AI 食譜。到清單最下面按「AI 食譜」。' },
   'ai.delete': { en: 'Delete', zh: '刪除' },
+  'ai.historyCap': { en: '{n} / {max} saved · when full, the oldest is removed automatically', zh: '{n} / {max} 筆 · 滿了會自動刪最舊的' },
+  'ai.capWarn': { en: 'History {n} / {max}. Generating again removes the oldest.', zh: '紀錄 {n} / {max}，再生成會刪掉最舊的。' },
+  'ai.trimmedNote': { en: 'History was full, so the oldest {n} were removed.', zh: '紀錄滿了，已自動刪掉最舊的 {n} 筆。' },
   'ai.disclaimer': {
     en: 'Written by AI from your list and this week\'s specials. Check it makes sense before you cook, especially times and temperatures.',
     zh: 'AI 依你的清單和本週特價寫的。下鍋前自己看一下合不合理，尤其是時間和溫度。',

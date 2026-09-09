@@ -182,10 +182,13 @@ export function buildPool(groups: Map<string, Group>, exclude: Set<string>): Poo
   return out
 }
 
-/** 按一次問一次，不快取（使用者是自己按的，每次都想看新的；後端每道都存進紀錄）。 */
-export async function fetchRecipes(anchors: Anchor[], pool: PoolItem[], prefs: Prefs, lang: string): Promise<AiRecipe[]> {
-  const out = await call<{ recipes: AiRecipe[] }>({ layer: 'recipes', anchors, pool, prefs, lang })
-  return (out.recipes ?? []).map((r) => ({ ...r, dbId: r.dbId ?? null }))
+/** 食譜紀錄一人最多幾筆（跟 Edge Function 的 HISTORY_MAX 一樣）；滿了後端自動刪最舊的。 */
+export const HISTORY_MAX = 10
+
+/** 按一次問一次，不快取（使用者是自己按的，每次都想看新的；後端每道都存進紀錄）。trimmed = 這次因為滿了被刪掉的舊紀錄數。 */
+export async function fetchRecipes(anchors: Anchor[], pool: PoolItem[], prefs: Prefs, lang: string): Promise<{ recipes: AiRecipe[]; trimmed: number }> {
+  const out = await call<{ recipes: AiRecipe[]; trimmed?: number }>({ layer: 'recipes', anchors, pool, prefs, lang })
+  return { recipes: (out.recipes ?? []).map((r) => ({ ...r, dbId: r.dbId ?? null })), trimmed: out.trimmed ?? 0 }
 }
 
 // ---- 食譜紀錄（ai_recipes，RLS 只有本人） ----
@@ -227,6 +230,10 @@ export async function historyGet(id: string): Promise<AiRecipe | null> {
   const { data } = await supabase.from('ai_recipes').select(COLS).eq('id', id).limit(1)
   const r = (data as unknown as Row[] | null)?.[0]
   return r ? fromRow(r) : null
+}
+export async function historyCount(): Promise<number> {
+  const { count } = await supabase.from('ai_recipes').select('id', { count: 'exact', head: true })
+  return count ?? 0
 }
 export async function historyDelete(id: string): Promise<void> {
   await supabase.from('ai_recipes').delete().eq('id', id)

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // 我的 → 食譜紀錄：AI 生成過的每道菜，新的在前。點進去看完整食譜，垃圾桶刪掉那筆。
 import { onMounted, ref } from 'vue'
-import { historyDelete, historyList, type AiRecipe } from '../lib/aiRecipe'
+import { HISTORY_MAX, historyDelete, historyList, type AiRecipe } from '../lib/aiRecipe'
 import { useAuth } from '../composables/useAuth'
 import { lang, t } from '../composables/useI18n'
 
@@ -22,7 +22,10 @@ const day = (iso?: string) => (iso ? new Date(iso).toLocaleDateString(lang.value
 <template>
   <div class="screen">
     <div class="pad" style="margin-top: 6px"><RouterLink class="back" to="/me">‹ {{ t('me.title') }}</RouterLink></div>
-    <div class="pad" style="margin-top: 8px"><div class="h1">{{ t('me.recipes') }}</div></div>
+    <div class="pad" style="margin-top: 8px">
+      <div class="h1">{{ t('me.recipes') }}</div>
+      <div v-if="isIn && !loading" class="sub" style="margin-top: 6px">{{ t('ai.historyCap', { n: list.length, max: HISTORY_MAX }) }}</div>
+    </div>
 
     <div v-if="!isIn" class="pad" style="margin-top: 14px">
       <div class="empty sub">{{ t('ai.needSignIn') }}<div style="margin-top: 12px"><RouterLink class="btn ghost" to="/signin" style="height: 42px; font-size: 15px">{{ t('common.signIn') }}</RouterLink></div></div>

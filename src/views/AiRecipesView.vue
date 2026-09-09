@@ -3,9 +3,9 @@
 // ① 表單：清單裡的東西一列列可勾（食物預設全勾、飲料零食灰掉）、手打補食材、問卷（人份／時間／辣度／喜好）、「AI 食譜」按了才生成
 // ② 結果：只顯示食譜（最多 2 道）、「再想 2 道」；返回回到表單。用網址 ?r=1 記段落，手機返回鍵也會回表單。
 // 每道後端都存進「我的 → 食譜紀錄」。
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { AiError, buildPool, fetchRecipes, isCookingCategory, loadPrefs, savePrefs, type AiRecipe, type Anchor, type Prefs } from '../lib/aiRecipe'
+import { AiError, HISTORY_MAX, buildPool, fetchRecipes, historyCount, isCookingCategory, loadPrefs, savePrefs, type AiRecipe, type Anchor, type Prefs } from '../lib/aiRecipe'
 import AiRecipeCard from '../components/AiRecipeCard.vue'
 import GradientButton from '../components/GradientButton.vue'
 import { useSpecials } from '../composables/useSpecials'
@@ -37,6 +37,10 @@ const asked = ref(false)
 const loading = ref(false)
 const error = ref<'quota' | 'signIn' | 'few' | 'failed' | null>(null)
 const open = ref<number | null>(null)
+/** 紀錄幾筆了（滿了再生成會刪最舊的，先講） */
+const histCount = ref(0)
+const trimmed = ref(0)
+onMounted(async () => { if (isIn.value) histCount.value = await historyCount() })
 const full = computed(() => sel.value.size + extras.value.length >= MAX_ANCHORS)
 /** 結果段：網址有 ?r=1 而且真的問過。重整後 asked 是 false → 回表單。 */
 const showResult = computed(() => route.query.r === '1' && asked.value)
@@ -77,7 +81,10 @@ async function generate() {
   open.value = null
   if (route.query.r !== '1') void router.push({ query: { r: '1' } })
   try {
-    recipes.value = await fetchRecipes(anchors.value, pool.value, prefs.value, lang.value)
+    const out = await fetchRecipes(anchors.value, pool.value, prefs.value, lang.value)
+    recipes.value = out.recipes
+    trimmed.value = out.trimmed
+    histCount.value = Math.min(HISTORY_MAX, histCount.value + out.recipes.length)
     if (recipes.value.length === 1) open.value = 0
   } catch (e) {
     error.value = e instanceof AiError ? e.code : 'failed'
@@ -132,6 +139,7 @@ function backToForm() {
         <div class="pad" style="margin-top: 16px">
           <GradientButton @click="generate">{{ t('ai.regenerate') }}</GradientButton>
           <RouterLink v-if="recipes[0]?.dbId" class="s" to="/me/recipes" style="display: block; margin-top: 12px; text-align: center; color: var(--ink-2); text-decoration: underline">{{ t('ai.savedNote') }}</RouterLink>
+          <div v-if="trimmed" class="note s" style="margin-top: 10px; text-align: center">{{ t('ai.trimmedNote', { n: trimmed }) }}</div>
           <div class="s muted" style="margin-top: 12px; font-size: 12px; line-height: 1.45">{{ t('ai.disclaimer') }}</div>
         </div>
       </template>
@@ -216,6 +224,7 @@ function backToForm() {
         <div class="s muted" style="margin-top: 8px; text-align: center; font-size: 12.5px">
           {{ anchors.length ? t('ai.poolSub', { n: pool.length }) : t('ai.pickOne') }}
         </div>
+        <div v-if="isIn && histCount >= HISTORY_MAX - 1" class="note s" style="margin-top: 10px; text-align: center">{{ t('ai.capWarn', { n: histCount, max: HISTORY_MAX }) }}</div>
       </div>
     </template>
   </div>
