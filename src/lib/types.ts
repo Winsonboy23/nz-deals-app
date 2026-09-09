@@ -42,6 +42,24 @@ export interface Special {
   product_url: string | null
 }
 
+/** store_prices 一列：後端週一「拿編號問原價」查到的某店現價（Phase 2b §9b）。available=false = 這家店沒賣。 */
+export interface StorePrice {
+  store_id: string
+  product_id: string
+  product_key: string | null
+  available: boolean
+  price: number | null
+  price_unit: string | null
+  was_price: number | null
+  is_special: boolean
+  club_only: boolean
+  multi_buy: MultiBuy | null
+  unit_price: number | null
+  unit_price_unit: string | null
+  name: string | null
+  fetched_at: string
+}
+
 export interface Category {
   id: string
   level: number

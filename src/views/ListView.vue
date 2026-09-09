@@ -170,7 +170,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
             <span>{{ t('list.from', { v: money(c.total) }) }}</span>
           </div>
           <div class="lrow" style="padding: 8px 12px">
-            <div class="s grow">{{ t('list.known', { k: c.known, m: c.known + c.missing, n: c.missing }) }}</div>
+            <div class="s grow">{{ t('list.known', { k: c.known, m: c.known + c.missing + c.notSold, n: c.missing }) }}{{ c.notSold ? t('list.knownNotSold', { n: c.notSold }) : '' }}</div>
           </div>
           <div v-for="l in c.lines" :key="l.item.id" class="lrow row" style="padding-left: 12px">
             <ProductThumb v-if="l.special ?? thumbFor(l.item.key)" :special="(l.special ?? thumbFor(l.item.key))!" variant="sq" class="list-tn" />
@@ -178,10 +178,12 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
             <component :is="l.item.key ? 'RouterLink' : 'div'" class="nm" :class="{ done: l.item.checked }" :to="l.item.key ? productLink(l.item.key) : undefined">
               <div class="t">{{ l.item.name }} × {{ l.item.qty }}</div>
               <div v-if="l.own" class="s ell">{{ t('list.selfPrice') }}</div>
+              <div v-else-if="l.shelf" class="s ell">{{ l.shelf.is_special ? t('list.shelfSpecial') : t('list.shelfPrice') }}{{ l.shelf.club_only ? ' · ' + t('tag.club') : '' }}</div>
+              <div v-else-if="l.notSold" class="s ell">{{ t('list.notSold') }}</div>
               <div v-else-if="!l.special" class="s ell">{{ t('cmp.noSpecial') }}</div>
-              <div v-if="!l.special && !l.own && altText(c.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">{{ altText(c.store.id, l.item.key) }}</div>
+              <div v-if="!l.special && !l.own && !l.shelf && altText(c.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">{{ altText(c.store.id, l.item.key) }}</div>
             </component>
-            <div v-if="l.special || l.own" class="p">{{ money(l.total) }}</div>
+            <div v-if="l.special || l.own || l.shelf" class="p" :class="{ muted: l.shelf && !l.shelf.is_special }">{{ money(l.total) }}</div>
             <div v-else class="p muted">—</div>
           </div>
         </div>

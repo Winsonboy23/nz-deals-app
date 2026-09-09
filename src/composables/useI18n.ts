@@ -205,10 +205,14 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'list.saved': { en: 'Saved on this device', zh: '存在這台裝置' },
   'list.freeText': { en: 'free text · not matched', zh: '自由輸入 · 未配對' },
   'list.known': {
-    en: '{k} of {m} known · {n} no special this week',
-    zh: '{m} 項裡 {k} 項已知 · {n} 項本週無特價',
+    en: '{k} of {m} known · {n} price unknown',
+    zh: '{m} 項裡 {k} 項已知 · {n} 項價格未知',
   },
   'list.from': { en: 'from {v}', zh: '起 {v}' },
+  'list.knownNotSold': { en: ' · {n} not sold here', zh: ' · {n} 項此店沒賣' },
+  'list.shelfPrice': { en: 'regular price · no special', zh: '原價 · 本週無特價' },
+  'list.shelfSpecial': { en: 'store price this week', zh: '店內本週價' },
+  'list.notSold': { en: 'not sold at this store', zh: '此店沒賣' },
   'list.unmatched': { en: 'Not matched to a special', zh: '沒有配對到特價' },
 
   'me.title': { en: 'Me', zh: '我的' },

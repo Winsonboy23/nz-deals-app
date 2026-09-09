@@ -1,8 +1,9 @@
 import { computed, ref, watch } from 'vue'
 import { readCache, writeCache } from '../lib/cache'
 import { dealPrice } from '../lib/compare'
-import type { Offer, Special, Store } from '../lib/types'
+import type { Offer, Special, Store, StorePrice } from '../lib/types'
 import { useSpecials } from './useSpecials'
+import { useStorePrices } from './useStorePrices'
 
 export interface ListItem {
   id: string
@@ -24,16 +25,26 @@ export interface SplitBucket {
 export interface OneStopCard {
   store: Store
   known: number
+  /** 價格未知（沒特價、沒查到現價、也沒自己填） */
   missing: number
+  /** 這家店沒賣（後端查價時接口沒回） */
+  notSold: number
   total: number
-  /** own = 價格是使用者自己填的 */
-  lines: Array<{ item: ListItem; special: Special | null; total: number; own?: boolean }>
+  /** own = 價格是使用者自己填的；shelf = 後端查到的現價（多半是原價，也可能是我們沒抓到的促銷） */
+  lines: Array<{ item: ListItem; special: Special | null; total: number; own?: boolean; shelf?: StorePrice; notSold?: boolean }>
 }
 
 const items = ref<ListItem[]>(readCache<ListItem[]>('list') ?? [])
 watch(items, (v) => writeCache('list', v), { deep: true })
 
 const { groups, activeStores } = useSpecials()
+const storePrices = useStorePrices()
+/** 清單 key × 你的店 → 抓後端查到的現價（登入者才會有，訪客回空） */
+watch(
+  () => [activeStores.value.map((d) => d.store.id), items.value.map((i) => i.key).filter((k): k is string => !!k)] as const,
+  ([stores, keys]) => void storePrices.load([...stores], [...new Set(keys)]),
+  { immediate: true },
+)
 
 /** uuid：登入後清單會存進資料庫（list_items.id）。 */
 function newId(): string {
@@ -132,6 +143,7 @@ const oneStop = computed<OneStopCard[]>(() => {
     const lines: OneStopCard['lines'] = []
     let known = 0
     let missing = 0
+    let notSold = 0
     let total = 0
     for (const item of items.value) {
       const g = item.key ? groups.value.get(item.key) : undefined
@@ -148,13 +160,26 @@ const oneStop = computed<OneStopCard[]>(() => {
         total += t
         lines.push({ item, special: null, total: t, own: true })
       } else {
-        missing += 1
-        lines.push({ item, special: null, total: 0 })
+        // 沒特價：看後端週一有沒有查到這家店的現價（Phase 2b §9b）
+        const sp = storePrices.priceAt(d.store.id, item.key)
+        if (sp?.available && sp.price != null) {
+          known += 1
+          const t = (sp.multi_buy && sp.multi_buy.qty > 0 ? sp.multi_buy.total / sp.multi_buy.qty : sp.price) * item.qty
+          total += t
+          lines.push({ item, special: null, total: t, shelf: sp })
+        } else if (sp && !sp.available) {
+          notSold += 1
+          lines.push({ item, special: null, total: 0, notSold: true })
+        } else {
+          missing += 1
+          lines.push({ item, special: null, total: 0 })
+        }
       }
     }
-    // 有特價的在前、自己填的其次、價格未知的墊底
-    lines.sort((a, b) => (a.special ? 0 : a.own ? 1 : 2) - (b.special ? 0 : b.own ? 1 : 2))
-    cards.push({ store: d.store, known, missing, total, lines })
+    // 有特價的在前、自己填的、查到現價的、價格未知的、這家沒賣的墊底
+    const rank = (l: OneStopCard['lines'][number]) => (l.special ? 0 : l.own ? 1 : l.shelf ? 2 : l.notSold ? 4 : 3)
+    lines.sort((a, b) => rank(a) - rank(b))
+    cards.push({ store: d.store, known, missing, notSold, total, lines })
   }
   return cards.sort((a, b) => b.known - a.known || a.total - b.total)
 })
