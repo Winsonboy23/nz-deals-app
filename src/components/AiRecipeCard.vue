@@ -198,7 +198,7 @@ button.rhead:active { background: var(--paper-2); }
 .pin.buy { border: 1.5px dashed #b5b5b0; color: var(--ink-2); }
 .pin.st { background: var(--paper-2); color: var(--ink-3); }
 .stbox { background: var(--paper-2); border-style: dashed; }
-.stbox .t { font-weight: 600; color: var(--ink-2); }
+.stbox .t { font-weight: 600; }
 .qty { margin-left: 8px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
 .rstep { display: flex; gap: 12px; margin-top: 12px; font-size: 15.5px; line-height: 1.45; }
 .rstep b { flex: none; width: 16px; font-family: 'Inter Tight', Inter, sans-serif; font-weight: 900; }
