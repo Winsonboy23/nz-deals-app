@@ -74,6 +74,10 @@ function toggleFood() {
           <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.watching') }}</div></div>
           <div class="link">{{ watched.size }} ›</div>
         </RouterLink>
+        <RouterLink v-if="isIn" class="lrow tap" to="/me/recipes" style="padding: 14px 12px">
+          <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.recipes') }}</div></div>
+          <div class="link">›</div>
+        </RouterLink>
         <div class="lrow" style="padding: 9px 12px">
           <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.language') }}</div></div>
           <div class="seg" style="width: 150px; flex: none">

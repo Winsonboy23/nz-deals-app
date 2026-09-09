@@ -11,6 +11,8 @@ export interface ListItem {
   name: string
   qty: number
   checked: boolean
+  /** 沒特價的自由項，使用者自己填的價格（選填）；算進「最省」總價，標「自己填的」 */
+  price?: number | null
 }
 
 export interface SplitBucket {
@@ -24,30 +26,12 @@ export interface OneStopCard {
   known: number
   missing: number
   total: number
-  lines: Array<{ item: ListItem; special: Special | null; total: number }>
+  /** own = 價格是使用者自己填的 */
+  lines: Array<{ item: ListItem; special: Special | null; total: number; own?: boolean }>
 }
 
 const items = ref<ListItem[]>(readCache<ListItem[]>('list') ?? [])
 watch(items, (v) => writeCache('list', v), { deep: true })
-
-/** 「用清單做菜」的挑食材模式。跟 checked（在店裡買到了）是兩回事，所以另存一份，也不進 localStorage。 */
-const picking = ref(false)
-const picked = ref<Set<string>>(new Set())
-function startPicking(): void {
-  picked.value = new Set()
-  picking.value = true
-}
-function stopPicking(): void {
-  picking.value = false
-  picked.value = new Set()
-}
-function togglePick(id: string): void {
-  const next = new Set(picked.value)
-  next.has(id) ? next.delete(id) : next.add(id)
-  picked.value = next
-}
-/** 選到的項目，順序照清單。送去 AI 食譜頁的就是這些。 */
-const pickedItems = computed(() => items.value.filter((i) => picked.value.has(i.id)))
 
 const { groups, activeStores } = useSpecials()
 
@@ -82,6 +66,16 @@ function setQty(id: string, qty: number): void {
   i.qty = qty
 }
 
+function rename(id: string, name: string): void {
+  const i = items.value.find((x) => x.id === id)
+  const n = name.trim()
+  if (i && n) i.name = n
+}
+function setPrice(id: string, price: number | null): void {
+  const i = items.value.find((x) => x.id === id)
+  if (i) i.price = price != null && Number.isFinite(price) && price > 0 ? Math.round(price * 100) / 100 : null
+}
+
 function toggle(id: string): void {
   const i = items.value.find((x) => x.id === id)
   if (i) i.checked = !i.checked
@@ -91,15 +85,17 @@ function has(key: string): boolean {
   return items.value.some((i) => i.key === key)
 }
 
-/** Every item goes to whichever of your stores is cheapest for it. */
-const split = computed<{ buckets: SplitBucket[]; unmatched: ListItem[]; total: number }>(() => {
+/** Every item goes to whichever of your stores is cheapest for it. 沒配對到的放最後一張「其他」卡，自己填了價格的算進總價。 */
+const split = computed<{ buckets: SplitBucket[]; unmatched: ListItem[]; total: number; othersTotal: number }>(() => {
   const map = new Map<string, SplitBucket>()
   const unmatched: ListItem[] = []
   let total = 0
+  let othersTotal = 0
   for (const item of items.value) {
     const g = item.key ? groups.value.get(item.key) : undefined
     if (!g) {
       unmatched.push(item)
+      if (item.price) othersTotal += item.price * item.qty
       continue
     }
     const offer = g.best
@@ -116,7 +112,8 @@ const split = computed<{ buckets: SplitBucket[]; unmatched: ListItem[]; total: n
   return {
     buckets: [...map.values()].sort((a, b) => b.subtotal - a.subtotal),
     unmatched,
-    total,
+    total: total + othersTotal,
+    othersTotal,
   }
 })
 
@@ -139,11 +136,19 @@ const oneStop = computed<OneStopCard[]>(() => {
         const t = dealPrice(offer.special) * item.qty
         total += t
         lines.push({ item, special: offer.special, total: t })
+      } else if (item.price) {
+        // 自己填的價格：每家都算已知
+        known += 1
+        const t = item.price * item.qty
+        total += t
+        lines.push({ item, special: null, total: t, own: true })
       } else {
         missing += 1
         lines.push({ item, special: null, total: 0 })
       }
     }
+    // 有特價的在前、自己填的其次、價格未知的墊底
+    lines.sort((a, b) => (a.special ? 0 : a.own ? 1 : 2) - (b.special ? 0 : b.own ? 1 : 2))
     cards.push({ store: d.store, known, missing, total, lines })
   }
   return cards.sort((a, b) => b.known - a.known || a.total - b.total)
@@ -154,16 +159,12 @@ const oneStopFrom = computed(() => (oneStop.value.length ? oneStop.value[0].tota
 export function useList() {
   return {
     items,
-    picking,
-    picked,
-    pickedItems,
-    startPicking,
-    stopPicking,
-    togglePick,
     add,
     addFreeText,
     remove,
     setQty,
+    rename,
+    setPrice,
     toggle,
     has,
     split,

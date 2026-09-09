@@ -1,8 +1,7 @@
-// AI 食譜前端（v2，docs/recipes-ai-design.md §5）：挑候選池、呼叫 Edge Function、快取、本機每日額度。
+// AI 食譜前端（v3，docs/recipes-ai-design.md §5）：挑候選池、呼叫 Edge Function、本機每日額度、食譜紀錄。
 // 模型只能從「錨」（你勾的食材）和「池」（你的店這週的特價）裡挑，回的是編號，所以價格和加清單都精確。
 import { supabase } from './supabase'
 import { readCache, writeCache } from './cache'
-import { nzMonday } from './week'
 import { discountDepth } from './compare'
 import { catLevel, chainShort, displayName } from './format'
 import type { Group } from './types'
@@ -11,9 +10,10 @@ export interface Prefs {
   serves: number
   maxMinutes: number
   spice: 'mild' | 'medium' | 'hot'
-  avoid: string
+  /** 喜好／不吃什麼，自由填 */
+  notes: string
 }
-/** 你已經有的東西：清單裡勾的。id 是 product_key，自由輸入的用 free:<名字>。 */
+/** 你已經有的東西：清單裡勾的，或手打的。id 是 product_key，手打的用 free:<名字>。 */
 export interface Anchor {
   id: string
   name: string
@@ -31,23 +31,31 @@ export interface AiIngredient {
   name: string
   qty: string
   staple: boolean
+  /** 生成當下的價格／店（池裡的才有） */
+  price: number | null
+  store: string | null
 }
 export interface AiRecipe {
+  /** ai_recipes 的 id；表沒建時 null */
+  dbId: string | null
+  createdAt?: string
   title: string
   cuisine: string
   serves: number
   minutes: number
+  kcal: number
   difficulty: 'easy' | 'medium' | 'hard'
   ingredients: AiIngredient[]
   steps: string[]
   tip: string
 }
 
-export const DEFAULT_PREFS: Prefs = { serves: 4, maxMinutes: 40, spice: 'mild', avoid: '' }
+export const DEFAULT_PREFS: Prefs = { serves: 4, maxMinutes: 40, spice: 'mild', notes: '' }
 
 /** 上次用的偏好，記在裝置上。 */
 export function loadPrefs(): Prefs {
-  return { ...DEFAULT_PREFS, ...(readCache<Partial<Prefs>>('ai:prefs') ?? {}) }
+  const saved = readCache<Partial<Prefs> & { avoid?: string }>('ai:prefs') ?? {}
+  return { ...DEFAULT_PREFS, ...saved, notes: saved.notes ?? saved.avoid ?? '' }
 }
 export function savePrefs(p: Prefs): void {
   writeCache('ai:prefs', p)
@@ -75,7 +83,7 @@ export class AiError extends Error {
   }
 }
 
-/** dev 時可以指到本機 deno（VITE_AI_RECIPE_URL=http://localhost:8000）。 */
+/** dev 時可以指到本機 deno 或 mock（VITE_AI_RECIPE_URL=http://localhost:8000）。 */
 const DEV_URL = import.meta.env.VITE_AI_RECIPE_URL as string | undefined
 /** 預設開著。要臨時關掉就 build 時給 VITE_AI_RECIPE=off。 */
 export const aiEnabled = import.meta.env.VITE_AI_RECIPE !== 'off'
@@ -171,23 +179,49 @@ export function buildPool(groups: Map<string, Group>, exclude: Set<string>): Poo
   return out
 }
 
-/** 短雜湊，讓快取 key 不要一公里長。 */
-function hash(s: string): string {
-  let h = 5381
-  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0
-  return (h >>> 0).toString(36)
+/** 按一次問一次，不快取（使用者是自己按的，每次都想看新的；後端每道都存進紀錄）。 */
+export async function fetchRecipes(anchors: Anchor[], pool: PoolItem[], prefs: Prefs, lang: string): Promise<AiRecipe[]> {
+  const out = await call<{ recipes: AiRecipe[] }>({ layer: 'recipes', anchors, pool, prefs, lang })
+  return (out.recipes ?? []).map((r) => ({ ...r, dbId: r.dbId ?? null }))
 }
 
-/** 同一組錨 + 池 + 偏好 + 語言，這一週內只問一次；「換 3 道」才重問。 */
-export async function fetchRecipes(anchors: Anchor[], pool: PoolItem[], prefs: Prefs, lang: string, fresh = false): Promise<AiRecipe[]> {
-  const sig = [...anchors.map((a) => a.id)].sort().join('|') + '#' + pool.map((p) => p.id).join('|') + '#' + `${prefs.serves}|${prefs.maxMinutes}|${prefs.spice}|${prefs.avoid}`
-  const key = `ai:rec:${nzMonday()}:${lang}:${hash(sig)}`
-  if (!fresh) {
-    const hit = readCache<AiRecipe[]>(key)
-    if (hit?.length) return hit
-  }
-  const out = await call<{ recipes: AiRecipe[] }>({ layer: 'recipes', anchors, pool, prefs, lang })
-  const list = out.recipes ?? []
-  if (list.length) writeCache(key, list, 'ai:rec:')
-  return list
+// ---- 食譜紀錄（ai_recipes，RLS 只有本人） ----
+interface Row {
+  id: string
+  created_at: string
+  title: string
+  cuisine: string | null
+  serves: number | null
+  minutes: number | null
+  kcal: number | null
+  difficulty: string | null
+  ingredients: AiIngredient[] | null
+  steps: string[] | null
+  tip: string | null
+}
+const COLS = 'id,created_at,title,cuisine,serves,minutes,kcal,difficulty,ingredients,steps,tip'
+const fromRow = (r: Row): AiRecipe => ({
+  dbId: r.id,
+  createdAt: r.created_at,
+  title: r.title,
+  cuisine: r.cuisine ?? '',
+  serves: r.serves ?? 0,
+  minutes: r.minutes ?? 0,
+  kcal: r.kcal ?? 0,
+  difficulty: (r.difficulty as AiRecipe['difficulty']) ?? 'easy',
+  ingredients: r.ingredients ?? [],
+  steps: r.steps ?? [],
+  tip: r.tip ?? '',
+})
+export async function historyList(): Promise<AiRecipe[]> {
+  const { data } = await supabase.from('ai_recipes').select(COLS).order('created_at', { ascending: false }).limit(100)
+  return ((data ?? []) as unknown as Row[]).map(fromRow)
+}
+export async function historyGet(id: string): Promise<AiRecipe | null> {
+  const { data } = await supabase.from('ai_recipes').select(COLS).eq('id', id).limit(1)
+  const r = (data as unknown as Row[] | null)?.[0]
+  return r ? fromRow(r) : null
+}
+export async function historyDelete(id: string): Promise<void> {
+  await supabase.from('ai_recipes').delete().eq('id', id)
 }

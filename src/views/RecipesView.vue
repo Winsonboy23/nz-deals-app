@@ -4,12 +4,9 @@ import { bi, useRecipes } from '../composables/useRecipes'
 import { useStores } from '../composables/useStores'
 import { t } from '../composables/useI18n'
 import { chainClass, chainName, chainShort, money } from '../lib/format'
-import { useAuth } from '../composables/useAuth'
-import { aiEnabled } from '../lib/aiRecipe'
 
 const { ranked } = useRecipes()
 const { selectedStores } = useStores()
-const { isIn } = useAuth()
 const filter = ref<'all' | 'quick'>('all')
 const list = computed(() => ranked.value.filter((r) => filter.value === 'all' || r.recipe.minutes <= 30))
 const base = import.meta.env.BASE_URL
@@ -25,9 +22,6 @@ const base = import.meta.env.BASE_URL
       </RouterLink>
     </div>
     <div class="pad sub" style="margin-top: 8px">{{ t('recipes.sub') }}</div>
-    <div v-if="aiEnabled && selectedStores.length" class="pad" style="margin-top: 12px">
-      <RouterLink class="aihome" :to="isIn ? '/ai-recipes?from=week' : '/signin'">{{ isIn ? t('ai.homeEntry') : t('ai.homeEntrySignIn') }}</RouterLink>
-    </div>
 
     <div class="chips nowrap" style="margin: 12px 0 0 var(--gutter)">
       <button class="chip" :class="{ on: filter === 'all' }" @click="filter = 'all'">{{ t('recipes.recommended') }}</button>
@@ -64,8 +58,6 @@ const base = import.meta.env.BASE_URL
 </template>
 
 <style scoped>
-.aihome { display: block; border: 1.5px dashed var(--ink); border-radius: var(--r); padding: 12px 14px; font-weight: 800; font-size: 14.5px; color: inherit; text-decoration: none; }
-.aihome:active { background: var(--paper-2); }
 .rc {
   display: flex;
   border: 1px solid var(--line);
