@@ -59,6 +59,11 @@ function remove(id: string): void {
   items.value = items.value.filter((i) => i.id !== id)
 }
 
+/** 一鍵清空。登入的話 useSync 會跟著把帳號裡的清單刪光。 */
+function clear(): void {
+  items.value = []
+}
+
 function setQty(id: string, qty: number): void {
   const i = items.value.find((x) => x.id === id)
   if (!i) return
@@ -162,6 +167,7 @@ export function useList() {
     add,
     addFreeText,
     remove,
+    clear,
     setQty,
     rename,
     setPrice,

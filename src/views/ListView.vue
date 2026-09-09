@@ -14,7 +14,7 @@ import { useSync } from '../composables/useSync'
 import { aiEnabled } from '../lib/aiRecipe'
 import GradientButton from '../components/GradientButton.vue'
 
-const { items, add, has, addFreeText, remove, setQty, rename, setPrice, toggle, split, oneStop, oneStopFrom } = useList()
+const { items, add, has, addFreeText, remove, clear, setQty, rename, setPrice, toggle, split, oneStop, oneStopFrom } = useList()
 const { activeStores, groups, familyAlt } = useSpecials()
 /** One stop：這家沒有這樣東西時，推薦它最便宜的同類（§8）。只是建議，不算進總價。 */
 function altText(storeId: string, key: string | null): string | null {
@@ -48,6 +48,9 @@ function submit() {
   addFreeText(draft.value)
   draft.value = ''
 }
+function clearAll() {
+  if (confirm(t('list.clearConfirm', { n: items.value.length }))) clear()
+}
 function onPrice(i: ListItem, e: Event) {
   const v = (e.target as HTMLInputElement).value.trim()
   setPrice(i.id, v ? Number(v) : null)
@@ -59,7 +62,10 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
   <div class="screen with-footbar">
     <div class="pad hrow" style="margin-top: 8px">
       <div class="h1">{{ t('list.title') }}</div>
-      <div class="link">{{ t('common.items', { n: items.length }) }}</div>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <div class="link">{{ t('common.items', { n: items.length }) }}</div>
+        <button v-if="items.length" class="link" style="background: none; padding: 0; text-decoration: underline" @click="clearAll">{{ t('list.clear') }}</button>
+      </div>
     </div>
 
     <div class="pad" style="margin-top: 8px">

@@ -196,6 +196,8 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'list.noPriceYet': { en: 'tap to add a price', zh: '點一下可以填價格' },
   'list.priceOptional': { en: 'price', zh: '價格' },
   'list.remove': { en: 'Remove', zh: '刪除' },
+  'list.clear': { en: 'Clear all', zh: '清空' },
+  'list.clearConfirm': { en: 'Remove all {n} items from your list?', zh: '把清單裡的 {n} 項全部刪掉？' },
   'list.aiBtn': { en: 'AI recipe', zh: 'AI 食譜' },
   'list.aiBtnSignIn': { en: 'AI recipe · sign in', zh: 'AI 食譜 · 需登入' },
   'list.aiSub': { en: 'Two dishes from what is on your list, priced with this week\'s specials.', zh: '用清單裡的食材想 2 道菜，要買的配本週特價。' },
