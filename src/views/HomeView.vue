@@ -16,8 +16,7 @@ import { dealPrice } from '../lib/compare'
 import { bi, useRecipes } from '../composables/useRecipes'
 import { chainName } from '../lib/format'
 
-const { loading, activeStores, totalSpecials, topDeduped, deepDiscounts, freshByKg, biggestSaving, whereToGo } =
-  useSpecials()
+const { loading, activeStores, totalSpecials, topDeduped, deepDiscounts, freshByKg, biggestSaving } = useSpecials()
 const { nameOf } = useCategories()
 const { isIn, name, avatar } = useAuth()
 const { watched } = useSync()
@@ -114,20 +113,6 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
         </div>
       </template>
 
-      <template v-if="whereToGo.length">
-        <div class="pad" style="margin-top: 22px"><div class="h2">{{ t('home.where') }}</div></div>
-        <div class="pad" style="margin-top: 8px">
-          <div class="box">
-            <div v-for="w in whereToGo" :key="w.cat" class="lrow" style="padding: 10px 12px">
-              <div class="grow" style="min-width: 0">
-                <div class="t ell" style="font-size: 15px">{{ catName(nameOf(w.cat)) }}</div>
-                <div class="s ell">{{ t('home.whereWins', { w: w.wins, n: w.total }) }}</div>
-              </div>
-              <span class="tag best" :class="chainClass(w.store.id)" style="flex: none">✓ {{ chainBadge(w.store.id) }}</span>
-            </div>
-          </div>
-        </div>
-      </template>
 
       <template v-if="isIn && watchedHits.length">
         <div class="pad hrow" style="margin-top: 22px">
