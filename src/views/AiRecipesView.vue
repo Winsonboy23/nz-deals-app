@@ -195,8 +195,14 @@ function backToForm() {
               <div v-for="sp in (['mild', 'medium', 'hot'] as const)" :key="sp" :class="{ on: prefs.spice === sp }" @click="setPref('spice', sp)">{{ t('ai.spice.' + sp) }}</div>
             </div>
           </div>
+          <div class="lrow q">
+            <div class="ql"><b>4</b>{{ t('ai.qDiff') }}</div>
+            <div class="seg qs" style="width: 180px">
+              <div v-for="d in (['easy', 'medium', 'hard'] as const)" :key="d" :class="{ on: prefs.difficulty === d }" @click="setPref('difficulty', d)">{{ t('recipes.' + d) }}</div>
+            </div>
+          </div>
           <div class="lrow q" style="flex-direction: column; align-items: stretch; gap: 8px">
-            <div class="ql"><b>4</b>{{ t('ai.q4') }}</div>
+            <div class="ql"><b>5</b>{{ t('ai.q4') }}</div>
             <div class="field" style="height: 42px; font-size: 14px">
               <input :value="prefs.notes" :placeholder="t('ai.notesPlaceholder')" style="flex: 1" maxlength="80" @change="setPref('notes', ($event.target as HTMLInputElement).value.slice(0, 80))" />
             </div>

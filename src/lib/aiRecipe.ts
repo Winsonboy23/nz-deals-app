@@ -10,6 +10,7 @@ export interface Prefs {
   serves: number
   maxMinutes: number
   spice: 'mild' | 'medium' | 'hot'
+  difficulty: 'easy' | 'medium' | 'hard'
   /** 喜好／不吃什麼，自由填 */
   notes: string
 }
@@ -52,7 +53,7 @@ export interface AiRecipe {
   image?: { url: string; photographer: string; link: string } | null
 }
 
-export const DEFAULT_PREFS: Prefs = { serves: 4, maxMinutes: 40, spice: 'mild', notes: '' }
+export const DEFAULT_PREFS: Prefs = { serves: 4, maxMinutes: 40, spice: 'mild', difficulty: 'easy', notes: '' }
 
 /** 上次用的偏好，記在裝置上。 */
 export function loadPrefs(): Prefs {
