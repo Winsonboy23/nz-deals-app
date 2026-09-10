@@ -5,6 +5,7 @@ import { useSettings } from '../composables/useSettings'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
 import { usePush } from '../composables/usePush'
+import { useAdmin } from '../composables/useAdmin'
 import { lang, setLang, t } from '../composables/useI18n'
 import { chainName } from '../lib/format'
 
@@ -12,6 +13,7 @@ const { selectedStores } = useStores()
 const { foodOnly } = useSettings()
 const { isIn, name, avatar, signOut } = useAuth()
 const { watched, merged } = useSync()
+const { isAdmin } = useAdmin()
 const push = usePush()
 const pushLine = computed(() => {
   if (push.error.value) return t('me.notifyFailed', { e: push.error.value })
@@ -76,6 +78,11 @@ function toggleFood() {
         </RouterLink>
         <RouterLink v-if="isIn" class="lrow tap" to="/me/recipes" style="padding: 14px 12px">
           <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.recipes') }}</div></div>
+          <div class="link">›</div>
+        </RouterLink>
+        <!-- 後台：只有 admins 表裡的 email 看得到（docs/admin-spec.md §1） -->
+        <RouterLink v-if="isAdmin" class="lrow tap" to="/admin" style="padding: 14px 12px">
+          <div class="grow"><div class="t" style="font-size: 16px">後台</div></div>
           <div class="link">›</div>
         </RouterLink>
         <div class="lrow" style="padding: 9px 12px">

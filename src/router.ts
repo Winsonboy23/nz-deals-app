@@ -19,6 +19,7 @@ export const router = createRouter({
     { path: '/me/recipes', name: 'ai-history', component: () => import('./views/AiHistoryView.vue'), meta: { tab: 'me' } },
     { path: '/me/recipes/:id', name: 'ai-history-item', component: () => import('./views/AiHistoryDetailView.vue'), meta: { tab: 'me' } },
     { path: '/signin', name: 'signin', component: () => import('./views/SignInView.vue'), meta: { tab: 'me' } },
+    { path: '/admin', name: 'admin', component: () => import('./views/AdminView.vue'), meta: { noTabs: true } },
     { path: '/s/:token', name: 'shared', component: () => import('./views/SharedListView.vue'), meta: { tab: 'list' } },
     { path: '/top10', name: 'top10', component: () => import('./views/Top10View.vue'), meta: { tab: 'specials' } },
     { path: '/half-price', name: 'half', component: () => import('./views/HalfPriceView.vue'), meta: { tab: 'specials' } },

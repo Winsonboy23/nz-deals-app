@@ -6,7 +6,7 @@ import { readCache } from './lib/cache'
 
 // Nothing to compare until stores are picked, so the picker is the front door.
 router.beforeEach((to) => {
-  if (to.path === '/stores') return true
+  if (to.path === '/stores' || to.path === '/admin') return true   // 後台不用選店
   const picked = readCache<string[]>('selected')
   return picked && picked.length ? true : '/stores'
 })
