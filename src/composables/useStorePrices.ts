@@ -15,8 +15,9 @@ const loading = ref(false)
 const pending = ref<Set<string>>(new Set())
 /** 我的單前面還有幾張（0 = 正在做或沒在排） */
 const queueAhead = ref(0)
-/** 這家店問不了（沒有這家的商品編號）的（店|key）：畫面直接「價格未知」、不轉圈 */
-const noId = ref<Set<string>>(new Set())
+/** 用名字配過但沒配上的（連鎖群|key）→ 'none'（找不到 · 可能沒賣）| 'review'（待人工確認）。沒編號又沒判過的會送去即時配對。 */
+const nameState = ref<Map<string, 'none' | 'review'>>(new Map())
+const NAME_RETRY_DAYS = 7
 let lastSig = ''
 let lastStores: string[] = []
 let lastKeys: string[] = []
@@ -83,11 +84,29 @@ function priceAt(storeId: string, key: string | null): StorePrice | undefined {
   return key ? byStoreKey.value.get(`${storeId}|${key}`) : undefined
 }
 const isPending = (storeId: string, key: string | null) => !!key && pending.value.has(`${storeId}|${key}`)
-const hasNoId = (storeId: string, key: string | null) => !!key && noId.value.has(`${storeId}|${key}`)
+const groupOf = (storeId: string) => (storeId.startsWith('woolworths:') ? 'woolworths' : 'foodstuffs')
+/** 這家連鎖用名字配過的結果（沒有 = 還沒配過或已配上） */
+const nameStateAt = (storeId: string, key: string | null): 'none' | 'review' | undefined => (key ? nameState.value.get(`${groupOf(storeId)}|${key}`) : undefined)
 
-/** key → 各家編號（product_ids 表，公開讀）。查過的記在記憶體。 */
-async function resolveIds(keys: string[]): Promise<void> {
-  const need = keys.filter((k) => !idsOf.has(k))
+/** name_matches：這些 key 在各連鎖群配過沒（none / review 才記；matched 的編號已經在 product_ids 裡）。 */
+async function loadNameState(keys: string[]): Promise<void> {
+  const next = new Map(nameState.value)
+  const cutoff = Date.now() - NAME_RETRY_DAYS * 86400000
+  for (let i = 0; i < keys.length; i += 100) {
+    const { data, error } = await supabase.from('name_matches').select('chain,product_key,status,searched_at').in('product_key', keys.slice(i, i + 100))
+    if (error) return
+    for (const r of (data ?? []) as Array<{ chain: string; product_key: string; status: string; searched_at: string }>) {
+      const k = `${r.chain}|${r.product_key}`
+      if ((r.status === 'none' || r.status === 'review') && new Date(r.searched_at).getTime() > cutoff) next.set(k, r.status)
+      else next.delete(k)
+    }
+  }
+  nameState.value = next
+}
+
+/** key → 各家編號（product_ids 表，公開讀）。查過的記在記憶體（force = 重抓，配對完要更新）。 */
+async function resolveIds(keys: string[], force = false): Promise<void> {
+  const need = force ? keys : keys.filter((k) => !idsOf.has(k))
   for (let i = 0; i < need.length; i += 100) {
     const chunk = need.slice(i, i + 100)
     const { data, error } = await supabase.from('product_ids').select('chain,product_id,product_key').in('product_key', chunk)
@@ -98,30 +117,30 @@ async function resolveIds(keys: string[]): Promise<void> {
 }
 const chainGroup = (storeId: string) => (storeId.startsWith('woolworths:') ? ['woolworths'] : ['newworld', 'paknsave'])
 
-/** 點「一站」時：這些（店, key）沒價格 → 送單去問。有編號的才送；沒編號的記進 noId。 */
+/** 點「一站」時：這些（店, key）沒價格 → 送單去問。有編號的送編號；沒編號、也還沒用名字配過的，送 key 讓後端用名字配（規則）。 */
 async function request(pairs: Array<{ storeId: string; key: string }>): Promise<void> {
   const now = Date.now()
   const todo = pairs.filter(({ storeId, key }) => {
     const id = `${storeId}|${key}`
-    return !pending.value.has(id) && !noId.value.has(id) && (tried.get(id) ?? 0) < now - RETRY_MS
+    return !pending.value.has(id) && !nameStateAt(storeId, key) && (tried.get(id) ?? 0) < now - RETRY_MS
   })
   if (!todo.length) return
   for (const { storeId, key } of todo) tried.set(`${storeId}|${key}`, now)
-  await resolveIds([...new Set(todo.map((p) => p.key))])
-  const byStore = new Map<string, { ids: Set<string>; pairs: string[] }>()
-  const nextNoId = new Set(noId.value)
+  const keys = [...new Set(todo.map((p) => p.key))]
+  await Promise.all([resolveIds(keys), loadNameState(keys)])
+  const byStore = new Map<string, { ids: Set<string>; keys: Set<string>; pairs: string[] }>()
   for (const { storeId, key } of todo) {
     const ids = (idsOf.get(key) ?? []).filter((r) => chainGroup(storeId).includes(r.chain)).map((r) => r.product_id)
     const pairId = `${storeId}|${key}`
-    if (!ids.length) { nextNoId.add(pairId); continue }
-    const b = byStore.get(storeId) ?? { ids: new Set<string>(), pairs: [] }
-    for (const id of ids) b.ids.add(id)
+    if (!ids.length && nameStateAt(storeId, key)) continue   // 最近用名字配過、沒配上：畫面直接顯示結果
+    const b = byStore.get(storeId) ?? { ids: new Set<string>(), keys: new Set<string>(), pairs: [] }
+    if (ids.length) for (const id of ids) b.ids.add(id)
+    else b.keys.add(key)
     b.pairs.push(pairId)
     byStore.set(storeId, b)
   }
-  noId.value = nextNoId
   if (!byStore.size) return
-  const items = [...byStore.entries()].map(([store_id, b]) => ({ store_id, product_ids: [...b.ids] }))
+  const items = [...byStore.entries()].map(([store_id, b]) => ({ store_id, product_ids: [...b.ids], product_keys: [...b.keys] }))
   const nextPending = new Set(pending.value)
   for (const b of byStore.values()) for (const p of b.pairs) nextPending.add(p)
   pending.value = nextPending
@@ -162,7 +181,11 @@ async function poll(): Promise<void> {
       }
       for (const [id, t] of tracking) if (now - t.since > GIVE_UP_MS || (!seen.has(id) && !error)) finished.push(id)
       queueAhead.value = ahead
-      if (anyDone) await load(lastStores, lastKeys, true)   // 先把價格讀進來，再拿掉轉圈，畫面不會閃一下「未知」
+      if (anyDone) {   // 先把結果讀進來，再拿掉轉圈，畫面不會閃一下「未知」。配對可能新增了編號 → 編號和配對狀態也重抓
+        const doneKeys = [...new Set(finished.flatMap((id) => (tracking.get(id)?.pairs ?? []).map((p) => p.split('|')[1]!)))]
+        await Promise.all([resolveIds(doneKeys, true), loadNameState(doneKeys)])
+        await load(lastStores, lastKeys, true)
+      }
       if (finished.length) {
         const next = new Set(pending.value)
         for (const id of finished) { for (const p of tracking.get(id)?.pairs ?? []) next.delete(p); tracking.delete(id) }
@@ -177,5 +200,5 @@ async function poll(): Promise<void> {
 }
 
 export function useStorePrices() {
-  return { load, priceAt, isPending, hasNoId, request, loading, pending, queueAhead, byStoreKey }
+  return { load, priceAt, isPending, nameStateAt, request, loading, pending, queueAhead, byStoreKey }
 }

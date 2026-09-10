@@ -33,7 +33,8 @@ export interface OneStopCard {
   /** 正在即時問的項數 */
   pending: number
   /** own = 價格是使用者自己填的；shelf = 後端查到的現價（多半是原價，也可能是我們沒抓到的促銷）；pending = 正在問 */
-  lines: Array<{ item: ListItem; special: Special | null; total: number; own?: boolean; shelf?: StorePrice; notSold?: boolean; pending?: boolean; noId?: boolean }>
+  /** nameState：用名字配過但沒配上 → 'none' 找不到（可能沒賣）| 'review' 待人工確認 */
+  lines: Array<{ item: ListItem; special: Special | null; total: number; own?: boolean; shelf?: StorePrice; notSold?: boolean; pending?: boolean; nameState?: 'none' | 'review' }>
 }
 
 const items = ref<ListItem[]>(readCache<ListItem[]>('list') ?? [])
@@ -178,8 +179,7 @@ const oneStop = computed<OneStopCard[]>(() => {
           lines.push({ item, special: null, total: 0, pending: true })
         } else {
           missing += 1
-          // noId = 這家連鎖沒有這商品的編號（還沒配對到），問不了
-          lines.push({ item, special: null, total: 0, noId: storePrices.hasNoId(d.store.id, item.key) })
+          lines.push({ item, special: null, total: 0, nameState: storePrices.nameStateAt(d.store.id, item.key) })
         }
       }
     }
@@ -194,7 +194,7 @@ const oneStop = computed<OneStopCard[]>(() => {
 /** 一站裡「沒價格、也問不了的還沒判定」的（店, key）→ 切到一站時送去即時問（useStorePrices.request 會自己過濾沒編號、問過的）。 */
 const oneStopMissing = computed<Array<{ storeId: string; key: string }>>(() => {
   const out: Array<{ storeId: string; key: string }> = []
-  for (const c of oneStop.value) for (const l of c.lines) if (l.item.key && !l.special && !l.own && !l.shelf && !l.notSold && !l.pending && !storePrices.hasNoId(c.store.id, l.item.key)) out.push({ storeId: c.store.id, key: l.item.key })
+  for (const c of oneStop.value) for (const l of c.lines) if (l.item.key && !l.special && !l.own && !l.shelf && !l.notSold && !l.pending && !l.nameState) out.push({ storeId: c.store.id, key: l.item.key })
   return out
 })
 
