@@ -17,6 +17,9 @@ interface Run {
   stores_failed: number | null
   rows: number | null
   needs_review: number | null
+  added?: number | null
+  changed?: number | null
+  removed?: number | null
   requests: number | null
   report: any
 }
@@ -26,6 +29,9 @@ interface RunStore {
   items: number | null
   rows: number | null
   needs_review: number | null
+  added?: number | null
+  changed?: number | null
+  removed?: number | null
   requests: number | null
   ms: number | null
   error: string | null
@@ -143,7 +149,7 @@ onUnmounted(() => clearInterval(timer))
           <div class="grow">
             <div class="t" :style="s.ok ? '' : 'color:#B00020'">{{ storeName.get(s.store_id) ?? s.store_id }}</div>
             <div class="s" :style="s.ok ? '' : 'color:#B00020'">
-              <template v-if="s.ok">{{ num(s.rows) }} 筆 · needs_review {{ num(s.needs_review) }} · {{ num(s.requests) }} 請求 · {{ fmtMs(s.ms) }}</template>
+              <template v-if="s.ok">{{ num(s.rows) }} 筆<template v-if="s.added != null">（新 {{ num(s.added) }} · 改價 {{ num(s.changed ?? null) }} · 下架 {{ num(s.removed ?? null) }}）</template> · needs_review {{ num(s.needs_review) }} · {{ num(s.requests) }} 請求 · {{ fmtMs(s.ms) }}</template>
               <template v-else>{{ s.error }}</template>
             </div>
           </div>

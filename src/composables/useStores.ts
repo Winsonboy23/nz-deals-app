@@ -1,6 +1,7 @@
 import { computed, ref, shallowRef } from 'vue'
 import { supabase } from '../lib/supabase'
 import { readCache, writeCache } from '../lib/cache'
+import pilotStores from '../data/pilot-stores.json'
 import { haversineKm, islandOf } from '../lib/geo'
 import { chainOf } from '../lib/format'
 import type { Store } from '../lib/types'
@@ -29,10 +30,12 @@ export interface RankedStore {
 
 /** 目前只開北島（南島還沒抓，2026-09-07）。南島開了把 'SI' 加回來就好。 */
 const SHOW_ISLANDS = new Set<'NI' | 'SI'>(['NI'])
+/** 2026-09-10：只爬 Hawke's Bay 11 家（每天兩次），選店頁只列這些。名單跟 data/stores-pilot.json 同步；清空這份 JSON 就回到列全部。 */
+const PILOT = new Set<string>(pilotStores as string[])
 const onlyShown = (list: Store[]): Store[] =>
   list.filter((s) => {
     const i = islandOf(s.region)
-    return !!i && SHOW_ISLANDS.has(i)
+    return !!i && SHOW_ISLANDS.has(i) && (PILOT.size === 0 || PILOT.has(s.id))
   })
 
 const all = shallowRef<Store[]>(onlyShown(readCache<Store[]>('stores') ?? []))

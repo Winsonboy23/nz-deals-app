@@ -233,8 +233,8 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'me.language': { en: 'Language · 語言', zh: '語言 · Language' },
   'me.foodOnly': { en: 'Food only', zh: '只看食品' },
   'me.footnote': {
-    en: "Prices from each store's online shop, refreshed Mondays. Only items on special are listed.",
-    zh: '價格來自各店線上購物，每週一更新。只收錄有特價的商品。',
+    en: "Prices from each store's online shop, refreshed twice a day. Only items on special are listed.",
+    zh: '價格來自各店線上購物，每天更新兩次。只收錄有特價的商品。',
   },
 
   'ai.needSignIn': {
