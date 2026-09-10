@@ -29,7 +29,7 @@ const idsOf = new Map<string, Array<{ chain: string; product_id: string }>>()
 const tracking = new Map<string, { pairs: string[]; since: number }>()
 let polling = false
 const RETRY_MS = 2 * 60 * 1000
-const GIVE_UP_MS = 60 * 1000
+const GIVE_UP_MS = 90 * 1000   // 常駐程式閒 30 分鐘會關瀏覽器，第一個人要多等 20–30 秒開瀏覽器
 
 const dealOf = (p: StorePrice) => (p.multi_buy && p.multi_buy.qty > 0 ? p.multi_buy.total / p.multi_buy.qty : Number(p.price))
 const nzDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland', year: 'numeric', month: '2-digit', day: '2-digit' })
