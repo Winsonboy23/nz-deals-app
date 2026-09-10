@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // 購物清單。✓ = 買到了（劃線變淡）。沒配對到特價的自由項放最後一張「其他」卡，可以自己填價格（算進最省總價）。
 // 最下面「AI 食譜」→ /ai-recipes 用清單裡的食材想 2 道菜。
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import ProductThumb from '../components/ProductThumb.vue'
 import { useList, type ListItem } from '../composables/useList'
 import { useSpecials } from '../composables/useSpecials'
@@ -14,7 +14,7 @@ import { useSync } from '../composables/useSync'
 import { aiEnabled } from '../lib/aiRecipe'
 import GradientButton from '../components/GradientButton.vue'
 
-const { items, add, has, addFreeText, remove, clear, setQty, rename, setPrice, toggle, split, oneStop, oneStopFrom } = useList()
+const { items, add, has, addFreeText, remove, clear, setQty, rename, setPrice, toggle, split, oneStop, oneStopFrom, oneStopMissing, requestPrices, priceQueueAhead } = useList()
 const { activeStores, groups, familyAlt } = useSpecials()
 /** One stop：這家沒有這樣東西時，推薦它最便宜的同類（§8）。只是建議，不算進總價。 */
 function altText(storeId: string, key: string | null): string | null {
@@ -28,6 +28,8 @@ function altText(storeId: string, key: string | null): string | null {
 const thumbFor = (key: string | null) => (key ? groups.value.get(key)?.best.special ?? null : null)
 
 const mode = ref<'split' | 'one'>('split')
+/** 切到一站、或一站裡有東西沒價格 → 即時送單去問（Mac mini 幾秒內回；沒編號的、問過的 request 會自己跳過） */
+watch(() => (mode.value === 'one' ? oneStopMissing.value : []), (pairs) => { if (pairs.length) void requestPrices(pairs) }, { immediate: true })
 const { isIn } = useAuth()
 const { shareUrl, watched } = useSync()
 /** 關注的商品這週有特價、又還沒在清單裡 → 頂部建議加入（app-features §6）。 */
@@ -170,7 +172,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
             <span>{{ t('list.from', { v: money(c.total) }) }}</span>
           </div>
           <div class="lrow" style="padding: 8px 12px">
-            <div class="s grow">{{ t('list.known', { k: c.known, m: c.known + c.missing + c.notSold, n: c.missing }) }}{{ c.notSold ? t('list.knownNotSold', { n: c.notSold }) : '' }}</div>
+            <div class="s grow">{{ t('list.known', { k: c.known, m: c.known + c.missing + c.notSold, n: c.missing - c.pending }) }}{{ c.pending ? t('list.checkingN', { n: c.pending }) + (priceQueueAhead ? t('list.queueAhead', { n: priceQueueAhead }) : '') : '' }}{{ c.notSold ? t('list.knownNotSold', { n: c.notSold }) : '' }}</div>
           </div>
           <div v-for="l in c.lines" :key="l.item.id" class="lrow row" style="padding-left: 12px">
             <ProductThumb v-if="l.special ?? thumbFor(l.item.key)" :special="(l.special ?? thumbFor(l.item.key))!" variant="sq" class="list-tn" />
@@ -180,10 +182,12 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
               <div v-if="l.own" class="s ell">{{ t('list.selfPrice') }}</div>
               <div v-else-if="l.shelf" class="s ell">{{ l.shelf.is_special ? t('list.shelfSpecial') : t('list.shelfPrice') }}{{ l.shelf.club_only ? ' · ' + t('tag.club') : '' }}</div>
               <div v-else-if="l.notSold" class="s ell">{{ t('list.notSold') }}</div>
+              <div v-else-if="l.pending" class="s ell pulse">{{ t('list.checking') }}</div>
               <div v-else-if="!l.special" class="s ell">{{ t('cmp.noSpecial') }}</div>
-              <div v-if="!l.special && !l.own && !l.shelf && altText(c.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">{{ altText(c.store.id, l.item.key) }}</div>
+              <div v-if="!l.special && !l.own && !l.shelf && !l.pending && altText(c.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">{{ altText(c.store.id, l.item.key) }}</div>
             </component>
             <div v-if="l.special || l.own || l.shelf" class="p" :class="{ muted: l.shelf && !l.shelf.is_special }">{{ money(l.total) }}</div>
+            <div v-else-if="l.pending" class="p muted pulse">…</div>
             <div v-else class="p muted">—</div>
           </div>
         </div>
@@ -210,6 +214,8 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
 </template>
 
 <style scoped>
+.pulse { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 .row { padding: 7px 8px; gap: 7px; }
 .row .cb { width: 26px; height: 26px; font-size: 13px; }
 /* 商品名固定寬（吃剩下的空間、最多兩行），數量和價格欄才會對齊 */

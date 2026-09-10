@@ -30,8 +30,10 @@ export interface OneStopCard {
   /** 這家店沒賣（後端查價時接口沒回） */
   notSold: number
   total: number
-  /** own = 價格是使用者自己填的；shelf = 後端查到的現價（多半是原價，也可能是我們沒抓到的促銷） */
-  lines: Array<{ item: ListItem; special: Special | null; total: number; own?: boolean; shelf?: StorePrice; notSold?: boolean }>
+  /** 正在即時問的項數 */
+  pending: number
+  /** own = 價格是使用者自己填的；shelf = 後端查到的現價（多半是原價，也可能是我們沒抓到的促銷）；pending = 正在問 */
+  lines: Array<{ item: ListItem; special: Special | null; total: number; own?: boolean; shelf?: StorePrice; notSold?: boolean; pending?: boolean }>
 }
 
 const items = ref<ListItem[]>(readCache<ListItem[]>('list') ?? [])
@@ -144,6 +146,7 @@ const oneStop = computed<OneStopCard[]>(() => {
     let known = 0
     let missing = 0
     let notSold = 0
+    let pendingN = 0
     let total = 0
     for (const item of items.value) {
       const g = item.key ? groups.value.get(item.key) : undefined
@@ -170,18 +173,28 @@ const oneStop = computed<OneStopCard[]>(() => {
         } else if (sp && !sp.available) {
           notSold += 1
           lines.push({ item, special: null, total: 0, notSold: true })
+        } else if (storePrices.isPending(d.store.id, item.key)) {
+          pendingN += 1
+          lines.push({ item, special: null, total: 0, pending: true })
         } else {
           missing += 1
           lines.push({ item, special: null, total: 0 })
         }
       }
     }
-    // 有特價的在前、自己填的、查到現價的、價格未知的、這家沒賣的墊底
-    const rank = (l: OneStopCard['lines'][number]) => (l.special ? 0 : l.own ? 1 : l.shelf ? 2 : l.notSold ? 4 : 3)
+    // 有特價的在前、自己填的、查到現價的、正在問的、價格未知的、這家沒賣的墊底
+    const rank = (l: OneStopCard['lines'][number]) => (l.special ? 0 : l.own ? 1 : l.shelf ? 2 : l.pending ? 3 : l.notSold ? 5 : 4)
     lines.sort((a, b) => rank(a) - rank(b))
-    cards.push({ store: d.store, known, missing, notSold, total, lines })
+    cards.push({ store: d.store, known, missing: missing + pendingN, notSold, pending: pendingN, total, lines })
   }
   return cards.sort((a, b) => b.known - a.known || a.total - b.total)
+})
+
+/** 一站裡「沒價格、也問不了的還沒判定」的（店, key）→ 切到一站時送去即時問（useStorePrices.request 會自己過濾沒編號、問過的）。 */
+const oneStopMissing = computed<Array<{ storeId: string; key: string }>>(() => {
+  const out: Array<{ storeId: string; key: string }> = []
+  for (const c of oneStop.value) for (const l of c.lines) if (l.item.key && !l.special && !l.own && !l.shelf && !l.notSold && !l.pending && !storePrices.hasNoId(c.store.id, l.item.key)) out.push({ storeId: c.store.id, key: l.item.key })
+  return out
 })
 
 const oneStopFrom = computed(() => (oneStop.value.length ? oneStop.value[0].total : 0))
@@ -201,5 +214,8 @@ export function useList() {
     split,
     oneStop,
     oneStopFrom,
+    oneStopMissing,
+    requestPrices: storePrices.request,
+    priceQueueAhead: storePrices.queueAhead,
   }
 }

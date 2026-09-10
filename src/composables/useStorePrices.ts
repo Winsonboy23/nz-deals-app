@@ -1,22 +1,60 @@
-// Phase 2b §9b「拿編號問原價」：後端每週一把清單／關注商品向各店查現價，存 store_prices（只有登入者的清單，訪客查不到是正常的）。
-// 這裡按「你的店 × 清單 key」讀回來，給一站模式把「價格未知」變成真價格、接口沒回的標「此店沒賣」。
+// 各店「現在多少錢」（store_prices）：
+//  - 後端週一批次幫登入者的清單先查好（Phase 2b §9b）
+//  - 點「一站」缺什麼就即時送單（RPC request_prices），Mac mini 上的 price-worker 幾秒內去問，這裡每 2 秒盯狀態，好了就重讀（2026-09-10）
+// 這週一換價之前查的當過期，不用、會重問。同一組（店 × 商品）2 分鐘內不重送。
 import { ref, shallowRef } from 'vue'
 import { supabase } from '../lib/supabase'
 import type { StorePrice } from '../lib/types'
+import { nzMonday } from '../lib/week'
 
 const COLS = 'store_id,product_id,product_key,available,price,price_unit,was_price,is_special,club_only,multi_buy,unit_price,unit_price_unit,name,fetched_at'
 /** `${store_id}|${product_key}` → 這家店這樣商品的價（同 key 多個編號時取有賣且最便宜的） */
 const byStoreKey = shallowRef<Map<string, StorePrice>>(new Map())
 const loading = ref(false)
+/** 正在問的（店|key） */
+const pending = ref<Set<string>>(new Set())
+/** 我的單前面還有幾張（0 = 正在做或沒在排） */
+const queueAhead = ref(0)
+/** 這家店問不了（沒有這家的商品編號）的（店|key）：畫面直接「價格未知」、不轉圈 */
+const noId = ref<Set<string>>(new Set())
 let lastSig = ''
+let lastStores: string[] = []
+let lastKeys: string[] = []
+/** 送過的（店|key）→ 時間，2 分鐘內不重送 */
+const tried = new Map<string, number>()
+/** key → product_ids 列（chain, product_id） */
+const idsOf = new Map<string, Array<{ chain: string; product_id: string }>>()
+/** 追蹤中的單：id → { pairs, since } */
+const tracking = new Map<string, { pairs: string[]; since: number }>()
+let polling = false
+const RETRY_MS = 2 * 60 * 1000
+const GIVE_UP_MS = 60 * 1000
 
 const dealOf = (p: StorePrice) => (p.multi_buy && p.multi_buy.qty > 0 ? p.multi_buy.total / p.multi_buy.qty : Number(p.price))
+const nzDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland', year: 'numeric', month: '2-digit', day: '2-digit' })
+/** 這週一（NZ）之後查的才算數 */
+const fresh = (p: StorePrice) => nzDate.format(new Date(p.fetched_at)) >= nzMonday()
 
-/** 抓 storeIds × keys 的現價。同樣的組合不重抓。 */
-async function load(storeIds: string[], keys: string[]): Promise<void> {
+function deviceId(): string {
+  try {
+    let id = localStorage.getItem('nzd:device')
+    if (!id) {
+      id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`
+      localStorage.setItem('nzd:device', id)
+    }
+    return id
+  } catch {
+    return 'anon'
+  }
+}
+
+/** 抓 storeIds × keys 的現價。同樣的組合不重抓（force 例外）。 */
+async function load(storeIds: string[], keys: string[], force = false): Promise<void> {
   const sig = `${[...storeIds].sort().join(',')}#${[...keys].sort().join(',')}`
-  if (sig === lastSig) return
+  if (sig === lastSig && !force) return
   lastSig = sig
+  lastStores = [...storeIds]
+  lastKeys = [...keys]
   if (!storeIds.length || !keys.length) {
     byStoreKey.value = new Map()
     return
@@ -28,7 +66,7 @@ async function load(storeIds: string[], keys: string[]): Promise<void> {
       const { data, error } = await supabase.from('store_prices').select(COLS).in('store_id', storeIds).in('product_key', keys.slice(i, i + 100))
       if (error) return   // 表還沒建或斷線：當作沒有，UI 維持「價格未知」
       for (const raw of (data ?? []) as unknown as StorePrice[]) {
-        if (!raw.product_key) continue
+        if (!raw.product_key || !fresh(raw)) continue
         const k = `${raw.store_id}|${raw.product_key}`
         const cur = map.get(k)
         const row: StorePrice = { ...raw, price: raw.price != null ? Number(raw.price) : null, was_price: raw.was_price != null ? Number(raw.was_price) : null, unit_price: raw.unit_price != null ? Number(raw.unit_price) : null }
@@ -44,7 +82,100 @@ async function load(storeIds: string[], keys: string[]): Promise<void> {
 function priceAt(storeId: string, key: string | null): StorePrice | undefined {
   return key ? byStoreKey.value.get(`${storeId}|${key}`) : undefined
 }
+const isPending = (storeId: string, key: string | null) => !!key && pending.value.has(`${storeId}|${key}`)
+const hasNoId = (storeId: string, key: string | null) => !!key && noId.value.has(`${storeId}|${key}`)
+
+/** key → 各家編號（product_ids 表，公開讀）。查過的記在記憶體。 */
+async function resolveIds(keys: string[]): Promise<void> {
+  const need = keys.filter((k) => !idsOf.has(k))
+  for (let i = 0; i < need.length; i += 100) {
+    const chunk = need.slice(i, i + 100)
+    const { data, error } = await supabase.from('product_ids').select('chain,product_id,product_key').in('product_key', chunk)
+    if (error) return
+    for (const k of chunk) idsOf.set(k, [])
+    for (const r of (data ?? []) as Array<{ chain: string; product_id: string; product_key: string }>) idsOf.get(r.product_key)!.push({ chain: r.chain, product_id: r.product_id })
+  }
+}
+const chainGroup = (storeId: string) => (storeId.startsWith('woolworths:') ? ['woolworths'] : ['newworld', 'paknsave'])
+
+/** 點「一站」時：這些（店, key）沒價格 → 送單去問。有編號的才送；沒編號的記進 noId。 */
+async function request(pairs: Array<{ storeId: string; key: string }>): Promise<void> {
+  const now = Date.now()
+  const todo = pairs.filter(({ storeId, key }) => {
+    const id = `${storeId}|${key}`
+    return !pending.value.has(id) && !noId.value.has(id) && (tried.get(id) ?? 0) < now - RETRY_MS
+  })
+  if (!todo.length) return
+  for (const { storeId, key } of todo) tried.set(`${storeId}|${key}`, now)
+  await resolveIds([...new Set(todo.map((p) => p.key))])
+  const byStore = new Map<string, { ids: Set<string>; pairs: string[] }>()
+  const nextNoId = new Set(noId.value)
+  for (const { storeId, key } of todo) {
+    const ids = (idsOf.get(key) ?? []).filter((r) => chainGroup(storeId).includes(r.chain)).map((r) => r.product_id)
+    const pairId = `${storeId}|${key}`
+    if (!ids.length) { nextNoId.add(pairId); continue }
+    const b = byStore.get(storeId) ?? { ids: new Set<string>(), pairs: [] }
+    for (const id of ids) b.ids.add(id)
+    b.pairs.push(pairId)
+    byStore.set(storeId, b)
+  }
+  noId.value = nextNoId
+  if (!byStore.size) return
+  const items = [...byStore.entries()].map(([store_id, b]) => ({ store_id, product_ids: [...b.ids] }))
+  const nextPending = new Set(pending.value)
+  for (const b of byStore.values()) for (const p of b.pairs) nextPending.add(p)
+  pending.value = nextPending
+  const { data, error } = await supabase.rpc('request_prices', { p_caller: `d:${deviceId()}`, p_items: items })
+  if (error || !Array.isArray(data)) {   // 額度滿了／後端沒開：當作沒問到
+    const back = new Set(pending.value)
+    for (const b of byStore.values()) for (const p of b.pairs) back.delete(p)
+    pending.value = back
+    return
+  }
+  const stores = [...byStore.keys()]
+  ;(data as string[]).forEach((id, i) => {
+    const b = byStore.get(stores[i]!)
+    if (b) tracking.set(id, { pairs: b.pairs, since: now })
+  })
+  void poll()
+}
+
+/** 每 2 秒問一次單的狀態；done / failed / 等超過 60 秒 → 拿掉轉圈，done 的重讀價格。 */
+async function poll(): Promise<void> {
+  if (polling) return
+  polling = true
+  try {
+    while (tracking.size) {
+      await new Promise((r) => setTimeout(r, 2000))
+      const ids = [...tracking.keys()]
+      const { data, error } = await supabase.rpc('price_request_status', { p_ids: ids })
+      const now = Date.now()
+      const finished: string[] = []
+      let anyDone = false
+      let ahead = 0
+      const rows = error ? [] : ((data ?? []) as Array<{ id: string; status: string; ahead: number }>)
+      const seen = new Set(rows.map((r) => r.id))
+      for (const r of rows) {
+        if (r.status === 'done') { finished.push(r.id); anyDone = true }
+        else if (r.status === 'failed') finished.push(r.id)
+        else ahead = Math.max(ahead, r.ahead ?? 0)
+      }
+      for (const [id, t] of tracking) if (now - t.since > GIVE_UP_MS || (!seen.has(id) && !error)) finished.push(id)
+      queueAhead.value = ahead
+      if (anyDone) await load(lastStores, lastKeys, true)   // 先把價格讀進來，再拿掉轉圈，畫面不會閃一下「未知」
+      if (finished.length) {
+        const next = new Set(pending.value)
+        for (const id of finished) { for (const p of tracking.get(id)?.pairs ?? []) next.delete(p); tracking.delete(id) }
+        pending.value = next
+      }
+    }
+    await load(lastStores, lastKeys, true)   // 全部做完再讀一次，保險
+  } finally {
+    polling = false
+    queueAhead.value = 0
+  }
+}
 
 export function useStorePrices() {
-  return { load, priceAt, loading, byStoreKey }
+  return { load, priceAt, isPending, hasNoId, request, loading, pending, queueAhead, byStoreKey }
 }
