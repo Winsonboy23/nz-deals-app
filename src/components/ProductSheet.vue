@@ -39,12 +39,15 @@ const family = computed(() => (best.value ? familyOffers(best.value.special, 6) 
 /** 口味／規格切換：同品牌同類的其他商品，標籤只寫「不一樣的字」（Classic Medium Roast / Caramel）。 */
 const variants = computed(() => {
   if (!best.value) return []
-  const all = [group.value!, ...variantsOf(best.value.special)]
+  // 現在這款也一起照名字排，順序才不會跟著點到誰而變（以前現在這款永遠排第一，點第四個就跳到第一）。
+  const all = [group.value!, ...variantsOf(best.value.special)].sort((a, b) => a.best.special.name.localeCompare(b.best.special.name))
   if (all.length < 2) return []
   const words = all.map((g) => displayName(g.best.special).split(/\s+/))
   const common = new Set(words[0].filter((w) => words.every((ws) => ws.includes(w))))
   const rows = all.map((g, i) => ({ key: g.key, label: words[i].filter((w) => !common.has(w)).join(' ') || displayName(g.best.special), current: g.key === group.value!.key }))
-  return rows.slice(0, 8)   // Moccona 有 20 幾款，最多列 8 個
+  // Moccona 有 20 幾款，最多列 8 個：固定每 8 個一頁，列現在這款所在的那頁，點同頁的不會換頁。
+  const page = Math.floor(Math.max(0, rows.findIndex((r) => r.current)) / 8) * 8
+  return rows.slice(page, page + 8)
 })
 // 換口味／規格後，讓那排按鈕留在螢幕原位；面板不要跳回最上面（iOS Safari 沒有 scroll anchoring）。
 const sheetEl = ref<HTMLElement>()
@@ -103,13 +106,11 @@ const lowest8 = computed(() => {
   return weeks.every((w) => dealPrice(b.special) <= (priceAt(w, b.store.id) as number) + 0.001)
 })
 
-const added = ref(false)
 function addToList() {
   if (!best.value) return
   add(props.pkey, displayName(best.value.special))
-  added.value = true
 }
-const inList = computed(() => added.value || has(props.pkey))
+const inList = computed(() => has(props.pkey))
 
 function detailLine(storeId: string, hasWas: number | null, unit: string | null): string {
   if (chainOf(storeId) === 'paknsave') return t('p.lowPrice')
