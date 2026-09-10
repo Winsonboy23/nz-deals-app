@@ -33,7 +33,7 @@ export interface OneStopCard {
   /** 正在即時問的項數 */
   pending: number
   /** own = 價格是使用者自己填的；shelf = 後端查到的現價（多半是原價，也可能是我們沒抓到的促銷）；pending = 正在問 */
-  lines: Array<{ item: ListItem; special: Special | null; total: number; own?: boolean; shelf?: StorePrice; notSold?: boolean; pending?: boolean }>
+  lines: Array<{ item: ListItem; special: Special | null; total: number; own?: boolean; shelf?: StorePrice; notSold?: boolean; pending?: boolean; noId?: boolean }>
 }
 
 const items = ref<ListItem[]>(readCache<ListItem[]>('list') ?? [])
@@ -178,7 +178,8 @@ const oneStop = computed<OneStopCard[]>(() => {
           lines.push({ item, special: null, total: 0, pending: true })
         } else {
           missing += 1
-          lines.push({ item, special: null, total: 0 })
+          // noId = 這家連鎖沒有這商品的編號（還沒配對到），問不了
+          lines.push({ item, special: null, total: 0, noId: storePrices.hasNoId(d.store.id, item.key) })
         }
       }
     }

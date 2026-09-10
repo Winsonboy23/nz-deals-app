@@ -183,6 +183,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
               <div v-else-if="l.shelf" class="s ell">{{ l.shelf.is_special ? t('list.shelfSpecial') : t('list.shelfPrice') }}{{ l.shelf.club_only ? ' · ' + t('tag.club') : '' }}</div>
               <div v-else-if="l.notSold" class="s ell">{{ t('list.notSold') }}</div>
               <div v-else-if="l.pending" class="s ell pulse">{{ t('list.checking') }}</div>
+              <div v-else-if="l.noId" class="s ell">{{ t('list.unknownNoId') }}</div>
               <div v-else-if="!l.special" class="s ell">{{ t('cmp.noSpecial') }}</div>
               <div v-if="!l.special && !l.own && !l.shelf && !l.pending && altText(c.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">{{ altText(c.store.id, l.item.key) }}</div>
             </component>

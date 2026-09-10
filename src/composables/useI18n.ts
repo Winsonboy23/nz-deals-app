@@ -214,6 +214,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'list.shelfSpecial': { en: 'store price this week', zh: '店內本週價' },
   'list.notSold': { en: 'not sold at this store', zh: '此店沒賣' },
   'list.checking': { en: 'checking price…', zh: '查價中…' },
+  'list.unknownNoId': { en: 'price unknown · not matched at this chain yet', zh: '價格未知 · 這家還沒配對到' },
   'list.checkingN': { en: ' · checking {n}', zh: ' · {n} 項查價中' },
   'list.queueAhead': { en: ' · {n} ahead in queue', zh: ' · 前面還有 {n} 張' },
   'list.unmatched': { en: 'Not matched to a special', zh: '沒有配對到特價' },
