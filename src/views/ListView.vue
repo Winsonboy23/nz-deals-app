@@ -3,7 +3,7 @@
 // 最下面「AI 食譜」→ /ai-recipes 用清單裡的食材想 2 道菜。
 import { computed, ref, watch } from 'vue'
 import ProductThumb from '../components/ProductThumb.vue'
-import { useList, type ListItem } from '../composables/useList'
+import { useList, type ListItem, type OneStopCard } from '../composables/useList'
 import { useSpecials } from '../composables/useSpecials'
 import { chainClass, chainName, displayName, money, unitLabel } from '../lib/format'
 import { dealPrice } from '../lib/compare'
@@ -28,6 +28,35 @@ function altText(storeId: string, key: string | null): string | null {
 const thumbFor = (key: string | null) => (key ? groups.value.get(key)?.best.special ?? null : null)
 
 const mode = ref<'split' | 'one'>('split')
+/** 一站畫面用：每家分成 有 / 沒有 / 不確定 三組。oneStop 已按「買得到幾樣、再比總價」排好，第一家就是結論。 */
+type OsLine = OneStopCard['lines'][number]
+interface OsStore { card: OneStopCard; have: OsLine[]; none: OsLine[]; unsure: OsLine[]; total: number; approx: boolean }
+const osStores = computed<OsStore[]>(() =>
+  oneStop.value.map((c) => {
+    const have = c.lines.filter((l) => !!(l.special || l.own || l.shelf))
+    const none = c.lines.filter((l) => !(l.special || l.own || l.shelf) && (l.notSold || l.nameState === 'none'))
+    const unsure = c.lines.filter((l) => !have.includes(l) && !none.includes(l))
+    return { card: c, have, none, unsure, total: c.total, approx: unsure.length > 0 }
+  }),
+)
+const winner = computed(() => osStores.value[0] ?? null)
+/** 全部買齊的那家（沒有「沒有」也沒有「不確定」）；跟結論那家不同時才多顯示一行 */
+const complete = computed(() => osStores.value.find((s) => !s.none.length && !s.unsure.length) ?? null)
+const anyPending = computed(() => oneStop.value.some((c) => c.pending > 0))
+const osTotal = (s: OsStore) => (s.approx ? t('list.approx', { v: money(s.total) }) : money(s.total))
+function missingNames(s: OsStore): string {
+  const names = s.none.map((l) => l.item.name)
+  return names.slice(0, 2).join('、') + (names.length > 2 ? t('list.andMore', { n: names.length - 2 }) : '')
+}
+/** 這家沒有 → 別家最便宜的特價在哪 */
+function buyAt(key: string | null): string | null {
+  const g = key ? groups.value.get(key) : undefined
+  return g ? t('list.buyAt', { s: g.best.store.name, v: money(dealPrice(g.best.special)) }) : null
+}
+/** 展開哪一家：預設第一家（結論那家）；點一下切換，再點收合 */
+const expanded = ref<string | null>(null)
+const isOpen = (id: string) => (expanded.value ?? winner.value?.card.store.id ?? '') === id
+const toggleStore = (id: string) => { expanded.value = isOpen(id) ? '' : id }
 /** 切到一站、或一站裡有東西沒價格 → 即時送單去問（Mac mini 幾秒內回；沒編號的、問過的 request 會自己跳過） */
 watch(() => (mode.value === 'one' ? oneStopMissing.value : []), (pairs) => { if (pairs.length) void requestPrices(pairs) }, { immediate: true })
 const { isIn } = useAuth()
@@ -163,35 +192,67 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
       </div>
     </template>
 
-    <!-- D1 · 一站 -->
+    <!-- D1 · 一站（2026-09-10 重排）：結論一句 → 三家一列 → 點開才看細項；狀態只有 有 / 沒有 / 不確定 -->
     <template v-else>
-      <div v-for="c in oneStop" :key="c.store.id" class="pad" style="margin-top: 8px">
+      <div v-if="osStores.length" class="pad" style="margin-top: 8px">
+        <div class="box os-sum">
+          <div v-if="anyPending" class="s pulse" style="margin-bottom: 4px">{{ t('list.checkingTop') }}{{ priceQueueAhead ? t('list.queueAhead', { n: priceQueueAhead }) : '' }}</div>
+          <div v-if="winner && winner.have.length" class="os-go">{{ t('list.go', { s: winner.card.store.name, m: items.length, n: winner.have.length, v: osTotal(winner) }) }}</div>
+          <div v-else class="os-go">{{ t('list.goNone') }}</div>
+          <div v-if="winner && winner.none.length" class="s" style="margin-top: 3px">{{ t('list.missingNames', { names: missingNames(winner) }) }}</div>
+          <div v-if="complete && winner && complete !== winner" class="s" style="margin-top: 3px">{{ t('list.allAt', { s: complete.card.store.name, v: money(complete.total) }) }}</div>
+        </div>
+      </div>
+      <div v-for="s in osStores" :key="s.card.store.id" class="pad" style="margin-top: 8px">
         <div class="box">
-          <div class="ghead" :class="chainClass(c.store.id)">
-            <span class="ell">{{ c.store.name }}</span>
-            <span>{{ t('list.from', { v: money(c.total) }) }}</span>
+          <div class="ghead os-row" :class="chainClass(s.card.store.id)" role="button" @click="toggleStore(s.card.store.id)">
+            <span class="ell">{{ s.card.store.name }}</span>
+            <span class="os-stat">{{ s.have.length }}/{{ items.length }} · {{ osTotal(s) }}<template v-if="s.none.length"> · {{ t('list.missingN', { n: s.none.length }) }}</template></span>
+            <span class="chev" :class="{ open: isOpen(s.card.store.id) }">▾</span>
           </div>
-          <div class="lrow" style="padding: 8px 12px">
-            <div class="s grow">{{ t('list.known', { k: c.known, m: c.known + c.missing + c.notSold, n: c.missing - c.pending }) }}{{ c.pending ? t('list.checkingN', { n: c.pending }) + (priceQueueAhead ? t('list.queueAhead', { n: priceQueueAhead }) : '') : '' }}{{ c.notSold ? t('list.knownNotSold', { n: c.notSold }) : '' }}</div>
-          </div>
-          <div v-for="l in c.lines" :key="l.item.id" class="lrow row" style="padding-left: 12px">
-            <ProductThumb v-if="l.special ?? thumbFor(l.item.key)" :special="(l.special ?? thumbFor(l.item.key))!" variant="sq" class="list-tn" />
-            <div v-else class="tn sq list-tn ph" />
-            <component :is="l.item.key ? 'RouterLink' : 'div'" class="nm" :class="{ done: l.item.checked }" :to="l.item.key ? productLink(l.item.key) : undefined">
-              <div class="t">{{ l.item.name }} × {{ l.item.qty }}</div>
-              <div v-if="l.own" class="s ell">{{ t('list.selfPrice') }}</div>
-              <div v-else-if="l.shelf" class="s ell">{{ l.shelf.is_special ? t('list.shelfSpecial') : t('list.shelfPrice') }}{{ l.shelf.club_only ? ' · ' + t('tag.club') : '' }}</div>
-              <div v-else-if="l.notSold" class="s ell">{{ t('list.notSold') }}</div>
-              <div v-else-if="l.pending" class="s ell pulse">{{ t('list.checking') }}</div>
-              <div v-else-if="l.nameState === 'none'" class="s ell">{{ t('list.nameNone') }}</div>
-              <div v-else-if="l.nameState === 'review'" class="s ell">{{ t('list.nameReview') }}</div>
-              <div v-else-if="!l.special" class="s ell">{{ t('cmp.noSpecial') }}</div>
-              <div v-if="!l.special && !l.own && !l.shelf && !l.pending && altText(c.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">{{ altText(c.store.id, l.item.key) }}</div>
-            </component>
-            <div v-if="l.special || l.own || l.shelf" class="p" :class="{ muted: l.shelf && !l.shelf.is_special }">{{ money(l.total) }}</div>
-            <div v-else-if="l.pending" class="p muted pulse">…</div>
-            <div v-else class="p muted">—</div>
-          </div>
+          <template v-if="isOpen(s.card.store.id)">
+            <template v-if="s.none.length">
+              <div class="grp">{{ t('list.grpNone', { n: s.none.length }) }}</div>
+              <div v-for="l in s.none" :key="l.item.id" class="lrow row" style="padding-left: 12px">
+                <ProductThumb v-if="thumbFor(l.item.key)" :special="thumbFor(l.item.key)!" variant="sq" class="list-tn" />
+                <div v-else class="tn sq list-tn ph" />
+                <component :is="l.item.key ? 'RouterLink' : 'div'" class="nm" :to="l.item.key ? productLink(l.item.key) : undefined">
+                  <div class="t">{{ l.item.name }} × {{ l.item.qty }}</div>
+                  <div v-if="altText(s.card.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">{{ altText(s.card.store.id, l.item.key) }}</div>
+                  <div v-else-if="buyAt(l.item.key)" class="s ell" style="color: var(--ink-2)">{{ buyAt(l.item.key) }}</div>
+                </component>
+                <div class="p muted">—</div>
+              </div>
+            </template>
+            <template v-if="s.unsure.length">
+              <div class="grp">{{ t('list.grpUnsure', { n: s.unsure.length }) }}</div>
+              <div v-for="l in s.unsure" :key="l.item.id" class="lrow row" style="padding-left: 12px">
+                <ProductThumb v-if="thumbFor(l.item.key)" :special="thumbFor(l.item.key)!" variant="sq" class="list-tn" />
+                <div v-else class="tn sq list-tn ph" />
+                <component :is="l.item.key ? 'RouterLink' : 'div'" class="nm" :to="l.item.key ? productLink(l.item.key) : undefined">
+                  <div class="t">{{ l.item.name }} × {{ l.item.qty }}</div>
+                  <div class="s ell" :class="{ pulse: l.pending }">{{ l.pending ? t('list.checking') : l.item.key ? t('list.unsure') : t('list.freeText') }}</div>
+                </component>
+                <div class="p muted" :class="{ pulse: l.pending }">{{ l.pending ? '…' : l.item.key ? '?' : '—' }}</div>
+              </div>
+            </template>
+            <template v-if="s.have.length">
+              <div class="grp">{{ t('list.grpHave', { n: s.have.length }) }}</div>
+              <div v-for="l in s.have" :key="l.item.id" class="lrow row" style="padding-left: 12px">
+                <ProductThumb v-if="l.special ?? thumbFor(l.item.key)" :special="(l.special ?? thumbFor(l.item.key))!" variant="sq" class="list-tn" />
+                <div v-else class="tn sq list-tn ph" />
+                <component :is="l.item.key ? 'RouterLink' : 'div'" class="nm" :class="{ done: l.item.checked }" :to="l.item.key ? productLink(l.item.key) : undefined">
+                  <div class="t">{{ l.item.name }} × {{ l.item.qty }}</div>
+                  <div class="s ell">
+                    <span v-if="l.special || l.shelf?.is_special" class="stag">{{ t('list.tagSpecial') }}</span>
+                    <span v-if="(l.special?.club_only) || l.shelf?.club_only" class="stag club">{{ t('tag.club') }}</span>
+                    <span v-if="l.own">{{ t('list.selfPrice') }}</span>
+                  </div>
+                </component>
+                <div class="p" :class="{ muted: l.shelf && !l.shelf.is_special }">{{ money(l.total) }}</div>
+              </div>
+            </template>
+          </template>
         </div>
       </div>
       <div v-if="!activeStores.length" class="pad" style="margin-top: 12px">
@@ -216,6 +277,15 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
 </template>
 
 <style scoped>
+.os-sum { padding: 12px 14px; }
+.os-go { font-size: 15.5px; font-weight: 700; line-height: 1.35; }
+.os-row { cursor: pointer; user-select: none; gap: 8px; }
+.os-stat { font-weight: 600; white-space: nowrap; font-size: 13px; }
+.chev { display: inline-block; transition: transform 0.15s; opacity: 0.8; }
+.chev.open { transform: rotate(180deg); }
+.grp { padding: 8px 12px 2px; font-size: 12px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.02em; }
+.stag { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: var(--ink); color: var(--paper); margin-right: 4px; line-height: 1.5; }
+.stag.club { background: var(--paper-2); color: var(--ink-2); }
 .pulse { animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 .row { padding: 7px 8px; gap: 7px; }
