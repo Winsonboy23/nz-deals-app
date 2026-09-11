@@ -81,7 +81,7 @@ export function localQuotaLeft(): number {
 }
 
 export class AiError extends Error {
-  constructor(public code: 'quota' | 'signIn' | 'few' | 'failed', message?: string) {
+  constructor(public code: 'quota' | 'signIn' | 'few' | 'failed' | 'paused', message?: string) {
     super(message ?? code)
   }
 }
@@ -114,6 +114,7 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
   if (status === 401) throw new AiError('signIn')
   if (status === 429) throw new AiError('quota')
   if (status === 400 && data?.error === 'too_few_items') throw new AiError('few')
+  if (status === 503 && data?.error === 'paused') throw new AiError('paused')   // 後台把 AI 食譜關掉了
   if (status !== 200 || !data) throw new AiError('failed', `status ${status}`)
   bumpLocal()
   return data as T

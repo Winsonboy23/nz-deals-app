@@ -35,7 +35,7 @@ const prefs = ref<Prefs>(loadPrefs())
 const recipes = ref<AiRecipe[]>([])
 const asked = ref(false)
 const loading = ref(false)
-const error = ref<'quota' | 'signIn' | 'few' | 'failed' | null>(null)
+const error = ref<'quota' | 'signIn' | 'few' | 'failed' | 'paused' | null>(null)
 const open = ref<number | null>(null)
 /** 紀錄幾筆了（滿了再生成會刪最舊的，先講） */
 const histCount = ref(0)
@@ -117,7 +117,7 @@ function backToForm() {
 
       <div v-else-if="error" class="pad" style="margin-top: 14px">
         <div class="empty sub">
-          {{ error === 'quota' ? t('ai.quota') : error === 'signIn' ? t('ai.needSignIn') : error === 'few' ? t('ai.few') : t('ai.failed') }}
+          {{ error === 'quota' ? t('ai.quota') : error === 'signIn' ? t('ai.needSignIn') : error === 'few' ? t('ai.few') : error === 'paused' ? t('ai.paused') : t('ai.failed') }}
           <div style="margin-top: 12px">
             <RouterLink v-if="error === 'signIn'" class="btn ghost" to="/signin" style="height: 42px; font-size: 15px">{{ t('common.signIn') }}</RouterLink>
             <RouterLink v-else-if="error === 'few' && !pool.length" class="btn ghost" to="/stores" style="height: 42px; font-size: 15px">{{ t('stores.title') }}</RouterLink>

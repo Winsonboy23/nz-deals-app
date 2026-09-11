@@ -12,12 +12,15 @@ import type { Group } from '../lib/types'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
 import { useStorePrices } from '../composables/useStorePrices'
+import { useSiteSettings } from '../composables/useSiteSettings'
 import { aiEnabled } from '../lib/aiRecipe'
 import GradientButton from '../components/GradientButton.vue'
 
 const { items, add, has, addFreeText, remove, clear, setQty, rename, setPrice, toggle, split, oneStop, oneStopFrom, oneStopMissing, requestPrices, priceQueueAhead } = useList()
 const { activeStores, groups, familyAlt } = useSpecials()
 const { priceAt } = useStorePrices()
+/** 後台的開關：即時查價關了就不送單，AI 食譜關了按鈕變灰 */
+const { livePrices, aiRecipes } = useSiteSettings()
 /** One stop：這家沒有這樣東西時，推薦它最便宜的同類（§8）。只是建議，不算進總價。 */
 function altText(storeId: string, key: string | null): string | null {
   const g = key ? groups.value.get(key) : undefined
@@ -208,7 +211,8 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
     <template v-else>
       <div v-if="osStores.length" class="pad" style="margin-top: 8px">
         <div class="box os-sum">
-          <div v-if="anyPending" class="s pulse" style="margin-bottom: 4px">{{ t('list.checkingTop') }}{{ priceQueueAhead ? t('list.queueAhead', { n: priceQueueAhead }) : '' }}</div>
+          <div v-if="!livePrices" class="s" style="margin-bottom: 4px">{{ t('list.pricesPaused') }}</div>
+          <div v-else-if="anyPending" class="s pulse" style="margin-bottom: 4px">{{ t('list.checkingTop') }}{{ priceQueueAhead ? t('list.queueAhead', { n: priceQueueAhead }) : '' }}</div>
           <div v-if="winner && winner.have.length" class="os-go">{{ t('list.go', { s: winner.card.store.name, m: items.length, n: winner.have.length, v: osTotal(winner) }) }}</div>
           <div v-else class="os-go">{{ t('list.goNone') }}</div>
           <div v-if="winner && winner.none.length" class="s" style="margin-top: 3px">{{ t('list.missingNames', { names: missingNames(winner) }) }}</div>
@@ -274,7 +278,8 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
 
     <!-- AI 食譜：清單最下面 -->
     <div v-if="!empty && aiEnabled" class="pad" style="margin-top: 20px">
-      <GradientButton v-if="isIn" to="/ai-recipes">{{ t('list.aiBtn') }}</GradientButton>
+      <button v-if="!aiRecipes" class="btn ghost" style="font-size: 17px; opacity: 0.5" disabled>{{ t('ai.paused') }}</button>
+      <GradientButton v-else-if="isIn" to="/ai-recipes">{{ t('list.aiBtn') }}</GradientButton>
       <RouterLink v-else class="btn ghost" to="/signin" style="font-size: 17px">{{ t('list.aiBtnSignIn') }}</RouterLink>
       <div class="s muted" style="margin-top: 8px; text-align: center; font-size: 12.5px; line-height: 1.4">{{ t('list.aiSub') }}</div>
     </div>

@@ -4,6 +4,7 @@
 // 這週一換價之前查的當過期，不用、會重問。同一組（店 × 商品）2 分鐘內不重送。
 import { ref, shallowRef } from 'vue'
 import { supabase } from '../lib/supabase'
+import { useSiteSettings } from './useSiteSettings'
 import type { StorePrice } from '../lib/types'
 import { nzMonday } from '../lib/week'
 
@@ -119,6 +120,7 @@ const chainGroup = (storeId: string) => (storeId.startsWith('woolworths:') ? ['w
 
 /** 點「一站」時：這些（店, key）沒價格 → 送單去問。有編號的送編號；沒編號、也還沒用名字配過的，送 key 讓後端用名字配（規則）。 */
 async function request(pairs: Array<{ storeId: string; key: string }>): Promise<void> {
+  if (!useSiteSettings().livePrices.value) return   // 後台把即時查價關掉了
   const now = Date.now()
   const todo = pairs.filter(({ storeId, key }) => {
     const id = `${storeId}|${key}`
@@ -146,6 +148,7 @@ async function request(pairs: Array<{ storeId: string; key: string }>): Promise<
   pending.value = nextPending
   const { data, error } = await supabase.rpc('request_prices', { p_caller: `d:${deviceId()}`, p_items: items })
   if (error || !Array.isArray(data)) {   // 額度滿了／後端沒開：當作沒問到
+    if (error && /paused/.test(error.message)) useSiteSettings().livePrices.value = false   // 剛被後台關掉
     const back = new Set(pending.value)
     for (const b of byStore.values()) for (const p of b.pairs) back.delete(p)
     pending.value = back

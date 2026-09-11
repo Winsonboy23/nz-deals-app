@@ -19,9 +19,18 @@ interface Req {
   created_at: string
   done_at: string | null
 }
+interface Health {
+  at: string
+  load: number | null
+  top: Array<{ cpu: number; name: string }> | null
+  chrome: number | null
+  orphan: number | null
+  mem_free_mb: number | null
+}
 const reqs = ref<Req[]>([])
 const counts = ref<Record<string, number>>({})
 const beat = ref<{ at: string; info: any } | null>(null)
+const health = ref<Health[]>([])
 const now = ref(Date.now())
 
 const nzFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland', year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -47,6 +56,19 @@ const summary = computed(() => [
   { label: '本週', s: stat(week.value) },
 ])
 
+/** 後台把即時查價關掉時，worker 的心跳會帶 paused。 */
+const paused = computed(() => !!beat.value?.info?.paused)
+
+/** Mac mini 健康（ops/health.sh 每 10 分鐘一列）：最新一列 + 24 小時負載折線。 */
+const latest = computed<Health | null>(() => health.value[0] ?? null)
+const loadLine = computed(() => {
+  const pts = health.value.map((h) => Number(h.load ?? 0)).reverse()
+  if (pts.length < 2) return ''
+  const max = Math.max(4, ...pts)
+  return pts.map((v, i) => `${(i / (pts.length - 1)) * 300},${60 - (v / max) * 56}`).join(' ')
+})
+const loadMax = computed(() => Math.max(4, ...health.value.map((h) => Number(h.load ?? 0))))
+
 /** 超過 5 分鐘沒回報就是紅的（§2.3）。 */
 const beatMins = computed(() => (beat.value ? Math.floor((now.value - new Date(beat.value.at).getTime()) / 60000) : null))
 const beatDead = computed(() => beatMins.value == null || beatMins.value >= 5)
@@ -56,13 +78,15 @@ const fmtTime = (iso: string) => new Date(iso).toLocaleString('zh-TW', { hour12:
 async function load() {
   now.value = Date.now()
   const since = new Date(Date.now() - 7 * 86400000).toISOString()
-  const [{ data: rows, error }, { data: hb }] = await Promise.all([
+  const [{ data: rows, error }, { data: hb }, { data: hl }] = await Promise.all([
     supabase.from('price_requests').select('*').gte('created_at', since).order('created_at', { ascending: false }).limit(500),
     supabase.from('heartbeats').select('at,info').eq('name', 'price-worker').limit(1),
+    supabase.from('health').select('at,load,top,chrome,orphan,mem_free_mb').order('at', { ascending: false }).limit(144),
   ])
   if (error) err.value = error.message
   reqs.value = (rows ?? []) as Req[]
   beat.value = ((hb ?? [])[0] as any) ?? null
+  health.value = (hl ?? []) as Health[]
   const got: Record<string, number> = {}
   for (const s of ['matched', 'review', 'none']) {
     const { count } = await supabase.from('name_matches').select('*', { count: 'exact', head: true }).eq('status', s)
@@ -93,6 +117,7 @@ onUnmounted(() => clearInterval(timer))
             <template v-if="beatMins == null">沒回報</template>
             <template v-else-if="beatDead">{{ beatMins }} 分鐘沒回報</template>
             <template v-else>{{ beatMins }} 分鐘前有回報</template>
+            <span v-if="paused" class="tag club" style="margin-left: 6px">已暫停（後台開關）</span>
           </div>
           <div class="s">
             瀏覽器 {{ beat?.info?.browsers ?? '—' }} 個 · 排隊 {{ beat?.info?.pending ?? '—' }} 張 ·
@@ -100,6 +125,26 @@ onUnmounted(() => clearInterval(timer))
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Mac mini 健康（health 表，每 10 分鐘一列） -->
+    <div class="sec" style="margin-bottom: 8px">Mac mini 健康</div>
+    <div class="box" style="margin-bottom: 16px">
+      <div v-if="!latest" class="lrow" style="padding: 12px 14px"><div class="s muted">還沒有記錄。</div></div>
+      <template v-else>
+        <div class="lrow" style="padding: 12px 14px">
+          <div class="grow">
+            <div class="t">負載 {{ latest.load ?? '—' }} · 記憶體剩 {{ latest.mem_free_mb ?? '—' }} MB · Chrome {{ latest.chrome ?? '—' }} 個（孤兒 {{ latest.orphan ?? '—' }}）</div>
+            <div class="s muted">{{ fmtTime(latest.at) }} · 最忙：{{ (latest.top ?? []).map((t) => `${t.name.slice(0, 28)} ${t.cpu}%`).join('、') || '—' }}</div>
+          </div>
+        </div>
+        <div v-if="loadLine" class="lrow" style="padding: 12px 14px; display: block">
+          <div class="sec">負載（最近 {{ health.length }} 筆，約 24 小時；上緣 {{ loadMax.toFixed(1) }}）</div>
+          <svg viewBox="0 0 300 60" preserveAspectRatio="none" style="width: 100%; height: 60px; margin-top: 6px">
+            <polyline :points="loadLine" fill="none" stroke="var(--ink)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+          </svg>
+        </div>
+      </template>
     </div>
 
     <!-- 查價單 -->

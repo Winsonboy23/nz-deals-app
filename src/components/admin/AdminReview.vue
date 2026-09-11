@@ -2,6 +2,7 @@
 // 後台「待審」（docs/admin-spec.md §2.1）：跨店配對 / 名字配對 / 同類（Phase B）。
 // 跨店配對點了不直接寫字典 —「都不一樣」要重算規則 key，改成插一張 admin_jobs（kind decide_pair）給 Mac mini 的 worker 做。
 import { computed, onMounted, ref } from 'vue'
+import AdminFamily from './AdminFamily.vue'
 import ProductThumb from '../ProductThumb.vue'
 import { supabase } from '../../lib/supabase'
 import { money } from '../../lib/format'
@@ -323,13 +324,8 @@ onMounted(() => {
       <div v-if="nameSent" class="sub muted" style="margin-top: 12px">這次已處理 {{ nameSent }} 組 ✓</div>
     </template>
 
-    <!-- 同類：family-dictionary.json 還沒搬進資料庫 -->
-    <div v-else class="empty">
-      <div class="h3">同類待審 · Phase B</div>
-      <div class="s" style="margin-top: 4px">
-        同類字典還在 data/family-dictionary.json，網頁改不到檔案。等它搬進資料庫（docs/admin-spec.md §3）再做。
-      </div>
-    </div>
+    <!-- 同類（family_dict） -->
+    <AdminFamily v-else />
   </div>
 </template>
 

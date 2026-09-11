@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { readCache, writeCache } from '../lib/cache'
+import { supabase } from '../lib/supabase'
 import { chainOf } from '../lib/format'
 
 export type Lang = 'en' | 'zh'
@@ -336,6 +337,9 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'recipes.tip': { en: 'Tip', zh: '小撇步' },
   'recipes.photo': { en: 'Photo: {p} · Pexels', zh: '照片：{p} · Pexels' },
 
+  'ai.paused': { en: 'AI recipes are paused', zh: 'AI 食譜暫停中' },
+  'list.pricesPaused': { en: 'Live price checks are paused', zh: '即時查價暫停中' },
+
   'top10.title': { en: 'Best deals this week', zh: '這週最划算' },
   'top10.sub': {
     en: 'Same item at 2+ of your stores, ranked by price gap and discount depth.',
@@ -369,6 +373,14 @@ async function loadZhCats(): Promise<void> {
     zhCats.value = (mod.default ?? mod) as Record<string, string>
   } catch {
     zhCats.value = {}
+  }
+  // 正本是 taxonomy_zh 表（後台改得到，公開讀）；讀不到就維持打包進來的那份
+  const { data } = await supabase.from('taxonomy_zh').select('name,zh')
+  const rows = (data ?? []) as Array<{ name: string; zh: string }>
+  if (rows.length) {
+    const next = { ...zhCats.value }
+    for (const r of rows) next[r.name] = r.zh
+    zhCats.value = next
   }
 }
 void loadZhCats()

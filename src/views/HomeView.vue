@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import StorePill from '../components/StorePill.vue'
 import ProductCard from '../components/ProductCard.vue'
 import MiniCard from '../components/MiniCard.vue'
@@ -14,6 +14,8 @@ import { useSync } from '../composables/useSync'
 import { dealPrice } from '../lib/compare'
 import { bi, useRecipes } from '../composables/useRecipes'
 import { chainName } from '../lib/format'
+import { useSiteSettings } from '../composables/useSiteSettings'
+import { readCache, writeCache } from '../lib/cache'
 
 const { loading, activeStores, totalSpecials, topDeduped, deepDiscounts, freshByKg, biggestSaving } = useSpecials()
 const { isIn, name, avatar } = useAuth()
@@ -37,6 +39,14 @@ const top6 = computed(() => topDeduped.value.slice(0, 6))
 const { ranked } = useRecipes()
 const top3 = computed(() => ranked.value.filter((r) => r.onSpecial > 0).slice(0, 3))
 const base = import.meta.env.BASE_URL
+/** 後台公告（settings.announce）：關掉之後同一句不再出現，換新的一句又會出現 */
+const { announce } = useSiteSettings()
+const seenAnnounce = ref(readCache<string>('announceSeen') ?? '')
+const showAnnounce = computed(() => !!announce.value && announce.value !== seenAnnounce.value)
+function closeAnnounce() {
+  seenAnnounce.value = announce.value
+  writeCache('announceSeen', announce.value)
+}
 const half = computed(() => deepDiscounts.value.slice(0, 12))
 const fresh = computed(() => freshByKg.value.slice(0, 12))
 </script>
@@ -54,6 +64,13 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
           <span v-else style="font-weight: 800">{{ name.slice(0, 1) }}</span>
         </RouterLink>
         <RouterLink v-else class="pill soft" to="/signin">{{ t('common.signIn') }}</RouterLink>
+      </div>
+    </div>
+
+    <div v-if="showAnnounce" class="pad" style="margin-top: 10px">
+      <div class="note row" style="gap: 10px; align-items: flex-start">
+        <div class="s" style="flex: 1; min-width: 0; color: var(--ink)">{{ announce }}</div>
+        <button class="link" style="flex: none" @click="closeAnnounce">✕</button>
       </div>
     </div>
 
