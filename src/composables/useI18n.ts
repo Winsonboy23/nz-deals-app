@@ -214,6 +214,8 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'list.grpUnsure': { en: 'Unsure ({n})', zh: '不確定（{n}）' },
   'list.grpHave': { en: 'Available ({n})', zh: '買得到（{n}）' },
   'list.buyAt': { en: 'Get at {s} for {v}', zh: '去 {s} 買 {v}' },
+  'list.buyAtShelf': { en: 'Get at {s} for {v} (regular price)', zh: '去 {s} 買 {v}（原價）' },
+  'list.regularPrice': { en: 'regular price', zh: '原價' },
   'list.checkingTop': { en: 'Still checking prices…', zh: '還在問價格…' },
   'list.unsure': { en: 'unsure', zh: '不確定' },
   'list.tagSpecial': { en: 'SPECIAL', zh: '特價' },

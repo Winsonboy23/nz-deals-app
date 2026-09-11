@@ -16,9 +16,11 @@ export interface ListItem {
   price?: number | null
 }
 
+/** 最省模式的一列：offer = 特價；shelf = 後端查到的現價（多半是原價，也可能是我們沒抓到的促銷）。兩者取一。 */
+export interface SplitLine { item: ListItem; offer?: Offer; shelf?: StorePrice; total: number }
 export interface SplitBucket {
   store: Store
-  lines: Array<{ item: ListItem; offer: Offer; total: number }>
+  lines: SplitLine[]
   subtotal: number
 }
 
@@ -111,21 +113,30 @@ const split = computed<{ buckets: SplitBucket[]; unmatched: ListItem[]; total: n
   let total = 0
   let othersTotal = 0
   for (const item of items.value) {
+    // 最便宜的來源：特價（groups）或後端查到的現價（store_prices，2026-09-11 起也算進最省）
     const g = item.key ? groups.value.get(item.key) : undefined
-    if (!g) {
+    let best: { store: Store; offer?: Offer; shelf?: StorePrice; price: number } | null = g ? { store: g.best.store, offer: g.best, price: dealPrice(g.best.special) } : null
+    if (item.key) {
+      for (const d of activeStores.value) {
+        const sp = storePrices.priceAt(d.store.id, item.key)
+        if (!sp?.available || sp.price == null) continue
+        const p = sp.multi_buy && sp.multi_buy.qty > 0 ? sp.multi_buy.total / sp.multi_buy.qty : sp.price
+        if (!best || p < best.price) best = { store: d.store, shelf: sp, price: p }
+      }
+    }
+    if (!best) {
       unmatched.push(item)
       if (item.price) othersTotal += item.price * item.qty
       continue
     }
-    const offer = g.best
-    const line = { item, offer, total: dealPrice(offer.special) * item.qty }
+    const line: SplitLine = { item, offer: best.offer, shelf: best.offer ? undefined : best.shelf, total: best.price * item.qty }
     total += line.total
-    const b = map.get(offer.store.id)
+    const b = map.get(best.store.id)
     if (b) {
       b.lines.push(line)
       b.subtotal += line.total
     } else {
-      map.set(offer.store.id, { store: offer.store, lines: [line], subtotal: line.total })
+      map.set(best.store.id, { store: best.store, lines: [line], subtotal: line.total })
     }
   }
   return {

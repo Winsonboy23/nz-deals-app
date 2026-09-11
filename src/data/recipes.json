@@ -1,2053 +1,2053 @@
 [
- {
-  "id": "chicken-egg-rice-bowl-oyakodon-style",
-  "title": {
-   "en": "Chicken & Egg Rice Bowl (Oyakodon-style)",
-   "zh": "雞肉滑蛋丼"
+  {
+    "id": "chicken-egg-rice-bowl-oyakodon-style",
+    "title": {
+      "en": "Chicken & Egg Rice Bowl (Oyakodon-style)",
+      "zh": "雞肉滑蛋丼"
+    },
+    "serves": 4,
+    "minutes": 20,
+    "kcal": 560,
+    "difficulty": "easy",
+    "cuisine": "japanese",
+    "cuisineName": {
+      "en": "Japanese",
+      "zh": "日式"
+    },
+    "image": "recipes/chicken-egg-rice-bowl-oyakodon-style.jpg",
+    "credit": {
+      "photographer": "Gu Ko",
+      "url": "https://www.pexels.com/photo/delicious-japanese-oyakodon-bowl-with-chicken-37297724/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Shredded cooked chicken 300 g",
+          "zh": "手撕熟雞肉 300 g"
+        },
+        "families": [
+          "chicken_shredded"
+        ]
+      },
+      {
+        "name": {
+          "en": "Free range eggs 6",
+          "zh": "放養雞蛋 6 顆"
+        },
+        "families": [
+          "egg_free_range"
+        ]
+      },
+      {
+        "name": {
+          "en": "Microwave rice pouches 2 pouches (500 g)",
+          "zh": "即食米飯 2 包（500 g）"
+        },
+        "families": [
+          "rice_microwave_pouch"
+        ]
+      },
+      {
+        "name": {
+          "en": "Chicken stock 250 ml",
+          "zh": "雞高湯 250 ml"
+        },
+        "families": [
+          "stock_chicken_liquid"
+        ]
+      },
+      {
+        "name": {
+          "en": "Onion 1, thinly sliced",
+          "zh": "洋蔥 1 顆，切薄片"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Soy sauce 3 tbsp",
+          "zh": "醬油 3 大匙"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "White sugar 1 tbsp",
+          "zh": "白砂糖 1 大匙"
+        },
+        "families": [
+          "sugar_white"
+        ]
+      },
+      {
+        "name": {
+          "en": "Spring onion 2, sliced",
+          "zh": "蔥 2 支，切蔥花"
+        },
+        "families": []
+      }
+    ],
+    "staples": {
+      "en": "",
+      "zh": ""
+    },
+    "steps": {
+      "en": [
+        "Bring stock, soy sauce and sugar to a gentle simmer in a frying pan. Add onion and cook 4 minutes until translucent and soft.",
+        "Stir in the chicken and simmer 2 minutes until it soaks up the sauce and the liquid halves.",
+        "Beat the eggs lightly, leaving streaks of white. Pour in a circle around the pan; do not stir.",
+        "Cover on low for 90 seconds. Stop when the edges are set but the centre still wobbles.",
+        "Microwave the rice per pack (2 minutes), fill bowls, slide the chicken and egg with its sauce on top, and scatter spring onion."
+      ],
+      "zh": [
+        "雞高湯、醬油、砂糖倒進平底鍋煮到冒小泡，放洋蔥片煮 4 分鐘，洋蔥變透明軟塌就好。",
+        "加入雞肉絲拌開，煮 2 分鐘讓肉吸湯汁，湯量剩約一半。",
+        "雞蛋打散但不要打太勻，留一點蛋白條紋。沿鍋邊繞圈倒入，不要攪。",
+        "蓋鍋小火 1 分半，蛋液邊緣凝固、中央還會晃動就熄火。",
+        "米飯依包裝微波 2 分鐘，盛碗，把鍋裡的雞肉蛋連湯滑到飯上，撒蔥花。"
+      ]
+    },
+    "tip": {
+      "en": "Undercook the egg slightly; residual heat finishes it at the table.",
+      "zh": "蛋不要煮全熟，端上桌的餘溫會把它燜到剛好。"
+    }
   },
-  "serves": 4,
-  "minutes": 20,
-  "kcal": 560,
-  "difficulty": "easy",
-  "cuisine": "japanese",
-  "cuisineName": {
-   "en": "Japanese",
-   "zh": "日式"
+  {
+    "id": "bacon-egg-fried-rice",
+    "title": {
+      "en": "Bacon & Egg Fried Rice",
+      "zh": "培根蛋炒飯"
+    },
+    "serves": 4,
+    "minutes": 15,
+    "kcal": 620,
+    "difficulty": "easy",
+    "cuisine": "japanese",
+    "cuisineName": {
+      "en": "Japanese",
+      "zh": "日式"
+    },
+    "image": "recipes/bacon-egg-fried-rice.jpg",
+    "credit": {
+      "photographer": "Jer Chung",
+      "url": "https://www.pexels.com/photo/scrambled-eggs-in-white-plate-2116095/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Streaky bacon 200 g, cut into 1 cm strips",
+          "zh": "五花培根 200 g，切 1 cm 段"
+        },
+        "families": [
+          "bacon_streaky"
+        ]
+      },
+      {
+        "name": {
+          "en": "Free range eggs 4",
+          "zh": "放養雞蛋 4 顆"
+        },
+        "families": [
+          "egg_free_range"
+        ]
+      },
+      {
+        "name": {
+          "en": "Microwave rice pouches 2 pouches (500 g)",
+          "zh": "即食米飯 2 包（500 g）"
+        },
+        "families": [
+          "rice_microwave_pouch"
+        ]
+      },
+      {
+        "name": {
+          "en": "Broccoli 1 head, cut into small florets",
+          "zh": "花椰菜 1 顆，切小朵"
+        },
+        "families": [
+          "broccoli"
+        ]
+      },
+      {
+        "name": {
+          "en": "Soy sauce 2 tbsp",
+          "zh": "醬油 2 大匙"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Spring onion 3, chopped",
+          "zh": "蔥 3 支，切段"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Salted butter 20 g",
+          "zh": "鹹奶油 20 g"
+        },
+        "families": [
+          "butter_salted"
+        ]
+      }
+    ],
+    "staples": {
+      "en": "Black pepper",
+      "zh": "黑胡椒"
+    },
+    "steps": {
+      "en": [
+        "Start the bacon in a cold pan over medium heat and cook 5 minutes until the fat renders and the edges crisp. Remove, keep the fat.",
+        "Fry the broccoli in the bacon fat 3 minutes, add 2 tbsp water, cover 2 minutes until bright green and fork-tender.",
+        "Microwave the rice 2 minutes and break up the clumps. Pour beaten eggs into the centre; when half set, add the rice and toss on high.",
+        "When the grains separate and the pan sizzles, add soy sauce around the edge and toss 1 minute to colour the rice.",
+        "Return the bacon, add spring onion and butter, toss twice until the butter melts. Finish with pepper."
+      ],
+      "zh": [
+        "培根下冷鍋中火慢煎 5 分鐘，逼出油、邊緣變脆焦黃，撈起留油。",
+        "花椰菜下鍋用培根油炒 3 分鐘，加 2 大匙水蓋鍋悶 2 分鐘，顏色轉鮮綠、叉子能插入就好。",
+        "米飯微波 2 分鐘後用手捏散。蛋打散倒進鍋中央，半凝固時把飯倒進去大火翻炒。",
+        "飯粒散開、鍋底聽到滋滋聲後淋醬油沿鍋邊下，翻炒 1 分鐘讓飯粒沾上醬色。",
+        "放回培根、蔥段、奶油，翻兩下奶油融化即可，撒黑胡椒。"
+      ]
+    },
+    "tip": {
+      "en": "Starting bacon in a cold pan renders the fat evenly without toughening it.",
+      "zh": "冷鍋下培根，油才逼得乾淨，肉不會硬。"
+    }
   },
-  "image": "recipes/chicken-egg-rice-bowl-oyakodon-style.jpg",
-  "credit": {
-   "photographer": "Gu Ko",
-   "url": "https://www.pexels.com/photo/delicious-japanese-oyakodon-bowl-with-chicken-37297724/",
-   "source": "Pexels"
+  {
+    "id": "crispy-fish-bites-rice-bowl-with-tartare",
+    "title": {
+      "en": "Crispy Fish Bites Rice Bowl with Tartare",
+      "zh": "日式炸魚塊丼佐塔塔醬"
+    },
+    "serves": 4,
+    "minutes": 25,
+    "kcal": 690,
+    "difficulty": "easy",
+    "cuisine": "japanese",
+    "cuisineName": {
+      "en": "Japanese",
+      "zh": "日式"
+    },
+    "image": "recipes/crispy-fish-bites-rice-bowl-with-tartare.jpg",
+    "credit": {
+      "photographer": "Pixabay",
+      "url": "https://www.pexels.com/photo/brown-wooden-chopsticks-on-white-ceramic-bowl-with-pork-cutlet-and-spring-onion-on-brown-wooden-table-37352/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Hoki fish bites 500 g",
+          "zh": "Hoki 裹粉魚塊 500 g"
+        },
+        "families": [
+          "hoki_fish_bites"
+        ]
+      },
+      {
+        "name": {
+          "en": "Microwave rice pouches 2 pouches (500 g)",
+          "zh": "即食米飯 2 包（500 g）"
+        },
+        "families": [
+          "rice_microwave_pouch"
+        ]
+      },
+      {
+        "name": {
+          "en": "Mayonnaise 120 g",
+          "zh": "美乃滋 120 g"
+        },
+        "families": [
+          "mayonnaise"
+        ]
+      },
+      {
+        "name": {
+          "en": "Lemon juice 2 tbsp",
+          "zh": "檸檬汁 2 大匙"
+        },
+        "families": [
+          "lemon_juice"
+        ]
+      },
+      {
+        "name": {
+          "en": "Cabbage 200 g, finely shredded",
+          "zh": "高麗菜 200 g，切細絲"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Spring onion 2, finely sliced",
+          "zh": "蔥 2 支，切蔥花"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Soy sauce 1 tbsp",
+          "zh": "醬油 1 大匙"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "White sugar 1 tsp",
+          "zh": "白砂糖 1 小匙"
+        },
+        "families": [
+          "sugar_white"
+        ]
+      }
+    ],
+    "staples": {
+      "en": "",
+      "zh": ""
+    },
+    "steps": {
+      "en": [
+        "Heat oven to 220°C (air fryer 200°C). Spread fish bites in one layer and cook 15 minutes, turning once, until golden and crisp when pressed.",
+        "Mix mayonnaise, lemon juice and half the spring onion for the tartare; it should taste clearly tangy.",
+        "Stir soy sauce and sugar until the sugar dissolves for the drizzle.",
+        "Microwave the rice 2 minutes. Fill bowls with rice, top with cabbage, then the fish.",
+        "Drizzle the soy mix, spoon over the tartare and finish with the remaining spring onion."
+      ],
+      "zh": [
+        "烤箱預熱 220°C（氣炸鍋 200°C）。魚塊單層排開，烤 15 分鐘，中途翻面，外皮金黃、用手按會喀一聲。",
+        "美乃滋、檸檬汁、一半蔥花拌成塔塔醬，嚐起來要有明顯酸味。",
+        "醬油和砂糖拌到糖溶化，做成淋醬。",
+        "米飯微波 2 分鐘。碗底鋪飯，放高麗菜絲，擺魚塊。",
+        "淋醬油糖水，擠上塔塔醬，撒剩下的蔥花。"
+      ]
+    },
+    "tip": {
+      "en": "Never stack the fish bites; stacked pieces steam instead of crisping.",
+      "zh": "魚塊不要疊放，疊了就不脆。"
+    }
   },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Shredded cooked chicken 300 g",
-     "zh": "手撕熟雞肉 300 g"
+  {
+    "id": "korean-army-stew-budae-jjigae",
+    "title": {
+      "en": "Korean Army Stew (Budae Jjigae)",
+      "zh": "韓式部隊鍋"
     },
-    "families": [
-     "chicken_shredded"
-    ]
-   },
-   {
-    "name": {
-     "en": "Free range eggs 6",
-     "zh": "放養雞蛋 6 顆"
+    "serves": 4,
+    "minutes": 30,
+    "kcal": 720,
+    "difficulty": "medium",
+    "cuisine": "korean",
+    "cuisineName": {
+      "en": "Korean",
+      "zh": "韓式"
     },
-    "families": [
-     "egg_free_range"
-    ]
-   },
-   {
-    "name": {
-     "en": "Microwave rice pouches 2 pouches (500 g)",
-     "zh": "即食米飯 2 包（500 g）"
+    "image": "recipes/korean-army-stew-budae-jjigae.jpg",
+    "credit": {
+      "photographer": "makafood",
+      "url": "https://www.pexels.com/photo/spicy-fish-soup-boiling-in-pan-8827925/",
+      "source": "Pexels"
     },
-    "families": [
-     "rice_microwave_pouch"
-    ]
-   },
-   {
-    "name": {
-     "en": "Chicken stock 250 ml",
-     "zh": "雞高湯 250 ml"
+    "ingredients": [
+      {
+        "name": {
+          "en": "Frankfurters 6, sliced on the diagonal",
+          "zh": "法蘭克福香腸 6 條，斜切"
+        },
+        "families": [
+          "frankfurter"
+        ]
+      },
+      {
+        "name": {
+          "en": "Streaky bacon 150 g, cut into pieces",
+          "zh": "五花培根 150 g，切段"
+        },
+        "families": [
+          "bacon_streaky"
+        ]
+      },
+      {
+        "name": {
+          "en": "Instant noodle packets 2 packets (noodle cakes only)",
+          "zh": "袋裝即食麵 2 包（麵餅）"
+        },
+        "families": [
+          "instant_noodle_packet"
+        ]
+      },
+      {
+        "name": {
+          "en": "Chicken stock 1 litre",
+          "zh": "雞高湯 1 公升"
+        },
+        "families": [
+          "stock_chicken_liquid"
+        ]
+      },
+      {
+        "name": {
+          "en": "Sauerkraut 200 g",
+          "zh": "德式酸菜 200 g"
+        },
+        "families": [
+          "sauerkraut"
+        ]
+      },
+      {
+        "name": {
+          "en": "Cheddar cheese 80 g, sliced",
+          "zh": "切達起司 80 g，切片"
+        },
+        "families": [
+          "cheese_cheddar_organic"
+        ]
+      },
+      {
+        "name": {
+          "en": "Gochujang 2 tbsp",
+          "zh": "韓式辣醬 2 大匙"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Garlic 3 cloves, minced",
+          "zh": "蒜 3 瓣，切末"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Spring onion 3, cut into lengths",
+          "zh": "蔥 3 支，切段"
+        },
+        "families": []
+      }
+    ],
+    "staples": {
+      "en": "",
+      "zh": ""
     },
-    "families": [
-     "stock_chicken_liquid"
-    ]
-   },
-   {
-    "name": {
-     "en": "Onion 1, thinly sliced",
-     "zh": "洋蔥 1 顆，切薄片"
+    "steps": {
+      "en": [
+        "Loosen gochujang and garlic with 3 tbsp stock in a wide pot, add the rest of the stock and bring to the boil.",
+        "Arrange sausages, bacon and sauerkraut in sections and simmer 8 minutes until the bacon turns opaque and the broth goes orange-red.",
+        "Add the noodle cakes without pressing them down. Cook 3 minutes until chopsticks can separate the strands, flip, and cook 1 more minute.",
+        "Lay cheese slices over the noodles, cover 1 minute until melted into the broth.",
+        "Scatter spring onion and bring the pot to the table; keep it simmering while you eat."
+      ],
+      "zh": [
+        "辣醬、蒜末用 3 大匙高湯調開，倒進寬口鍋，加剩下的高湯煮滾。",
+        "香腸、培根、酸菜分區擺進鍋裡，中火煮 8 分鐘，培根變不透明、湯色轉橘紅。",
+        "放進麵餅，不要壓，煮 3 分鐘，麵條能用筷子撥散就翻面再煮 1 分鐘。",
+        "起司片鋪在麵上，蓋鍋 1 分鐘，起司融化流進湯裡。",
+        "撒蔥段，整鍋端上桌，邊煮邊吃。"
+      ]
     },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Soy sauce 3 tbsp",
-     "zh": "醬油 3 大匙"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "White sugar 1 tbsp",
-     "zh": "白砂糖 1 大匙"
-    },
-    "families": [
-     "sugar_white"
-    ]
-   },
-   {
-    "name": {
-     "en": "Spring onion 2, sliced",
-     "zh": "蔥 2 支，切蔥花"
-    },
-    "families": []
-   }
-  ],
-  "staples": {
-   "en": "",
-   "zh": ""
+    "tip": {
+      "en": "Sauerkraut plus gochujang stands in for kimchi: you get both the sour and the heat.",
+      "zh": "沒有泡菜就用酸菜加辣醬，酸和辣都到位。"
+    }
   },
-  "steps": {
-   "en": [
-    "Bring stock, soy sauce and sugar to a gentle simmer in a frying pan. Add onion and cook 4 minutes until translucent and soft.",
-    "Stir in the chicken and simmer 2 minutes until it soaks up the sauce and the liquid halves.",
-    "Beat the eggs lightly, leaving streaks of white. Pour in a circle around the pan; do not stir.",
-    "Cover on low for 90 seconds. Stop when the edges are set but the centre still wobbles.",
-    "Microwave the rice per pack (2 minutes), fill bowls, slide the chicken and egg with its sauce on top, and scatter spring onion."
-   ],
-   "zh": [
-    "雞高湯、醬油、砂糖倒進平底鍋煮到冒小泡，放洋蔥片煮 4 分鐘，洋蔥變透明軟塌就好。",
-    "加入雞肉絲拌開，煮 2 分鐘讓肉吸湯汁，湯量剩約一半。",
-    "雞蛋打散但不要打太勻，留一點蛋白條紋。沿鍋邊繞圈倒入，不要攪。",
-    "蓋鍋小火 1 分半，蛋液邊緣凝固、中央還會晃動就熄火。",
-    "米飯依包裝微波 2 分鐘，盛碗，把鍋裡的雞肉蛋連湯滑到飯上，撒蔥花。"
-   ]
+  {
+    "id": "korean-chicken-bibimbap",
+    "title": {
+      "en": "Korean Chicken Bibimbap",
+      "zh": "韓式雞肉拌飯"
+    },
+    "serves": 4,
+    "minutes": 25,
+    "kcal": 640,
+    "difficulty": "medium",
+    "cuisine": "korean",
+    "cuisineName": {
+      "en": "Korean",
+      "zh": "韓式"
+    },
+    "image": "recipes/korean-chicken-bibimbap.jpg",
+    "credit": {
+      "photographer": "J MAD",
+      "url": "https://www.pexels.com/photo/cooked-food-on-black-bowl-12973148/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Shredded cooked chicken 300 g",
+          "zh": "手撕熟雞肉 300 g"
+        },
+        "families": [
+          "chicken_shredded"
+        ]
+      },
+      {
+        "name": {
+          "en": "Free range eggs 4",
+          "zh": "放養雞蛋 4 顆"
+        },
+        "families": [
+          "egg_free_range"
+        ]
+      },
+      {
+        "name": {
+          "en": "Microwave rice pouches 2 pouches (500 g)",
+          "zh": "即食米飯 2 包（500 g）"
+        },
+        "families": [
+          "rice_microwave_pouch"
+        ]
+      },
+      {
+        "name": {
+          "en": "Broccoli 1 head, cut into small florets",
+          "zh": "花椰菜 1 顆，切小朵"
+        },
+        "families": [
+          "broccoli"
+        ]
+      },
+      {
+        "name": {
+          "en": "Carrot 1, grated",
+          "zh": "紅蘿蔔 1 根，刨絲"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Gochujang 3 tbsp",
+          "zh": "韓式辣醬 3 大匙"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Sesame oil 2 tbsp",
+          "zh": "麻油 2 大匙"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Soy sauce 1 tbsp",
+          "zh": "醬油 1 大匙"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "White sugar 1 tsp",
+          "zh": "白砂糖 1 小匙"
+        },
+        "families": [
+          "sugar_white"
+        ]
+      }
+    ],
+    "staples": {
+      "en": "",
+      "zh": ""
+    },
+    "steps": {
+      "en": [
+        "Mix gochujang, 1 tbsp sesame oil, soy sauce and sugar into a sauce; stir until no sugar grains remain.",
+        "Blanch broccoli 2 minutes until bright green, drain and rinse under cold water.",
+        "Toss the chicken with 1 tbsp of the sauce. Salt the carrot lightly, rest 5 minutes and squeeze out the water.",
+        "Fry the eggs in 1 tbsp sesame oil until the whites bubble and crisp at the edges while the yolks stay runny.",
+        "Microwave rice 2 minutes, bowl it, arrange chicken, broccoli and carrot in sections, top with an egg, spoon over the rest of the sauce and mix at the table."
+      ],
+      "zh": [
+        "辣醬、1 大匙麻油、醬油、砂糖拌成醬，糖要拌到看不見顆粒。",
+        "花椰菜放滾水燙 2 分鐘，顏色鮮綠撈起沖冷水瀝乾。",
+        "雞肉絲用 1 大匙醬拌勻。紅蘿蔔絲用少許鹽抓 5 分鐘出水擠乾。",
+        "平底鍋 1 大匙麻油煎蛋 4 顆，蛋白邊緣起泡變酥、蛋黃仍是液狀就起鍋。",
+        "米飯微波 2 分鐘盛碗，雞肉、花椰菜、紅蘿蔔分區放，頂上放煎蛋，淋剩下的醬，拌開吃。"
+      ]
+    },
+    "tip": {
+      "en": "Make the sauce first so every bowl seasons evenly when mixed.",
+      "zh": "醬先拌好才不會拌飯時鹹的鹹淡的淡。"
+    }
   },
-  "tip": {
-   "en": "Undercook the egg slightly; residual heat finishes it at the table.",
-   "zh": "蛋不要煮全熟，端上桌的餘溫會把它燜到剛好。"
+  {
+    "id": "pork-prawn-dumpling-soup",
+    "title": {
+      "en": "Pork & Prawn Dumpling Soup",
+      "zh": "鮮蝦豬肉水餃湯"
+    },
+    "serves": 4,
+    "minutes": 20,
+    "kcal": 480,
+    "difficulty": "easy",
+    "cuisine": "chinese",
+    "cuisineName": {
+      "en": "Chinese",
+      "zh": "中式"
+    },
+    "image": "recipes/pork-prawn-dumpling-soup.jpg",
+    "credit": {
+      "photographer": "wutthichai charoenburi",
+      "url": "https://www.pexels.com/photo/bowl-of-soup-19811262/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Pork & prawn dumplings 24 (about 600 g)",
+          "zh": "豬肉鮮蝦水餃 24 顆（約 600 g）"
+        },
+        "families": [
+          "dumpling_pork_prawn"
+        ]
+      },
+      {
+        "name": {
+          "en": "Chicken stock 1.2 litres",
+          "zh": "雞高湯 1.2 公升"
+        },
+        "families": [
+          "stock_chicken_liquid"
+        ]
+      },
+      {
+        "name": {
+          "en": "Free range eggs 2",
+          "zh": "放養雞蛋 2 顆"
+        },
+        "families": [
+          "egg_free_range"
+        ]
+      },
+      {
+        "name": {
+          "en": "Broccoli ½ head, small florets",
+          "zh": "花椰菜 半顆，切小朵"
+        },
+        "families": [
+          "broccoli"
+        ]
+      },
+      {
+        "name": {
+          "en": "Ginger 3 slices",
+          "zh": "薑 3 片"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Spring onion 2, sliced",
+          "zh": "蔥 2 支，切蔥花"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Sesame oil 1 tsp",
+          "zh": "麻油 1 小匙"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "White vinegar 1 tbsp",
+          "zh": "白醋 1 大匙"
+        },
+        "families": [
+          "vinegar_white"
+        ]
+      }
+    ],
+    "staples": {
+      "en": "Salt",
+      "zh": "鹽"
+    },
+    "steps": {
+      "en": [
+        "Bring the stock and ginger to the boil, add frozen dumplings, return to the boil, then simmer 8 minutes until they all float and the skins turn translucent.",
+        "Add broccoli and cook 2 minutes until bright green.",
+        "Drizzle beaten egg slowly into the soup while stirring in circles with chopsticks; stop once ribbons form.",
+        "Off the heat, add vinegar and sesame oil. Taste and salt.",
+        "Ladle into bowls and top with spring onion."
+      ],
+      "zh": [
+        "高湯加薑片煮滾，放冷凍水餃，再次滾起後轉中火煮 8 分鐘，水餃全部浮起、皮變半透明。",
+        "加花椰菜煮 2 分鐘，顏色鮮綠。",
+        "蛋打散，慢慢淋入湯中，邊淋邊用筷子畫圈，蛋花成絲即停。",
+        "熄火，加白醋、麻油，試味加鹽。",
+        "分碗，撒蔥花。"
+      ]
+    },
+    "tip": {
+      "en": "A splash of vinegar keeps the broth clean and cuts the richness of the dumplings.",
+      "zh": "一點白醋讓湯清爽，餃子油膩感全消。"
+    }
+  },
+  {
+    "id": "garlic-broccoli-with-crispy-bacon",
+    "title": {
+      "en": "Garlic Broccoli with Crispy Bacon",
+      "zh": "蒜香培根炒花椰菜"
+    },
+    "serves": 4,
+    "minutes": 15,
+    "kcal": 320,
+    "difficulty": "easy",
+    "cuisine": "chinese",
+    "cuisineName": {
+      "en": "Chinese",
+      "zh": "中式"
+    },
+    "image": "recipes/garlic-broccoli-with-crispy-bacon.jpg",
+    "credit": {
+      "photographer": "https://kaboompics.com/",
+      "url": "https://www.pexels.com/photo/composition-of-bacon-and-garlic-on-desk-4022583/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Broccoli 2 heads, cut into florets",
+          "zh": "花椰菜 2 顆，切小朵"
+        },
+        "families": [
+          "broccoli"
+        ]
+      },
+      {
+        "name": {
+          "en": "Streaky bacon 200 g, cut into pieces",
+          "zh": "五花培根 200 g，切段"
+        },
+        "families": [
+          "bacon_streaky"
+        ]
+      },
+      {
+        "name": {
+          "en": "Garlic 4 cloves, sliced",
+          "zh": "蒜 4 瓣，切片"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Soy sauce 1 tbsp",
+          "zh": "醬油 1 大匙"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Chicken stock 100 ml",
+          "zh": "雞高湯 100 ml"
+        },
+        "families": [
+          "stock_chicken_liquid"
+        ]
+      },
+      {
+        "name": {
+          "en": "Sesame oil 1 tsp",
+          "zh": "麻油 1 小匙"
+        },
+        "families": []
+      }
+    ],
+    "staples": {
+      "en": "Black pepper",
+      "zh": "黑胡椒"
+    },
+    "steps": {
+      "en": [
+        "Start the bacon in a cold pan and cook 5 minutes until crisp. Remove, leaving 1 tbsp fat.",
+        "Fry garlic 30 seconds on low until the edges just colour, then add broccoli and toss 2 minutes on high.",
+        "Add stock and soy sauce, cover 3 minutes until a chopstick pierces the stems while they keep some bite.",
+        "Uncover and boil 1 minute until only a thin glaze remains.",
+        "Return the bacon, add sesame oil and pepper, toss twice and serve."
+      ],
+      "zh": [
+        "培根冷鍋中火煎 5 分鐘到酥脆，撈起，鍋裡留 1 大匙油。",
+        "蒜片下鍋小火 30 秒，邊緣微黃立刻放花椰菜大火翻炒 2 分鐘。",
+        "倒高湯和醬油，蓋鍋悶 3 分鐘，花椰菜梗用筷子能戳穿、還帶脆度。",
+        "開蓋大火收汁 1 分鐘，湯汁剩鍋底薄薄一層。",
+        "放回培根，淋麻油撒黑胡椒，翻兩下起鍋。"
+      ]
+    },
+    "tip": {
+      "en": "Keep the broccoli crisp-tender; soft broccoli loses all its charm.",
+      "zh": "花椰菜不要煮軟，帶脆才好吃。"
+    }
+  },
+  {
+    "id": "tomato-egg-stir-fry-on-rice",
+    "title": {
+      "en": "Tomato & Egg Stir-fry on Rice",
+      "zh": "番茄炒蛋蓋飯"
+    },
+    "serves": 4,
+    "minutes": 15,
+    "kcal": 520,
+    "difficulty": "easy",
+    "cuisine": "chinese",
+    "cuisineName": {
+      "en": "Chinese",
+      "zh": "中式"
+    },
+    "image": "recipes/tomato-egg-stir-fry-on-rice.jpg",
+    "credit": {
+      "photographer": "Markus Winkler",
+      "url": "https://www.pexels.com/photo/delicious-homemade-scrambled-eggs-with-tomatoes-30855418/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Free range eggs 6",
+          "zh": "放養雞蛋 6 顆"
+        },
+        "families": [
+          "egg_free_range"
+        ]
+      },
+      {
+        "name": {
+          "en": "Tomatoes 4, cut into wedges",
+          "zh": "番茄 4 顆，切塊"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Microwave rice pouches 2 pouches (500 g)",
+          "zh": "即食米飯 2 包（500 g）"
+        },
+        "families": [
+          "rice_microwave_pouch"
+        ]
+      },
+      {
+        "name": {
+          "en": "White sugar 2 tsp",
+          "zh": "白砂糖 2 小匙"
+        },
+        "families": [
+          "sugar_white"
+        ]
+      },
+      {
+        "name": {
+          "en": "Spring onion 2, sliced",
+          "zh": "蔥 2 支，切蔥花"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Vegetable oil 3 tbsp",
+          "zh": "沙拉油 3 大匙"
+        },
+        "families": []
+      }
+    ],
+    "staples": {
+      "en": "Salt, Black pepper",
+      "zh": "鹽、黑胡椒"
+    },
+    "steps": {
+      "en": [
+        "Beat the eggs with ½ tsp salt. Heat 2 tbsp oil until it shimmers, pour in the eggs and push with a spatula for 30 seconds until just set and still glossy. Remove.",
+        "Add the remaining oil and the tomatoes. Cook 3 minutes over medium heat until they release juice and the pan has a red sauce.",
+        "Add sugar and ½ tsp salt and cook 1 minute until the juice thickens slightly.",
+        "Return the eggs and toss 30 seconds so they soak up the tomato. Pepper.",
+        "Microwave rice 2 minutes, top with the tomato and egg, and scatter spring onion."
+      ],
+      "zh": [
+        "蛋打散加半小匙鹽。鍋燒熱下 2 大匙油，油紋出現時倒蛋，用鏟子推 30 秒，八分熟、還有一點濕就盛起。",
+        "同鍋下剩下的油，番茄塊下鍋中火炒 3 分鐘，邊角出汁、鍋底有紅色湯汁。",
+        "加砂糖和半小匙鹽，炒 1 分鐘讓湯汁略稠。",
+        "蛋倒回鍋，翻炒 30 秒讓蛋吸滿番茄汁，撒黑胡椒。",
+        "米飯微波 2 分鐘，番茄蛋鋪上去，撒蔥花。"
+      ]
+    },
+    "tip": {
+      "en": "Take the eggs out early; they finish cooking when they go back in.",
+      "zh": "蛋要提早盛起，回鍋才不會老。"
+    }
+  },
+  {
+    "id": "thai-coconut-chicken-curry",
+    "title": {
+      "en": "Thai Coconut Chicken Curry",
+      "zh": "泰式椰奶咖哩雞"
+    },
+    "serves": 4,
+    "minutes": 25,
+    "kcal": 610,
+    "difficulty": "easy",
+    "cuisine": "southeast-asian",
+    "cuisineName": {
+      "en": "Southeast Asian",
+      "zh": "東南亞"
+    },
+    "image": "recipes/thai-coconut-chicken-curry.jpg",
+    "credit": {
+      "photographer": "Gu Ko",
+      "url": "https://www.pexels.com/photo/delicious-asian-curry-in-tokyo-restaurant-31653129/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Coconut milk 400 ml",
+          "zh": "椰奶 400 ml"
+        },
+        "families": [
+          "coconut_milk"
+        ]
+      },
+      {
+        "name": {
+          "en": "Shredded cooked chicken 300 g",
+          "zh": "手撕熟雞肉 300 g"
+        },
+        "families": [
+          "chicken_shredded"
+        ]
+      },
+      {
+        "name": {
+          "en": "Broccoli 1 head, cut into florets",
+          "zh": "花椰菜 1 顆，切小朵"
+        },
+        "families": [
+          "broccoli"
+        ]
+      },
+      {
+        "name": {
+          "en": "Thai red curry paste 3 tbsp",
+          "zh": "紅咖哩醬 3 大匙"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Lime juice 2 tbsp",
+          "zh": "萊姆汁 2 大匙"
+        },
+        "families": [
+          "lime_juice"
+        ]
+      },
+      {
+        "name": {
+          "en": "Fish sauce 1 tbsp",
+          "zh": "魚露 1 大匙"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "White sugar 1 tbsp",
+          "zh": "白砂糖 1 大匙"
+        },
+        "families": [
+          "sugar_white"
+        ]
+      },
+      {
+        "name": {
+          "en": "Microwave rice pouches 2 pouches (500 g)",
+          "zh": "即食米飯 2 包（500 g）"
+        },
+        "families": [
+          "rice_microwave_pouch"
+        ]
+      }
+    ],
+    "staples": {
+      "en": "",
+      "zh": ""
+    },
+    "steps": {
+      "en": [
+        "Simmer 100 ml of the coconut milk 2 minutes until the oil separates and the surface looks glossy.",
+        "Add curry paste and fry 1 minute until fragrant and deep red.",
+        "Add the rest of the coconut milk, fish sauce and sugar, bring to the boil, add broccoli and cook 4 minutes until the stems soften.",
+        "Stir in the chicken and heat 2 minutes. Off the heat, add lime juice.",
+        "Microwave rice 2 minutes and spoon the curry over."
+      ],
+      "zh": [
+        "椰奶先倒 100 ml 進鍋中火煮 2 分鐘，油浮起、表面出現亮亮油紋。",
+        "加咖哩醬炒 1 分鐘到香味明顯、顏色變深紅。",
+        "倒入剩下的椰奶、魚露、砂糖煮滾，放花椰菜煮 4 分鐘到梗變軟。",
+        "加雞肉絲煮 2 分鐘讓肉熱透，熄火加萊姆汁。",
+        "米飯微波 2 分鐘，咖哩淋上。"
+      ]
+    },
+    "tip": {
+      "en": "Splitting the coconut milk before adding the paste makes the curry far more fragrant.",
+      "zh": "椰奶先煮出油再下咖哩醬，香氣差很多。"
+    }
+  },
+  {
+    "id": "satay-peanut-chicken-rice",
+    "title": {
+      "en": "Satay Peanut Chicken Rice",
+      "zh": "沙嗲花生醬雞肉飯"
+    },
+    "serves": 4,
+    "minutes": 20,
+    "kcal": 680,
+    "difficulty": "easy",
+    "cuisine": "southeast-asian",
+    "cuisineName": {
+      "en": "Southeast Asian",
+      "zh": "東南亞"
+    },
+    "image": "recipes/satay-peanut-chicken-rice.jpg",
+    "credit": {
+      "photographer": "Teguh S",
+      "url": "https://www.pexels.com/photo/delicious-indonesian-cuisine-with-sate-skewers-37081070/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Peanut butter 120 g",
+          "zh": "花生醬 120 g"
+        },
+        "families": [
+          "peanut_butter"
+        ]
+      },
+      {
+        "name": {
+          "en": "Coconut milk 250 ml",
+          "zh": "椰奶 250 ml"
+        },
+        "families": [
+          "coconut_milk"
+        ]
+      },
+      {
+        "name": {
+          "en": "Shredded cooked chicken 300 g",
+          "zh": "手撕熟雞肉 300 g"
+        },
+        "families": [
+          "chicken_shredded"
+        ]
+      },
+      {
+        "name": {
+          "en": "Lime juice 2 tbsp",
+          "zh": "萊姆汁 2 大匙"
+        },
+        "families": [
+          "lime_juice"
+        ]
+      },
+      {
+        "name": {
+          "en": "Soy sauce 2 tbsp",
+          "zh": "醬油 2 大匙"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Garlic 2 cloves, minced",
+          "zh": "蒜 2 瓣，切末"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Chilli flakes 1 tsp",
+          "zh": "辣椒粉 1 小匙"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Microwave rice pouches 2 pouches (500 g)",
+          "zh": "即食米飯 2 包（500 g）"
+        },
+        "families": [
+          "rice_microwave_pouch"
+        ]
+      },
+      {
+        "name": {
+          "en": "Cucumber 1, sliced",
+          "zh": "小黃瓜 1 條，切片"
+        },
+        "families": []
+      }
+    ],
+    "staples": {
+      "en": "",
+      "zh": ""
+    },
+    "steps": {
+      "en": [
+        "Warm peanut butter, coconut milk, soy sauce, garlic and chilli in a small pot over low heat, stirring 4 minutes until smooth and thick enough to coat a spoon.",
+        "Add the chicken and heat 2 minutes; the sauce thickens a little more.",
+        "Off the heat, add lime juice; loosen with 2 tbsp water if too thick.",
+        "Microwave the rice 2 minutes.",
+        "Serve the satay chicken on rice with cucumber on the side."
+      ],
+      "zh": [
+        "花生醬、椰奶、醬油、蒜末、辣椒粉放小鍋，小火邊煮邊攪 4 分鐘，醬變滑順、湯匙拉起會掛住。",
+        "加雞肉絲拌勻煮 2 分鐘讓肉熱透，醬會再稠一點。",
+        "熄火加萊姆汁，太稠加 2 大匙水調整。",
+        "米飯微波 2 分鐘。",
+        "飯上放沙嗲雞，旁邊放小黃瓜片解膩。"
+      ]
+    },
+    "tip": {
+      "en": "Too thick? Add water. Too thin? Simmer another minute.",
+      "zh": "醬太稠就加水，太稀多煮一分鐘。"
+    }
+  },
+  {
+    "id": "spaghetti-carbonara-with-streaky-bacon",
+    "title": {
+      "en": "Spaghetti Carbonara with Streaky Bacon",
+      "zh": "培根蛋黃義大利麵"
+    },
+    "serves": 4,
+    "minutes": 25,
+    "kcal": 720,
+    "difficulty": "medium",
+    "cuisine": "western",
+    "cuisineName": {
+      "en": "European & American",
+      "zh": "歐美"
+    },
+    "image": "recipes/spaghetti-carbonara-with-streaky-bacon.jpg",
+    "credit": {
+      "photographer": "Adriano Bragi",
+      "url": "https://www.pexels.com/photo/delicious-creamy-spaghetti-carbonara-dish-31779533/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Spaghetti 400 g",
+          "zh": "義大利直麵 400 g"
+        },
+        "families": [
+          "pasta_spaghetti"
+        ]
+      },
+      {
+        "name": {
+          "en": "Streaky bacon 200 g, cut into 1 cm pieces",
+          "zh": "五花培根 200 g，切 1 cm"
+        },
+        "families": [
+          "bacon_streaky"
+        ]
+      },
+      {
+        "name": {
+          "en": "Free range eggs 3 eggs + 2 yolks",
+          "zh": "放養雞蛋 3 顆 + 2 顆蛋黃"
+        },
+        "families": [
+          "egg_free_range"
+        ]
+      },
+      {
+        "name": {
+          "en": "Cheddar cheese 80 g, finely grated",
+          "zh": "切達起司 80 g，磨細"
+        },
+        "families": [
+          "cheese_cheddar_organic"
+        ]
+      },
+      {
+        "name": {
+          "en": "Garlic 2 cloves, crushed",
+          "zh": "蒜 2 瓣，拍扁"
+        },
+        "families": []
+      }
+    ],
+    "staples": {
+      "en": "Black pepper, Salt",
+      "zh": "黑胡椒、鹽"
+    },
+    "steps": {
+      "en": [
+        "Boil a large pot of water with 1 tbsp salt and cook the spaghetti 1 minute less than the pack says. Save 1 cup of pasta water.",
+        "Start bacon and garlic in a cold pan over medium heat and cook 6 minutes until crisp and golden. Discard the garlic.",
+        "Whisk eggs, yolks, cheese and 1 tsp pepper in a large bowl.",
+        "Take the pan off the heat for 30 seconds, toss the pasta in the bacon fat, then tip everything into the egg bowl and stir fast.",
+        "Add pasta water 2 tbsp at a time until the sauce is glossy and coats every strand with no watery pools and no scrambled bits. Finish with pepper."
+      ],
+      "zh": [
+        "大鍋水加 1 大匙鹽煮滾，下麵煮包裝時間少 1 分鐘，撈起前留 1 杯煮麵水。",
+        "培根和蒜下冷鍋中火煎 6 分鐘，培根金黃酥脆，撈掉蒜。",
+        "蛋、蛋黃、起司、1 小匙黑胡椒在大碗裡打勻。",
+        "鍋離火 30 秒稍降溫，麵倒進培根鍋拌一下，再全部倒進蛋液碗裡快速攪拌。",
+        "分次加煮麵水，每次 2 大匙，攪到醬變成能裹住每根麵的奶油狀，不見水汪汪也沒有蛋塊。撒黑胡椒上桌。"
+      ]
+    },
+    "tip": {
+      "en": "Always mix the egg off the heat; a hot pan gives you scrambled egg.",
+      "zh": "鍋一定要離火再拌蛋，太燙會變炒蛋。"
+    }
+  },
+  {
+    "id": "ham-cheese-baked-penne",
+    "title": {
+      "en": "Ham & Cheese Baked Penne",
+      "zh": "火腿起司焗烤斜管麵"
+    },
+    "serves": 4,
+    "minutes": 40,
+    "kcal": 760,
+    "difficulty": "medium",
+    "cuisine": "western",
+    "cuisineName": {
+      "en": "European & American",
+      "zh": "歐美"
+    },
+    "image": "recipes/ham-cheese-baked-penne.jpg",
+    "credit": {
+      "photographer": "Ronmar Lacamiento",
+      "url": "https://www.pexels.com/photo/close-up-photography-of-baked-mac-806357/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Penne 400 g",
+          "zh": "斜管麵 400 g"
+        },
+        "families": [
+          "pasta_penne"
+        ]
+      },
+      {
+        "name": {
+          "en": "Pasta sauce 500 g",
+          "zh": "義大利麵醬 500 g"
+        },
+        "families": [
+          "pasta_sauce"
+        ]
+      },
+      {
+        "name": {
+          "en": "Sliced ham 200 g, cut into strips",
+          "zh": "火腿片 200 g，切條"
+        },
+        "families": [
+          "ham_sliced"
+        ]
+      },
+      {
+        "name": {
+          "en": "Cheddar cheese 150 g, grated",
+          "zh": "切達起司 150 g，磨絲"
+        },
+        "families": [
+          "cheese_cheddar_organic"
+        ]
+      },
+      {
+        "name": {
+          "en": "Sour cream 150 g",
+          "zh": "酸奶油 150 g"
+        },
+        "families": [
+          "sour_cream"
+        ]
+      },
+      {
+        "name": {
+          "en": "Mixed herbs 1 tsp",
+          "zh": "綜合香草 1 小匙"
+        },
+        "families": [
+          "mixed_herb"
+        ]
+      },
+      {
+        "name": {
+          "en": "Broccoli 1 head, small florets",
+          "zh": "花椰菜 1 顆，切小朵"
+        },
+        "families": [
+          "broccoli"
+        ]
+      }
+    ],
+    "staples": {
+      "en": "Black pepper",
+      "zh": "黑胡椒"
+    },
+    "steps": {
+      "en": [
+        "Heat oven to 200°C. Cook the penne 2 minutes short of the pack time, adding broccoli for the last 2 minutes. Drain together.",
+        "Mix pasta, broccoli, sauce, sour cream, ham, herbs and half the cheese until every piece is coated.",
+        "Spread in a baking dish and cover with the remaining cheese.",
+        "Bake 20 minutes until the cheese bubbles and the edges brown.",
+        "Rest 5 minutes before serving. Finish with pepper."
+      ],
+      "zh": [
+        "烤箱預熱 200°C。麵煮到包裝時間少 2 分鐘，最後 2 分鐘把花椰菜丟進同一鍋，一起瀝乾。",
+        "麵、花椰菜、麵醬、酸奶油、火腿、香草、一半起司拌勻，每根麵都要沾到醬。",
+        "倒進烤盤鋪平，剩下的起司鋪滿表面。",
+        "烤 20 分鐘，起司融化冒泡、邊緣焦黃。",
+        "出爐靜置 5 分鐘再切，撒黑胡椒。"
+      ]
+    },
+    "tip": {
+      "en": "Undercook the pasta by 2 minutes so it stays firm after baking.",
+      "zh": "麵少煮 2 分鐘，進烤箱才不會糊。"
+    }
+  },
+  {
+    "id": "english-muffin-ham-egg-brunch",
+    "title": {
+      "en": "English Muffin Ham & Egg Brunch",
+      "zh": "英式瑪芬火腿蛋早午餐"
+    },
+    "serves": 4,
+    "minutes": 15,
+    "kcal": 480,
+    "difficulty": "easy",
+    "cuisine": "western",
+    "cuisineName": {
+      "en": "European & American",
+      "zh": "歐美"
+    },
+    "image": "recipes/english-muffin-ham-egg-brunch.jpg",
+    "credit": {
+      "photographer": "Su La Pyae",
+      "url": "https://www.pexels.com/photo/english-muffin-with-cheese-and-bacon-on-a-cutting-board-next-to-a-slice-of-tomato-and-a-sliced-orange-19471334/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "English muffins 4",
+          "zh": "英式瑪芬 4 個"
+        },
+        "families": [
+          "english_muffin"
+        ]
+      },
+      {
+        "name": {
+          "en": "Sliced ham 8 slices",
+          "zh": "火腿片 8 片"
+        },
+        "families": [
+          "ham_sliced"
+        ]
+      },
+      {
+        "name": {
+          "en": "Free range eggs 4",
+          "zh": "放養雞蛋 4 顆"
+        },
+        "families": [
+          "egg_free_range"
+        ]
+      },
+      {
+        "name": {
+          "en": "Aioli 4 tbsp",
+          "zh": "蒜味美乃滋 4 大匙"
+        },
+        "families": [
+          "aioli"
+        ]
+      },
+      {
+        "name": {
+          "en": "Cheddar cheese 4 slices",
+          "zh": "切達起司 4 片"
+        },
+        "families": [
+          "cheese_cheddar_organic"
+        ]
+      },
+      {
+        "name": {
+          "en": "Salted butter 20 g",
+          "zh": "鹹奶油 20 g"
+        },
+        "families": [
+          "butter_salted"
+        ]
+      },
+      {
+        "name": {
+          "en": "Tomato 1, sliced",
+          "zh": "番茄 1 顆，切片"
+        },
+        "families": []
+      }
+    ],
+    "staples": {
+      "en": "Black pepper",
+      "zh": "黑胡椒"
+    },
+    "steps": {
+      "en": [
+        "Split the muffins and toast cut side up 3 minutes until the edges are golden.",
+        "Fry the ham 1 minute per side over medium heat until the edges curl. Remove.",
+        "Melt butter in the same pan; when it foams, crack in the eggs and fry 3 minutes until the whites are set and the yolks still wobble.",
+        "Spread aioli on the bottom halves, stack ham, cheese, tomato and an egg.",
+        "Pepper, close with the tops and eat hot."
+      ],
+      "zh": [
+        "瑪芬對半剖開，切面朝上烤 3 分鐘，邊緣金黃。",
+        "平底鍋中火，火腿每面煎 1 分鐘，邊緣微捲，起鍋。",
+        "同鍋放奶油，融化起泡後打入蛋，煎 3 分鐘，蛋白全白、蛋黃還會晃就好。",
+        "瑪芬下半片抹蒜味美乃滋，疊火腿、起司片、番茄、煎蛋。",
+        "撒黑胡椒，蓋上上半片，趁熱吃。"
+      ]
+    },
+    "tip": {
+      "en": "Put the cheese on the hot ham and it melts on its own.",
+      "zh": "起司放在熱火腿上，餘溫就會融。"
+    }
+  },
+  {
+    "id": "chorizo-tomato-baked-eggs-shakshuka-style",
+    "title": {
+      "en": "Chorizo & Tomato Baked Eggs (Shakshuka-style)",
+      "zh": "西班牙臘腸番茄烤蛋"
+    },
+    "serves": 4,
+    "minutes": 30,
+    "kcal": 540,
+    "difficulty": "medium",
+    "cuisine": "western",
+    "cuisineName": {
+      "en": "European & American",
+      "zh": "歐美"
+    },
+    "image": "recipes/chorizo-tomato-baked-eggs-shakshuka-style.jpg",
+    "credit": {
+      "photographer": "Boryslav Shoot",
+      "url": "https://www.pexels.com/photo/delicious-shakshuka-dish-with-bread-slices-29385750/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Chorizo 200 g, sliced",
+          "zh": "西班牙臘腸 200 g，切片"
+        },
+        "families": [
+          "chorizo"
+        ]
+      },
+      {
+        "name": {
+          "en": "Pasta sauce 500 g",
+          "zh": "義大利麵醬 500 g"
+        },
+        "families": [
+          "pasta_sauce"
+        ]
+      },
+      {
+        "name": {
+          "en": "Free range eggs 6",
+          "zh": "放養雞蛋 6 顆"
+        },
+        "families": [
+          "egg_free_range"
+        ]
+      },
+      {
+        "name": {
+          "en": "Onion 1, diced",
+          "zh": "洋蔥 1 顆，切丁"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Garlic 2 cloves, minced",
+          "zh": "蒜 2 瓣，切末"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Mixed herbs 1 tsp",
+          "zh": "綜合香草 1 小匙"
+        },
+        "families": [
+          "mixed_herb"
+        ]
+      },
+      {
+        "name": {
+          "en": "Naan bread 4",
+          "zh": "印度烤餅 4 片"
+        },
+        "families": [
+          "naan_bread"
+        ]
+      },
+      {
+        "name": {
+          "en": "Sour cream 100 g",
+          "zh": "酸奶油 100 g"
+        },
+        "families": [
+          "sour_cream"
+        ]
+      }
+    ],
+    "staples": {
+      "en": "Black pepper",
+      "zh": "黑胡椒"
+    },
+    "steps": {
+      "en": [
+        "Fry the chorizo 4 minutes over medium heat until the oil runs red and the edges crisp. Set half aside.",
+        "Cook onion and garlic in the chorizo oil 4 minutes until translucent.",
+        "Add pasta sauce and herbs and simmer 5 minutes until thick enough that a spoon leaves a trail.",
+        "Make 6 wells, crack an egg into each, cover and cook on low 6 minutes until the whites set and the yolks stay soft.",
+        "Top with the reserved chorizo and pepper. Warm the naan and serve with sour cream for dipping."
+      ],
+      "zh": [
+        "臘腸片下平底鍋中火煎 4 分鐘，出紅油、邊緣微焦，撈起一半備用。",
+        "洋蔥丁、蒜末下鍋用臘腸油炒 4 分鐘到洋蔥透明。",
+        "倒麵醬和香草，小火煮 5 分鐘到醬變稠、勺子劃過能看到鍋底。",
+        "用湯匙在醬裡挖 6 個洞，各打一顆蛋，蓋鍋小火 6 分鐘，蛋白凝固、蛋黃半熟。",
+        "撒回臘腸片和黑胡椒，烤餅烤熱，配酸奶油沾著吃。"
+      ]
+    },
+    "tip": {
+      "en": "Want firmer yolks? Give it one more minute under the lid.",
+      "zh": "蛋黃想更熟就多蓋 1 分鐘。"
+    }
+  },
+  {
+    "id": "air-fryer-crispy-fish-sandwich",
+    "title": {
+      "en": "Air Fryer Crispy Fish Sandwich",
+      "zh": "氣炸魚排三明治"
+    },
+    "serves": 4,
+    "minutes": 15,
+    "kcal": 590,
+    "difficulty": "easy",
+    "cuisine": "quick",
+    "cuisineName": {
+      "en": "Quick (microwave / air fryer)",
+      "zh": "快速料理"
+    },
+    "image": "recipes/air-fryer-crispy-fish-sandwich.jpg",
+    "credit": {
+      "photographer": "Anthony Rahayel",
+      "url": "https://www.pexels.com/photo/crispy-fish-sandwich-with-french-fries-on-plate-39042551/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Coated fish fillets 4 fillets",
+          "zh": "裹粉魚排 4 片"
+        },
+        "families": [
+          "fish_fillet_coated"
+        ]
+      },
+      {
+        "name": {
+          "en": "English muffins 4",
+          "zh": "英式瑪芬 4 個"
+        },
+        "families": [
+          "english_muffin"
+        ]
+      },
+      {
+        "name": {
+          "en": "Aioli 4 tbsp",
+          "zh": "蒜味美乃滋 4 大匙"
+        },
+        "families": [
+          "aioli"
+        ]
+      },
+      {
+        "name": {
+          "en": "Lemon juice 1 tbsp",
+          "zh": "檸檬汁 1 大匙"
+        },
+        "families": [
+          "lemon_juice"
+        ]
+      },
+      {
+        "name": {
+          "en": "Cabbage 150 g, finely shredded",
+          "zh": "高麗菜 150 g，切細絲"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Cheddar cheese 4 slices",
+          "zh": "切達起司 4 片"
+        },
+        "families": [
+          "cheese_cheddar_organic"
+        ]
+      }
+    ],
+    "staples": {
+      "en": "Black pepper",
+      "zh": "黑胡椒"
+    },
+    "steps": {
+      "en": [
+        "Air fry the fish at 200°C in one layer for 10 minutes, turning once, until golden and crisp to the touch.",
+        "Mix aioli with lemon juice; toss the cabbage with half of it for a quick slaw.",
+        "Split the muffins and warm them in the air fryer for the last 2 minutes.",
+        "Spread the remaining aioli on the bottoms, add cheese, the hot fish and the slaw.",
+        "Pepper and close with the tops."
+      ],
+      "zh": [
+        "氣炸鍋 200°C，魚排單層放，氣炸 10 分鐘，中途翻面，表面金黃、按下去酥脆。",
+        "蒜味美乃滋和檸檬汁拌勻，高麗菜絲用一半的醬拌成沙拉。",
+        "瑪芬對半剖開，氣炸最後 2 分鐘放進去烤熱。",
+        "下半片抹剩下的醬，放起司片、熱魚排、高麗菜沙拉。",
+        "撒黑胡椒，蓋上上半片。"
+      ]
+    },
+    "tip": {
+      "en": "Cheese under the hot fillet melts without any extra step.",
+      "zh": "起司壓在熱魚排下面就會融化。"
+    }
+  },
+  {
+    "id": "microwave-butter-chicken-with-naan",
+    "title": {
+      "en": "Microwave Butter Chicken with Naan",
+      "zh": "微波奶油雞咖哩配烤餅"
+    },
+    "serves": 4,
+    "minutes": 15,
+    "kcal": 650,
+    "difficulty": "easy",
+    "cuisine": "quick",
+    "cuisineName": {
+      "en": "Quick (microwave / air fryer)",
+      "zh": "快速料理"
+    },
+    "image": "recipes/microwave-butter-chicken-with-naan.jpg",
+    "credit": {
+      "photographer": "Alberta Studios",
+      "url": "https://www.pexels.com/photo/cooked-food-on-white-ceramic-plate-10615283/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Butter chicken recipe base 1 jar (about 500 g)",
+          "zh": "奶油雞料理包 1 包（約 500 g）"
+        },
+        "families": [
+          "recipe_base_butter_chicken"
+        ]
+      },
+      {
+        "name": {
+          "en": "Shredded cooked chicken 400 g",
+          "zh": "手撕熟雞肉 400 g"
+        },
+        "families": [
+          "chicken_shredded"
+        ]
+      },
+      {
+        "name": {
+          "en": "Naan bread 4",
+          "zh": "印度烤餅 4 片"
+        },
+        "families": [
+          "naan_bread"
+        ]
+      },
+      {
+        "name": {
+          "en": "Natural Greek yoghurt 100 g",
+          "zh": "希臘原味優格 100 g"
+        },
+        "families": [
+          "yoghurt_greek_natural_unsweetened"
+        ]
+      },
+      {
+        "name": {
+          "en": "Broccoli ½ head, small florets",
+          "zh": "花椰菜 半顆，切小朵"
+        },
+        "families": [
+          "broccoli"
+        ]
+      },
+      {
+        "name": {
+          "en": "Microwave rice pouches 1 pouch (250 g)",
+          "zh": "即食米飯 1 包（250 g）"
+        },
+        "families": [
+          "rice_microwave_pouch"
+        ]
+      }
+    ],
+    "staples": {
+      "en": "",
+      "zh": ""
+    },
+    "steps": {
+      "en": [
+        "Microwave the broccoli with 2 tbsp water, covered, 3 minutes until bright green.",
+        "Mix chicken and the sauce in a large bowl, cover and microwave 5 minutes, stirring once, until bubbling and piping hot.",
+        "Stir in the broccoli and half the yoghurt; microwave 1 more minute.",
+        "Microwave rice 2 minutes; sprinkle the naan with water and microwave 40 seconds until soft and warm.",
+        "Serve the curry with rice and naan, topped with the remaining yoghurt."
+      ],
+      "zh": [
+        "花椰菜放可微波碗加 2 大匙水，蓋上微波 3 分鐘，顏色鮮綠。",
+        "雞肉絲和料理包醬倒進大碗拌勻，蓋上微波 5 分鐘，中途攪一次，醬冒泡、雞肉燙手。",
+        "拌入花椰菜和一半優格，再微波 1 分鐘。",
+        "米飯微波 2 分鐘；烤餅噴一點水，微波 40 秒變軟熱。",
+        "咖哩配飯和烤餅，頂上放剩下的優格。"
+      ]
+    },
+    "tip": {
+      "en": "Add the yoghurt at the end so it keeps its tang.",
+      "zh": "優格最後放，酸味才留得住。"
+    }
+  },
+  {
+    "id": "air-fryer-wedges-nuggets-platter",
+    "title": {
+      "en": "Air Fryer Wedges & Nuggets Platter",
+      "zh": "氣炸薯角雞塊拼盤"
+    },
+    "serves": 4,
+    "minutes": 20,
+    "kcal": 700,
+    "difficulty": "easy",
+    "cuisine": "quick",
+    "cuisineName": {
+      "en": "Quick (microwave / air fryer)",
+      "zh": "快速料理"
+    },
+    "image": "recipes/air-fryer-wedges-nuggets-platter.jpg",
+    "credit": {
+      "photographer": "FOX ^.ᆽ.^= ∫",
+      "url": "https://www.pexels.com/photo/crispy-chicken-pieces-in-modern-air-fryer-35285814/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Frozen potato wedges 750 g",
+          "zh": "冷凍薯角 750 g"
+        },
+        "families": [
+          "potato_wedge_frozen"
+        ]
+      },
+      {
+        "name": {
+          "en": "Free-range chicken nuggets 500 g",
+          "zh": "放養雞塊 500 g"
+        },
+        "families": [
+          "chicken_nugget_free_range"
+        ]
+      },
+      {
+        "name": {
+          "en": "BBQ sauce 100 ml",
+          "zh": "燒烤醬 100 ml"
+        },
+        "families": [
+          "bbq_sauce"
+        ]
+      },
+      {
+        "name": {
+          "en": "Sour cream 150 g",
+          "zh": "酸奶油 150 g"
+        },
+        "families": [
+          "sour_cream"
+        ]
+      },
+      {
+        "name": {
+          "en": "Spring onion 2, sliced",
+          "zh": "蔥 2 支，切蔥花"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "BBQ rub 2 tsp",
+          "zh": "燒烤香料粉 2 小匙"
+        },
+        "families": [
+          "bbq_rub"
+        ]
+      },
+      {
+        "name": {
+          "en": "Cucumber 1, cut into sticks",
+          "zh": "小黃瓜 1 條，切條"
+        },
+        "families": []
+      }
+    ],
+    "staples": {
+      "en": "",
+      "zh": ""
+    },
+    "steps": {
+      "en": [
+        "Toss the wedges with BBQ rub and air fry at 200°C for 12 minutes, shaking once, until the edges are golden and crisp.",
+        "Push the wedges aside, add nuggets and cook 8 more minutes, turning once, until golden outside and white all the way through.",
+        "Mix sour cream with spring onion for a dip.",
+        "Plate wedges and nuggets with BBQ sauce, the sour cream dip and cucumber sticks.",
+        "Eat hot."
+      ],
+      "zh": [
+        "薯角撒燒烤香料粉拌勻，氣炸鍋 200°C 先炸 12 分鐘，中途搖一次，邊緣金黃酥脆。",
+        "薯角推到一邊，雞塊放進去再炸 8 分鐘，翻面一次，雞塊表面金黃、剝開裡面全白。",
+        "酸奶油拌蔥花做沾醬。",
+        "薯角和雞塊擺盤，燒烤醬、蔥花酸奶油、小黃瓜條放旁邊。",
+        "趁熱吃。"
+      ]
+    },
+    "tip": {
+      "en": "Start the wedges first so both finish at the same time.",
+      "zh": "薯角先炸再放雞塊，兩樣才會同時剛好。"
+    }
+  },
+  {
+    "id": "honey-cinnamon-yoghurt-cups",
+    "title": {
+      "en": "Honey Cinnamon Yoghurt Cups",
+      "zh": "蜂蜜肉桂優格杯"
+    },
+    "serves": 4,
+    "minutes": 10,
+    "kcal": 320,
+    "difficulty": "easy",
+    "cuisine": "dessert",
+    "cuisineName": {
+      "en": "Dessert",
+      "zh": "甜點"
+    },
+    "image": "recipes/honey-cinnamon-yoghurt-cups.jpg",
+    "credit": {
+      "photographer": "Denys Gromov",
+      "url": "https://www.pexels.com/photo/dessert-in-a-bowl-6769486/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Natural Greek yoghurt 500 g",
+          "zh": "希臘原味優格 500 g"
+        },
+        "families": [
+          "yoghurt_greek_natural_unsweetened"
+        ]
+      },
+      {
+        "name": {
+          "en": "Manuka honey 4 tbsp",
+          "zh": "麥盧卡蜂蜜 4 大匙"
+        },
+        "families": [
+          "honey_manuka"
+        ]
+      },
+      {
+        "name": {
+          "en": "Ground cinnamon 1 tsp",
+          "zh": "肉桂粉 1 小匙"
+        },
+        "families": [
+          "cinnamon_ground"
+        ]
+      },
+      {
+        "name": {
+          "en": "Granola 120 g",
+          "zh": "格蘭諾拉麥片 120 g"
+        },
+        "families": [
+          "granola"
+        ]
+      },
+      {
+        "name": {
+          "en": "Dried cranberries 40 g",
+          "zh": "蔓越莓乾 40 g"
+        },
+        "families": [
+          "dried_cranberry"
+        ]
+      },
+      {
+        "name": {
+          "en": "Banana 2, sliced",
+          "zh": "香蕉 2 根，切片"
+        },
+        "families": []
+      }
+    ],
+    "staples": {
+      "en": "",
+      "zh": ""
+    },
+    "steps": {
+      "en": [
+        "Stir cinnamon and 2 tbsp honey into the yoghurt until evenly pale brown with no white streaks.",
+        "Put a layer of granola (about 2 tbsp) in each of 4 glasses.",
+        "Spoon in half the yoghurt, add banana slices, then the rest of the yoghurt.",
+        "Top with the remaining granola and the cranberries.",
+        "Drizzle ½ tbsp honey over each just before eating."
+      ],
+      "zh": [
+        "優格加肉桂粉和 2 大匙蜂蜜拌勻，顏色變淡棕、看不到白色條紋。",
+        "4 個杯子各鋪一層麥片（約 2 大匙）。",
+        "舀一半的優格進杯，放香蕉片，再蓋上剩下的優格。",
+        "頂上放剩下的麥片和蔓越莓乾。",
+        "吃之前各淋半大匙蜂蜜。"
+      ]
+    },
+    "tip": {
+      "en": "Add the granola right before eating so it stays crunchy.",
+      "zh": "麥片吃之前才放才會脆。"
+    }
+  },
+  {
+    "id": "no-bake-peanut-butter-cookie-ice-cream-cups",
+    "title": {
+      "en": "No-bake Peanut Butter Cookie Ice Cream Cups",
+      "zh": "免烤花生醬餅乾冰淇淋杯"
+    },
+    "serves": 4,
+    "minutes": 15,
+    "kcal": 560,
+    "difficulty": "easy",
+    "cuisine": "dessert",
+    "cuisineName": {
+      "en": "Dessert",
+      "zh": "甜點"
+    },
+    "image": "recipes/no-bake-peanut-butter-cookie-ice-cream-cups.jpg",
+    "credit": {
+      "photographer": "ROMAN ODINTSOV",
+      "url": "https://www.pexels.com/photo/close-up-of-ice-cream-and-a-glass-of-milk-5060281/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Chocolate cream biscuits 12",
+          "zh": "巧克力夾心餅 12 片"
+        },
+        "families": [
+          "chocolate_cream_biscuit"
+        ]
+      },
+      {
+        "name": {
+          "en": "Peanut butter 100 g",
+          "zh": "花生醬 100 g"
+        },
+        "families": [
+          "peanut_butter"
+        ]
+      },
+      {
+        "name": {
+          "en": "Unsalted butter 40 g, melted",
+          "zh": "無鹽奶油 40 g，融化"
+        },
+        "families": [
+          "butter_unsalted"
+        ]
+      },
+      {
+        "name": {
+          "en": "Ice cream (tub) 500 ml",
+          "zh": "桶裝冰淇淋 500 ml"
+        },
+        "families": [
+          "ice_cream_tub"
+        ]
+      },
+      {
+        "name": {
+          "en": "Choc chip cookies 4, crumbled",
+          "zh": "巧克力豆餅乾 4 片，捏碎"
+        },
+        "families": [
+          "cookie_choc_chip"
+        ]
+      }
+    ],
+    "staples": {
+      "en": "",
+      "zh": ""
+    },
+    "steps": {
+      "en": [
+        "Crush the biscuits in a bag with a rolling pin to coarse crumbs, then mix in the melted butter until it holds together when squeezed.",
+        "Press the crumbs into 4 cups and freeze 5 minutes to set.",
+        "Microwave the peanut butter 20 seconds until it flows.",
+        "Scoop ice cream into the cups and drizzle 1 tbsp peanut butter over each.",
+        "Top with crumbled cookies and the remaining peanut butter. Eat straight away."
+      ],
+      "zh": [
+        "夾心餅放袋子裡用擀麵棍敲碎成粗砂狀，倒入融化的奶油拌到捏得成團。",
+        "餅乾屑分進 4 個杯子壓實，冷凍 5 分鐘定型。",
+        "花生醬微波 20 秒變流動狀。",
+        "冰淇淋挖進杯子，每杯淋 1 大匙花生醬。",
+        "撒碎巧克力豆餅乾，剩下的花生醬淋在最上面，馬上吃。"
+      ]
+    },
+    "tip": {
+      "en": "A quick zap makes the peanut butter pourable.",
+      "zh": "花生醬微波一下才淋得開。"
+    }
   }
- },
- {
-  "id": "bacon-egg-fried-rice",
-  "title": {
-   "en": "Bacon & Egg Fried Rice",
-   "zh": "培根蛋炒飯"
-  },
-  "serves": 4,
-  "minutes": 15,
-  "kcal": 620,
-  "difficulty": "easy",
-  "cuisine": "japanese",
-  "cuisineName": {
-   "en": "Japanese",
-   "zh": "日式"
-  },
-  "image": "recipes/bacon-egg-fried-rice.jpg",
-  "credit": {
-   "photographer": "Jer Chung",
-   "url": "https://www.pexels.com/photo/scrambled-eggs-in-white-plate-2116095/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Streaky bacon 200 g, cut into 1 cm strips",
-     "zh": "五花培根 200 g，切 1 cm 段"
-    },
-    "families": [
-     "bacon_streaky"
-    ]
-   },
-   {
-    "name": {
-     "en": "Free range eggs 4",
-     "zh": "放養雞蛋 4 顆"
-    },
-    "families": [
-     "egg_free_range"
-    ]
-   },
-   {
-    "name": {
-     "en": "Microwave rice pouches 2 pouches (500 g)",
-     "zh": "即食米飯 2 包（500 g）"
-    },
-    "families": [
-     "rice_microwave_pouch"
-    ]
-   },
-   {
-    "name": {
-     "en": "Broccoli 1 head, cut into small florets",
-     "zh": "花椰菜 1 顆，切小朵"
-    },
-    "families": [
-     "broccoli"
-    ]
-   },
-   {
-    "name": {
-     "en": "Soy sauce 2 tbsp",
-     "zh": "醬油 2 大匙"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Spring onion 3, chopped",
-     "zh": "蔥 3 支，切段"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Salted butter 20 g",
-     "zh": "鹹奶油 20 g"
-    },
-    "families": [
-     "butter_salted"
-    ]
-   }
-  ],
-  "staples": {
-   "en": "Black pepper",
-   "zh": "黑胡椒"
-  },
-  "steps": {
-   "en": [
-    "Start the bacon in a cold pan over medium heat and cook 5 minutes until the fat renders and the edges crisp. Remove, keep the fat.",
-    "Fry the broccoli in the bacon fat 3 minutes, add 2 tbsp water, cover 2 minutes until bright green and fork-tender.",
-    "Microwave the rice 2 minutes and break up the clumps. Pour beaten eggs into the centre; when half set, add the rice and toss on high.",
-    "When the grains separate and the pan sizzles, add soy sauce around the edge and toss 1 minute to colour the rice.",
-    "Return the bacon, add spring onion and butter, toss twice until the butter melts. Finish with pepper."
-   ],
-   "zh": [
-    "培根下冷鍋中火慢煎 5 分鐘，逼出油、邊緣變脆焦黃，撈起留油。",
-    "花椰菜下鍋用培根油炒 3 分鐘，加 2 大匙水蓋鍋悶 2 分鐘，顏色轉鮮綠、叉子能插入就好。",
-    "米飯微波 2 分鐘後用手捏散。蛋打散倒進鍋中央，半凝固時把飯倒進去大火翻炒。",
-    "飯粒散開、鍋底聽到滋滋聲後淋醬油沿鍋邊下，翻炒 1 分鐘讓飯粒沾上醬色。",
-    "放回培根、蔥段、奶油，翻兩下奶油融化即可，撒黑胡椒。"
-   ]
-  },
-  "tip": {
-   "en": "Starting bacon in a cold pan renders the fat evenly without toughening it.",
-   "zh": "冷鍋下培根，油才逼得乾淨，肉不會硬。"
-  }
- },
- {
-  "id": "crispy-fish-bites-rice-bowl-with-tartare",
-  "title": {
-   "en": "Crispy Fish Bites Rice Bowl with Tartare",
-   "zh": "日式炸魚塊丼佐塔塔醬"
-  },
-  "serves": 4,
-  "minutes": 25,
-  "kcal": 690,
-  "difficulty": "easy",
-  "cuisine": "japanese",
-  "cuisineName": {
-   "en": "Japanese",
-   "zh": "日式"
-  },
-  "image": "recipes/crispy-fish-bites-rice-bowl-with-tartare.jpg",
-  "credit": {
-   "photographer": "Pixabay",
-   "url": "https://www.pexels.com/photo/brown-wooden-chopsticks-on-white-ceramic-bowl-with-pork-cutlet-and-spring-onion-on-brown-wooden-table-37352/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Hoki fish bites 500 g",
-     "zh": "Hoki 裹粉魚塊 500 g"
-    },
-    "families": [
-     "hoki_fish_bites"
-    ]
-   },
-   {
-    "name": {
-     "en": "Microwave rice pouches 2 pouches (500 g)",
-     "zh": "即食米飯 2 包（500 g）"
-    },
-    "families": [
-     "rice_microwave_pouch"
-    ]
-   },
-   {
-    "name": {
-     "en": "Mayonnaise 120 g",
-     "zh": "美乃滋 120 g"
-    },
-    "families": [
-     "mayonnaise"
-    ]
-   },
-   {
-    "name": {
-     "en": "Lemon juice 2 tbsp",
-     "zh": "檸檬汁 2 大匙"
-    },
-    "families": [
-     "lemon_juice"
-    ]
-   },
-   {
-    "name": {
-     "en": "Cabbage 200 g, finely shredded",
-     "zh": "高麗菜 200 g，切細絲"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Spring onion 2, finely sliced",
-     "zh": "蔥 2 支，切蔥花"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Soy sauce 1 tbsp",
-     "zh": "醬油 1 大匙"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "White sugar 1 tsp",
-     "zh": "白砂糖 1 小匙"
-    },
-    "families": [
-     "sugar_white"
-    ]
-   }
-  ],
-  "staples": {
-   "en": "",
-   "zh": ""
-  },
-  "steps": {
-   "en": [
-    "Heat oven to 220°C (air fryer 200°C). Spread fish bites in one layer and cook 15 minutes, turning once, until golden and crisp when pressed.",
-    "Mix mayonnaise, lemon juice and half the spring onion for the tartare; it should taste clearly tangy.",
-    "Stir soy sauce and sugar until the sugar dissolves for the drizzle.",
-    "Microwave the rice 2 minutes. Fill bowls with rice, top with cabbage, then the fish.",
-    "Drizzle the soy mix, spoon over the tartare and finish with the remaining spring onion."
-   ],
-   "zh": [
-    "烤箱預熱 220°C（氣炸鍋 200°C）。魚塊單層排開，烤 15 分鐘，中途翻面，外皮金黃、用手按會喀一聲。",
-    "美乃滋、檸檬汁、一半蔥花拌成塔塔醬，嚐起來要有明顯酸味。",
-    "醬油和砂糖拌到糖溶化，做成淋醬。",
-    "米飯微波 2 分鐘。碗底鋪飯，放高麗菜絲，擺魚塊。",
-    "淋醬油糖水，擠上塔塔醬，撒剩下的蔥花。"
-   ]
-  },
-  "tip": {
-   "en": "Never stack the fish bites; stacked pieces steam instead of crisping.",
-   "zh": "魚塊不要疊放，疊了就不脆。"
-  }
- },
- {
-  "id": "korean-army-stew-budae-jjigae",
-  "title": {
-   "en": "Korean Army Stew (Budae Jjigae)",
-   "zh": "韓式部隊鍋"
-  },
-  "serves": 4,
-  "minutes": 30,
-  "kcal": 720,
-  "difficulty": "medium",
-  "cuisine": "korean",
-  "cuisineName": {
-   "en": "Korean",
-   "zh": "韓式"
-  },
-  "image": "recipes/korean-army-stew-budae-jjigae.jpg",
-  "credit": {
-   "photographer": "makafood",
-   "url": "https://www.pexels.com/photo/spicy-fish-soup-boiling-in-pan-8827925/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Frankfurters 6, sliced on the diagonal",
-     "zh": "法蘭克福香腸 6 條，斜切"
-    },
-    "families": [
-     "frankfurter"
-    ]
-   },
-   {
-    "name": {
-     "en": "Streaky bacon 150 g, cut into pieces",
-     "zh": "五花培根 150 g，切段"
-    },
-    "families": [
-     "bacon_streaky"
-    ]
-   },
-   {
-    "name": {
-     "en": "Instant noodle packets 2 packets (noodle cakes only)",
-     "zh": "袋裝即食麵 2 包（麵餅）"
-    },
-    "families": [
-     "instant_noodle_packet"
-    ]
-   },
-   {
-    "name": {
-     "en": "Chicken stock 1 litre",
-     "zh": "雞高湯 1 公升"
-    },
-    "families": [
-     "stock_chicken_liquid"
-    ]
-   },
-   {
-    "name": {
-     "en": "Sauerkraut 200 g",
-     "zh": "德式酸菜 200 g"
-    },
-    "families": [
-     "sauerkraut"
-    ]
-   },
-   {
-    "name": {
-     "en": "Cheddar cheese 80 g, sliced",
-     "zh": "切達起司 80 g，切片"
-    },
-    "families": [
-     "cheese_cheddar_organic"
-    ]
-   },
-   {
-    "name": {
-     "en": "Gochujang 2 tbsp",
-     "zh": "韓式辣醬 2 大匙"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Garlic 3 cloves, minced",
-     "zh": "蒜 3 瓣，切末"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Spring onion 3, cut into lengths",
-     "zh": "蔥 3 支，切段"
-    },
-    "families": []
-   }
-  ],
-  "staples": {
-   "en": "",
-   "zh": ""
-  },
-  "steps": {
-   "en": [
-    "Loosen gochujang and garlic with 3 tbsp stock in a wide pot, add the rest of the stock and bring to the boil.",
-    "Arrange sausages, bacon and sauerkraut in sections and simmer 8 minutes until the bacon turns opaque and the broth goes orange-red.",
-    "Add the noodle cakes without pressing them down. Cook 3 minutes until chopsticks can separate the strands, flip, and cook 1 more minute.",
-    "Lay cheese slices over the noodles, cover 1 minute until melted into the broth.",
-    "Scatter spring onion and bring the pot to the table; keep it simmering while you eat."
-   ],
-   "zh": [
-    "辣醬、蒜末用 3 大匙高湯調開，倒進寬口鍋，加剩下的高湯煮滾。",
-    "香腸、培根、酸菜分區擺進鍋裡，中火煮 8 分鐘，培根變不透明、湯色轉橘紅。",
-    "放進麵餅，不要壓，煮 3 分鐘，麵條能用筷子撥散就翻面再煮 1 分鐘。",
-    "起司片鋪在麵上，蓋鍋 1 分鐘，起司融化流進湯裡。",
-    "撒蔥段，整鍋端上桌，邊煮邊吃。"
-   ]
-  },
-  "tip": {
-   "en": "Sauerkraut plus gochujang stands in for kimchi: you get both the sour and the heat.",
-   "zh": "沒有泡菜就用酸菜加辣醬，酸和辣都到位。"
-  }
- },
- {
-  "id": "korean-chicken-bibimbap",
-  "title": {
-   "en": "Korean Chicken Bibimbap",
-   "zh": "韓式雞肉拌飯"
-  },
-  "serves": 4,
-  "minutes": 25,
-  "kcal": 640,
-  "difficulty": "medium",
-  "cuisine": "korean",
-  "cuisineName": {
-   "en": "Korean",
-   "zh": "韓式"
-  },
-  "image": "recipes/korean-chicken-bibimbap.jpg",
-  "credit": {
-   "photographer": "J MAD",
-   "url": "https://www.pexels.com/photo/cooked-food-on-black-bowl-12973148/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Shredded cooked chicken 300 g",
-     "zh": "手撕熟雞肉 300 g"
-    },
-    "families": [
-     "chicken_shredded"
-    ]
-   },
-   {
-    "name": {
-     "en": "Free range eggs 4",
-     "zh": "放養雞蛋 4 顆"
-    },
-    "families": [
-     "egg_free_range"
-    ]
-   },
-   {
-    "name": {
-     "en": "Microwave rice pouches 2 pouches (500 g)",
-     "zh": "即食米飯 2 包（500 g）"
-    },
-    "families": [
-     "rice_microwave_pouch"
-    ]
-   },
-   {
-    "name": {
-     "en": "Broccoli 1 head, cut into small florets",
-     "zh": "花椰菜 1 顆，切小朵"
-    },
-    "families": [
-     "broccoli"
-    ]
-   },
-   {
-    "name": {
-     "en": "Carrot 1, grated",
-     "zh": "紅蘿蔔 1 根，刨絲"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Gochujang 3 tbsp",
-     "zh": "韓式辣醬 3 大匙"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Sesame oil 2 tbsp",
-     "zh": "麻油 2 大匙"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Soy sauce 1 tbsp",
-     "zh": "醬油 1 大匙"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "White sugar 1 tsp",
-     "zh": "白砂糖 1 小匙"
-    },
-    "families": [
-     "sugar_white"
-    ]
-   }
-  ],
-  "staples": {
-   "en": "",
-   "zh": ""
-  },
-  "steps": {
-   "en": [
-    "Mix gochujang, 1 tbsp sesame oil, soy sauce and sugar into a sauce; stir until no sugar grains remain.",
-    "Blanch broccoli 2 minutes until bright green, drain and rinse under cold water.",
-    "Toss the chicken with 1 tbsp of the sauce. Salt the carrot lightly, rest 5 minutes and squeeze out the water.",
-    "Fry the eggs in 1 tbsp sesame oil until the whites bubble and crisp at the edges while the yolks stay runny.",
-    "Microwave rice 2 minutes, bowl it, arrange chicken, broccoli and carrot in sections, top with an egg, spoon over the rest of the sauce and mix at the table."
-   ],
-   "zh": [
-    "辣醬、1 大匙麻油、醬油、砂糖拌成醬，糖要拌到看不見顆粒。",
-    "花椰菜放滾水燙 2 分鐘，顏色鮮綠撈起沖冷水瀝乾。",
-    "雞肉絲用 1 大匙醬拌勻。紅蘿蔔絲用少許鹽抓 5 分鐘出水擠乾。",
-    "平底鍋 1 大匙麻油煎蛋 4 顆，蛋白邊緣起泡變酥、蛋黃仍是液狀就起鍋。",
-    "米飯微波 2 分鐘盛碗，雞肉、花椰菜、紅蘿蔔分區放，頂上放煎蛋，淋剩下的醬，拌開吃。"
-   ]
-  },
-  "tip": {
-   "en": "Make the sauce first so every bowl seasons evenly when mixed.",
-   "zh": "醬先拌好才不會拌飯時鹹的鹹淡的淡。"
-  }
- },
- {
-  "id": "pork-prawn-dumpling-soup",
-  "title": {
-   "en": "Pork & Prawn Dumpling Soup",
-   "zh": "鮮蝦豬肉水餃湯"
-  },
-  "serves": 4,
-  "minutes": 20,
-  "kcal": 480,
-  "difficulty": "easy",
-  "cuisine": "chinese",
-  "cuisineName": {
-   "en": "Chinese",
-   "zh": "中式"
-  },
-  "image": "recipes/pork-prawn-dumpling-soup.jpg",
-  "credit": {
-   "photographer": "wutthichai charoenburi",
-   "url": "https://www.pexels.com/photo/bowl-of-soup-19811262/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Pork & prawn dumplings 24 (about 600 g)",
-     "zh": "豬肉鮮蝦水餃 24 顆（約 600 g）"
-    },
-    "families": [
-     "dumpling_pork_prawn"
-    ]
-   },
-   {
-    "name": {
-     "en": "Chicken stock 1.2 litres",
-     "zh": "雞高湯 1.2 公升"
-    },
-    "families": [
-     "stock_chicken_liquid"
-    ]
-   },
-   {
-    "name": {
-     "en": "Free range eggs 2",
-     "zh": "放養雞蛋 2 顆"
-    },
-    "families": [
-     "egg_free_range"
-    ]
-   },
-   {
-    "name": {
-     "en": "Broccoli ½ head, small florets",
-     "zh": "花椰菜 半顆，切小朵"
-    },
-    "families": [
-     "broccoli"
-    ]
-   },
-   {
-    "name": {
-     "en": "Ginger 3 slices",
-     "zh": "薑 3 片"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Spring onion 2, sliced",
-     "zh": "蔥 2 支，切蔥花"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Sesame oil 1 tsp",
-     "zh": "麻油 1 小匙"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "White vinegar 1 tbsp",
-     "zh": "白醋 1 大匙"
-    },
-    "families": [
-     "vinegar_white"
-    ]
-   }
-  ],
-  "staples": {
-   "en": "Salt",
-   "zh": "鹽"
-  },
-  "steps": {
-   "en": [
-    "Bring the stock and ginger to the boil, add frozen dumplings, return to the boil, then simmer 8 minutes until they all float and the skins turn translucent.",
-    "Add broccoli and cook 2 minutes until bright green.",
-    "Drizzle beaten egg slowly into the soup while stirring in circles with chopsticks; stop once ribbons form.",
-    "Off the heat, add vinegar and sesame oil. Taste and salt.",
-    "Ladle into bowls and top with spring onion."
-   ],
-   "zh": [
-    "高湯加薑片煮滾，放冷凍水餃，再次滾起後轉中火煮 8 分鐘，水餃全部浮起、皮變半透明。",
-    "加花椰菜煮 2 分鐘，顏色鮮綠。",
-    "蛋打散，慢慢淋入湯中，邊淋邊用筷子畫圈，蛋花成絲即停。",
-    "熄火，加白醋、麻油，試味加鹽。",
-    "分碗，撒蔥花。"
-   ]
-  },
-  "tip": {
-   "en": "A splash of vinegar keeps the broth clean and cuts the richness of the dumplings.",
-   "zh": "一點白醋讓湯清爽，餃子油膩感全消。"
-  }
- },
- {
-  "id": "garlic-broccoli-with-crispy-bacon",
-  "title": {
-   "en": "Garlic Broccoli with Crispy Bacon",
-   "zh": "蒜香培根炒花椰菜"
-  },
-  "serves": 4,
-  "minutes": 15,
-  "kcal": 320,
-  "difficulty": "easy",
-  "cuisine": "chinese",
-  "cuisineName": {
-   "en": "Chinese",
-   "zh": "中式"
-  },
-  "image": "recipes/garlic-broccoli-with-crispy-bacon.jpg",
-  "credit": {
-   "photographer": "https://kaboompics.com/",
-   "url": "https://www.pexels.com/photo/composition-of-bacon-and-garlic-on-desk-4022583/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Broccoli 2 heads, cut into florets",
-     "zh": "花椰菜 2 顆，切小朵"
-    },
-    "families": [
-     "broccoli"
-    ]
-   },
-   {
-    "name": {
-     "en": "Streaky bacon 200 g, cut into pieces",
-     "zh": "五花培根 200 g，切段"
-    },
-    "families": [
-     "bacon_streaky"
-    ]
-   },
-   {
-    "name": {
-     "en": "Garlic 4 cloves, sliced",
-     "zh": "蒜 4 瓣，切片"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Soy sauce 1 tbsp",
-     "zh": "醬油 1 大匙"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Chicken stock 100 ml",
-     "zh": "雞高湯 100 ml"
-    },
-    "families": [
-     "stock_chicken_liquid"
-    ]
-   },
-   {
-    "name": {
-     "en": "Sesame oil 1 tsp",
-     "zh": "麻油 1 小匙"
-    },
-    "families": []
-   }
-  ],
-  "staples": {
-   "en": "Black pepper",
-   "zh": "黑胡椒"
-  },
-  "steps": {
-   "en": [
-    "Start the bacon in a cold pan and cook 5 minutes until crisp. Remove, leaving 1 tbsp fat.",
-    "Fry garlic 30 seconds on low until the edges just colour, then add broccoli and toss 2 minutes on high.",
-    "Add stock and soy sauce, cover 3 minutes until a chopstick pierces the stems while they keep some bite.",
-    "Uncover and boil 1 minute until only a thin glaze remains.",
-    "Return the bacon, add sesame oil and pepper, toss twice and serve."
-   ],
-   "zh": [
-    "培根冷鍋中火煎 5 分鐘到酥脆，撈起，鍋裡留 1 大匙油。",
-    "蒜片下鍋小火 30 秒，邊緣微黃立刻放花椰菜大火翻炒 2 分鐘。",
-    "倒高湯和醬油，蓋鍋悶 3 分鐘，花椰菜梗用筷子能戳穿、還帶脆度。",
-    "開蓋大火收汁 1 分鐘，湯汁剩鍋底薄薄一層。",
-    "放回培根，淋麻油撒黑胡椒，翻兩下起鍋。"
-   ]
-  },
-  "tip": {
-   "en": "Keep the broccoli crisp-tender; soft broccoli loses all its charm.",
-   "zh": "花椰菜不要煮軟，帶脆才好吃。"
-  }
- },
- {
-  "id": "tomato-egg-stir-fry-on-rice",
-  "title": {
-   "en": "Tomato & Egg Stir-fry on Rice",
-   "zh": "番茄炒蛋蓋飯"
-  },
-  "serves": 4,
-  "minutes": 15,
-  "kcal": 520,
-  "difficulty": "easy",
-  "cuisine": "chinese",
-  "cuisineName": {
-   "en": "Chinese",
-   "zh": "中式"
-  },
-  "image": "recipes/tomato-egg-stir-fry-on-rice.jpg",
-  "credit": {
-   "photographer": "UNDO KIM",
-   "url": "https://www.pexels.com/photo/delicious-thai-basil-pork-with-fried-egg-plate-34714657/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Free range eggs 6",
-     "zh": "放養雞蛋 6 顆"
-    },
-    "families": [
-     "egg_free_range"
-    ]
-   },
-   {
-    "name": {
-     "en": "Tomatoes 4, cut into wedges",
-     "zh": "番茄 4 顆，切塊"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Microwave rice pouches 2 pouches (500 g)",
-     "zh": "即食米飯 2 包（500 g）"
-    },
-    "families": [
-     "rice_microwave_pouch"
-    ]
-   },
-   {
-    "name": {
-     "en": "White sugar 2 tsp",
-     "zh": "白砂糖 2 小匙"
-    },
-    "families": [
-     "sugar_white"
-    ]
-   },
-   {
-    "name": {
-     "en": "Spring onion 2, sliced",
-     "zh": "蔥 2 支，切蔥花"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Vegetable oil 3 tbsp",
-     "zh": "沙拉油 3 大匙"
-    },
-    "families": []
-   }
-  ],
-  "staples": {
-   "en": "Salt, Black pepper",
-   "zh": "鹽、黑胡椒"
-  },
-  "steps": {
-   "en": [
-    "Beat the eggs with ½ tsp salt. Heat 2 tbsp oil until it shimmers, pour in the eggs and push with a spatula for 30 seconds until just set and still glossy. Remove.",
-    "Add the remaining oil and the tomatoes. Cook 3 minutes over medium heat until they release juice and the pan has a red sauce.",
-    "Add sugar and ½ tsp salt and cook 1 minute until the juice thickens slightly.",
-    "Return the eggs and toss 30 seconds so they soak up the tomato. Pepper.",
-    "Microwave rice 2 minutes, top with the tomato and egg, and scatter spring onion."
-   ],
-   "zh": [
-    "蛋打散加半小匙鹽。鍋燒熱下 2 大匙油，油紋出現時倒蛋，用鏟子推 30 秒，八分熟、還有一點濕就盛起。",
-    "同鍋下剩下的油，番茄塊下鍋中火炒 3 分鐘，邊角出汁、鍋底有紅色湯汁。",
-    "加砂糖和半小匙鹽，炒 1 分鐘讓湯汁略稠。",
-    "蛋倒回鍋，翻炒 30 秒讓蛋吸滿番茄汁，撒黑胡椒。",
-    "米飯微波 2 分鐘，番茄蛋鋪上去，撒蔥花。"
-   ]
-  },
-  "tip": {
-   "en": "Take the eggs out early; they finish cooking when they go back in.",
-   "zh": "蛋要提早盛起，回鍋才不會老。"
-  }
- },
- {
-  "id": "thai-coconut-chicken-curry",
-  "title": {
-   "en": "Thai Coconut Chicken Curry",
-   "zh": "泰式椰奶咖哩雞"
-  },
-  "serves": 4,
-  "minutes": 25,
-  "kcal": 610,
-  "difficulty": "easy",
-  "cuisine": "southeast-asian",
-  "cuisineName": {
-   "en": "Southeast Asian",
-   "zh": "東南亞"
-  },
-  "image": "recipes/thai-coconut-chicken-curry.jpg",
-  "credit": {
-   "photographer": "Gu Ko",
-   "url": "https://www.pexels.com/photo/delicious-asian-curry-in-tokyo-restaurant-31653129/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Coconut milk 400 ml",
-     "zh": "椰奶 400 ml"
-    },
-    "families": [
-     "coconut_milk"
-    ]
-   },
-   {
-    "name": {
-     "en": "Shredded cooked chicken 300 g",
-     "zh": "手撕熟雞肉 300 g"
-    },
-    "families": [
-     "chicken_shredded"
-    ]
-   },
-   {
-    "name": {
-     "en": "Broccoli 1 head, cut into florets",
-     "zh": "花椰菜 1 顆，切小朵"
-    },
-    "families": [
-     "broccoli"
-    ]
-   },
-   {
-    "name": {
-     "en": "Thai red curry paste 3 tbsp",
-     "zh": "紅咖哩醬 3 大匙"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Lime juice 2 tbsp",
-     "zh": "萊姆汁 2 大匙"
-    },
-    "families": [
-     "lime_juice"
-    ]
-   },
-   {
-    "name": {
-     "en": "Fish sauce 1 tbsp",
-     "zh": "魚露 1 大匙"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "White sugar 1 tbsp",
-     "zh": "白砂糖 1 大匙"
-    },
-    "families": [
-     "sugar_white"
-    ]
-   },
-   {
-    "name": {
-     "en": "Microwave rice pouches 2 pouches (500 g)",
-     "zh": "即食米飯 2 包（500 g）"
-    },
-    "families": [
-     "rice_microwave_pouch"
-    ]
-   }
-  ],
-  "staples": {
-   "en": "",
-   "zh": ""
-  },
-  "steps": {
-   "en": [
-    "Simmer 100 ml of the coconut milk 2 minutes until the oil separates and the surface looks glossy.",
-    "Add curry paste and fry 1 minute until fragrant and deep red.",
-    "Add the rest of the coconut milk, fish sauce and sugar, bring to the boil, add broccoli and cook 4 minutes until the stems soften.",
-    "Stir in the chicken and heat 2 minutes. Off the heat, add lime juice.",
-    "Microwave rice 2 minutes and spoon the curry over."
-   ],
-   "zh": [
-    "椰奶先倒 100 ml 進鍋中火煮 2 分鐘，油浮起、表面出現亮亮油紋。",
-    "加咖哩醬炒 1 分鐘到香味明顯、顏色變深紅。",
-    "倒入剩下的椰奶、魚露、砂糖煮滾，放花椰菜煮 4 分鐘到梗變軟。",
-    "加雞肉絲煮 2 分鐘讓肉熱透，熄火加萊姆汁。",
-    "米飯微波 2 分鐘，咖哩淋上。"
-   ]
-  },
-  "tip": {
-   "en": "Splitting the coconut milk before adding the paste makes the curry far more fragrant.",
-   "zh": "椰奶先煮出油再下咖哩醬，香氣差很多。"
-  }
- },
- {
-  "id": "satay-peanut-chicken-rice",
-  "title": {
-   "en": "Satay Peanut Chicken Rice",
-   "zh": "沙嗲花生醬雞肉飯"
-  },
-  "serves": 4,
-  "minutes": 20,
-  "kcal": 680,
-  "difficulty": "easy",
-  "cuisine": "southeast-asian",
-  "cuisineName": {
-   "en": "Southeast Asian",
-   "zh": "東南亞"
-  },
-  "image": "recipes/satay-peanut-chicken-rice.jpg",
-  "credit": {
-   "photographer": "Teguh S",
-   "url": "https://www.pexels.com/photo/delicious-indonesian-cuisine-with-sate-skewers-37081070/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Peanut butter 120 g",
-     "zh": "花生醬 120 g"
-    },
-    "families": [
-     "peanut_butter"
-    ]
-   },
-   {
-    "name": {
-     "en": "Coconut milk 250 ml",
-     "zh": "椰奶 250 ml"
-    },
-    "families": [
-     "coconut_milk"
-    ]
-   },
-   {
-    "name": {
-     "en": "Shredded cooked chicken 300 g",
-     "zh": "手撕熟雞肉 300 g"
-    },
-    "families": [
-     "chicken_shredded"
-    ]
-   },
-   {
-    "name": {
-     "en": "Lime juice 2 tbsp",
-     "zh": "萊姆汁 2 大匙"
-    },
-    "families": [
-     "lime_juice"
-    ]
-   },
-   {
-    "name": {
-     "en": "Soy sauce 2 tbsp",
-     "zh": "醬油 2 大匙"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Garlic 2 cloves, minced",
-     "zh": "蒜 2 瓣，切末"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Chilli flakes 1 tsp",
-     "zh": "辣椒粉 1 小匙"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Microwave rice pouches 2 pouches (500 g)",
-     "zh": "即食米飯 2 包（500 g）"
-    },
-    "families": [
-     "rice_microwave_pouch"
-    ]
-   },
-   {
-    "name": {
-     "en": "Cucumber 1, sliced",
-     "zh": "小黃瓜 1 條，切片"
-    },
-    "families": []
-   }
-  ],
-  "staples": {
-   "en": "",
-   "zh": ""
-  },
-  "steps": {
-   "en": [
-    "Warm peanut butter, coconut milk, soy sauce, garlic and chilli in a small pot over low heat, stirring 4 minutes until smooth and thick enough to coat a spoon.",
-    "Add the chicken and heat 2 minutes; the sauce thickens a little more.",
-    "Off the heat, add lime juice; loosen with 2 tbsp water if too thick.",
-    "Microwave the rice 2 minutes.",
-    "Serve the satay chicken on rice with cucumber on the side."
-   ],
-   "zh": [
-    "花生醬、椰奶、醬油、蒜末、辣椒粉放小鍋，小火邊煮邊攪 4 分鐘，醬變滑順、湯匙拉起會掛住。",
-    "加雞肉絲拌勻煮 2 分鐘讓肉熱透，醬會再稠一點。",
-    "熄火加萊姆汁，太稠加 2 大匙水調整。",
-    "米飯微波 2 分鐘。",
-    "飯上放沙嗲雞，旁邊放小黃瓜片解膩。"
-   ]
-  },
-  "tip": {
-   "en": "Too thick? Add water. Too thin? Simmer another minute.",
-   "zh": "醬太稠就加水，太稀多煮一分鐘。"
-  }
- },
- {
-  "id": "spaghetti-carbonara-with-streaky-bacon",
-  "title": {
-   "en": "Spaghetti Carbonara with Streaky Bacon",
-   "zh": "培根蛋黃義大利麵"
-  },
-  "serves": 4,
-  "minutes": 25,
-  "kcal": 720,
-  "difficulty": "medium",
-  "cuisine": "western",
-  "cuisineName": {
-   "en": "European & American",
-   "zh": "歐美"
-  },
-  "image": "recipes/spaghetti-carbonara-with-streaky-bacon.jpg",
-  "credit": {
-   "photographer": "Adriano Bragi",
-   "url": "https://www.pexels.com/photo/delicious-creamy-spaghetti-carbonara-dish-31779533/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Spaghetti 400 g",
-     "zh": "義大利直麵 400 g"
-    },
-    "families": [
-     "pasta_spaghetti"
-    ]
-   },
-   {
-    "name": {
-     "en": "Streaky bacon 200 g, cut into 1 cm pieces",
-     "zh": "五花培根 200 g，切 1 cm"
-    },
-    "families": [
-     "bacon_streaky"
-    ]
-   },
-   {
-    "name": {
-     "en": "Free range eggs 3 eggs + 2 yolks",
-     "zh": "放養雞蛋 3 顆 + 2 顆蛋黃"
-    },
-    "families": [
-     "egg_free_range"
-    ]
-   },
-   {
-    "name": {
-     "en": "Cheddar cheese 80 g, finely grated",
-     "zh": "切達起司 80 g，磨細"
-    },
-    "families": [
-     "cheese_cheddar_organic"
-    ]
-   },
-   {
-    "name": {
-     "en": "Garlic 2 cloves, crushed",
-     "zh": "蒜 2 瓣，拍扁"
-    },
-    "families": []
-   }
-  ],
-  "staples": {
-   "en": "Black pepper, Salt",
-   "zh": "黑胡椒、鹽"
-  },
-  "steps": {
-   "en": [
-    "Boil a large pot of water with 1 tbsp salt and cook the spaghetti 1 minute less than the pack says. Save 1 cup of pasta water.",
-    "Start bacon and garlic in a cold pan over medium heat and cook 6 minutes until crisp and golden. Discard the garlic.",
-    "Whisk eggs, yolks, cheese and 1 tsp pepper in a large bowl.",
-    "Take the pan off the heat for 30 seconds, toss the pasta in the bacon fat, then tip everything into the egg bowl and stir fast.",
-    "Add pasta water 2 tbsp at a time until the sauce is glossy and coats every strand with no watery pools and no scrambled bits. Finish with pepper."
-   ],
-   "zh": [
-    "大鍋水加 1 大匙鹽煮滾，下麵煮包裝時間少 1 分鐘，撈起前留 1 杯煮麵水。",
-    "培根和蒜下冷鍋中火煎 6 分鐘，培根金黃酥脆，撈掉蒜。",
-    "蛋、蛋黃、起司、1 小匙黑胡椒在大碗裡打勻。",
-    "鍋離火 30 秒稍降溫，麵倒進培根鍋拌一下，再全部倒進蛋液碗裡快速攪拌。",
-    "分次加煮麵水，每次 2 大匙，攪到醬變成能裹住每根麵的奶油狀，不見水汪汪也沒有蛋塊。撒黑胡椒上桌。"
-   ]
-  },
-  "tip": {
-   "en": "Always mix the egg off the heat; a hot pan gives you scrambled egg.",
-   "zh": "鍋一定要離火再拌蛋，太燙會變炒蛋。"
-  }
- },
- {
-  "id": "ham-cheese-baked-penne",
-  "title": {
-   "en": "Ham & Cheese Baked Penne",
-   "zh": "火腿起司焗烤斜管麵"
-  },
-  "serves": 4,
-  "minutes": 40,
-  "kcal": 760,
-  "difficulty": "medium",
-  "cuisine": "western",
-  "cuisineName": {
-   "en": "European & American",
-   "zh": "歐美"
-  },
-  "image": "recipes/ham-cheese-baked-penne.jpg",
-  "credit": {
-   "photographer": "Ronmar Lacamiento",
-   "url": "https://www.pexels.com/photo/close-up-photography-of-baked-mac-806357/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Penne 400 g",
-     "zh": "斜管麵 400 g"
-    },
-    "families": [
-     "pasta_penne"
-    ]
-   },
-   {
-    "name": {
-     "en": "Pasta sauce 500 g",
-     "zh": "義大利麵醬 500 g"
-    },
-    "families": [
-     "pasta_sauce"
-    ]
-   },
-   {
-    "name": {
-     "en": "Sliced ham 200 g, cut into strips",
-     "zh": "火腿片 200 g，切條"
-    },
-    "families": [
-     "ham_sliced"
-    ]
-   },
-   {
-    "name": {
-     "en": "Cheddar cheese 150 g, grated",
-     "zh": "切達起司 150 g，磨絲"
-    },
-    "families": [
-     "cheese_cheddar_organic"
-    ]
-   },
-   {
-    "name": {
-     "en": "Sour cream 150 g",
-     "zh": "酸奶油 150 g"
-    },
-    "families": [
-     "sour_cream"
-    ]
-   },
-   {
-    "name": {
-     "en": "Mixed herbs 1 tsp",
-     "zh": "綜合香草 1 小匙"
-    },
-    "families": [
-     "mixed_herb"
-    ]
-   },
-   {
-    "name": {
-     "en": "Broccoli 1 head, small florets",
-     "zh": "花椰菜 1 顆，切小朵"
-    },
-    "families": [
-     "broccoli"
-    ]
-   }
-  ],
-  "staples": {
-   "en": "Black pepper",
-   "zh": "黑胡椒"
-  },
-  "steps": {
-   "en": [
-    "Heat oven to 200°C. Cook the penne 2 minutes short of the pack time, adding broccoli for the last 2 minutes. Drain together.",
-    "Mix pasta, broccoli, sauce, sour cream, ham, herbs and half the cheese until every piece is coated.",
-    "Spread in a baking dish and cover with the remaining cheese.",
-    "Bake 20 minutes until the cheese bubbles and the edges brown.",
-    "Rest 5 minutes before serving. Finish with pepper."
-   ],
-   "zh": [
-    "烤箱預熱 200°C。麵煮到包裝時間少 2 分鐘，最後 2 分鐘把花椰菜丟進同一鍋，一起瀝乾。",
-    "麵、花椰菜、麵醬、酸奶油、火腿、香草、一半起司拌勻，每根麵都要沾到醬。",
-    "倒進烤盤鋪平，剩下的起司鋪滿表面。",
-    "烤 20 分鐘，起司融化冒泡、邊緣焦黃。",
-    "出爐靜置 5 分鐘再切，撒黑胡椒。"
-   ]
-  },
-  "tip": {
-   "en": "Undercook the pasta by 2 minutes so it stays firm after baking.",
-   "zh": "麵少煮 2 分鐘，進烤箱才不會糊。"
-  }
- },
- {
-  "id": "english-muffin-ham-egg-brunch",
-  "title": {
-   "en": "English Muffin Ham & Egg Brunch",
-   "zh": "英式瑪芬火腿蛋早午餐"
-  },
-  "serves": 4,
-  "minutes": 15,
-  "kcal": 480,
-  "difficulty": "easy",
-  "cuisine": "western",
-  "cuisineName": {
-   "en": "European & American",
-   "zh": "歐美"
-  },
-  "image": "recipes/english-muffin-ham-egg-brunch.jpg",
-  "credit": {
-   "photographer": "Polina Tankilevitch",
-   "url": "https://www.pexels.com/photo/hash-browns-burritos-and-burgers-5848090/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "English muffins 4",
-     "zh": "英式瑪芬 4 個"
-    },
-    "families": [
-     "english_muffin"
-    ]
-   },
-   {
-    "name": {
-     "en": "Sliced ham 8 slices",
-     "zh": "火腿片 8 片"
-    },
-    "families": [
-     "ham_sliced"
-    ]
-   },
-   {
-    "name": {
-     "en": "Free range eggs 4",
-     "zh": "放養雞蛋 4 顆"
-    },
-    "families": [
-     "egg_free_range"
-    ]
-   },
-   {
-    "name": {
-     "en": "Aioli 4 tbsp",
-     "zh": "蒜味美乃滋 4 大匙"
-    },
-    "families": [
-     "aioli"
-    ]
-   },
-   {
-    "name": {
-     "en": "Cheddar cheese 4 slices",
-     "zh": "切達起司 4 片"
-    },
-    "families": [
-     "cheese_cheddar_organic"
-    ]
-   },
-   {
-    "name": {
-     "en": "Salted butter 20 g",
-     "zh": "鹹奶油 20 g"
-    },
-    "families": [
-     "butter_salted"
-    ]
-   },
-   {
-    "name": {
-     "en": "Tomato 1, sliced",
-     "zh": "番茄 1 顆，切片"
-    },
-    "families": []
-   }
-  ],
-  "staples": {
-   "en": "Black pepper",
-   "zh": "黑胡椒"
-  },
-  "steps": {
-   "en": [
-    "Split the muffins and toast cut side up 3 minutes until the edges are golden.",
-    "Fry the ham 1 minute per side over medium heat until the edges curl. Remove.",
-    "Melt butter in the same pan; when it foams, crack in the eggs and fry 3 minutes until the whites are set and the yolks still wobble.",
-    "Spread aioli on the bottom halves, stack ham, cheese, tomato and an egg.",
-    "Pepper, close with the tops and eat hot."
-   ],
-   "zh": [
-    "瑪芬對半剖開，切面朝上烤 3 分鐘，邊緣金黃。",
-    "平底鍋中火，火腿每面煎 1 分鐘，邊緣微捲，起鍋。",
-    "同鍋放奶油，融化起泡後打入蛋，煎 3 分鐘，蛋白全白、蛋黃還會晃就好。",
-    "瑪芬下半片抹蒜味美乃滋，疊火腿、起司片、番茄、煎蛋。",
-    "撒黑胡椒，蓋上上半片，趁熱吃。"
-   ]
-  },
-  "tip": {
-   "en": "Put the cheese on the hot ham and it melts on its own.",
-   "zh": "起司放在熱火腿上，餘溫就會融。"
-  }
- },
- {
-  "id": "chorizo-tomato-baked-eggs-shakshuka-style",
-  "title": {
-   "en": "Chorizo & Tomato Baked Eggs (Shakshuka-style)",
-   "zh": "西班牙臘腸番茄烤蛋"
-  },
-  "serves": 4,
-  "minutes": 30,
-  "kcal": 540,
-  "difficulty": "medium",
-  "cuisine": "western",
-  "cuisineName": {
-   "en": "European & American",
-   "zh": "歐美"
-  },
-  "image": "recipes/chorizo-tomato-baked-eggs-shakshuka-style.jpg",
-  "credit": {
-   "photographer": "Boryslav Shoot",
-   "url": "https://www.pexels.com/photo/delicious-shakshuka-dish-with-bread-slices-29385750/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Chorizo 200 g, sliced",
-     "zh": "西班牙臘腸 200 g，切片"
-    },
-    "families": [
-     "chorizo"
-    ]
-   },
-   {
-    "name": {
-     "en": "Pasta sauce 500 g",
-     "zh": "義大利麵醬 500 g"
-    },
-    "families": [
-     "pasta_sauce"
-    ]
-   },
-   {
-    "name": {
-     "en": "Free range eggs 6",
-     "zh": "放養雞蛋 6 顆"
-    },
-    "families": [
-     "egg_free_range"
-    ]
-   },
-   {
-    "name": {
-     "en": "Onion 1, diced",
-     "zh": "洋蔥 1 顆，切丁"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Garlic 2 cloves, minced",
-     "zh": "蒜 2 瓣，切末"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Mixed herbs 1 tsp",
-     "zh": "綜合香草 1 小匙"
-    },
-    "families": [
-     "mixed_herb"
-    ]
-   },
-   {
-    "name": {
-     "en": "Naan bread 4",
-     "zh": "印度烤餅 4 片"
-    },
-    "families": [
-     "naan_bread"
-    ]
-   },
-   {
-    "name": {
-     "en": "Sour cream 100 g",
-     "zh": "酸奶油 100 g"
-    },
-    "families": [
-     "sour_cream"
-    ]
-   }
-  ],
-  "staples": {
-   "en": "Black pepper",
-   "zh": "黑胡椒"
-  },
-  "steps": {
-   "en": [
-    "Fry the chorizo 4 minutes over medium heat until the oil runs red and the edges crisp. Set half aside.",
-    "Cook onion and garlic in the chorizo oil 4 minutes until translucent.",
-    "Add pasta sauce and herbs and simmer 5 minutes until thick enough that a spoon leaves a trail.",
-    "Make 6 wells, crack an egg into each, cover and cook on low 6 minutes until the whites set and the yolks stay soft.",
-    "Top with the reserved chorizo and pepper. Warm the naan and serve with sour cream for dipping."
-   ],
-   "zh": [
-    "臘腸片下平底鍋中火煎 4 分鐘，出紅油、邊緣微焦，撈起一半備用。",
-    "洋蔥丁、蒜末下鍋用臘腸油炒 4 分鐘到洋蔥透明。",
-    "倒麵醬和香草，小火煮 5 分鐘到醬變稠、勺子劃過能看到鍋底。",
-    "用湯匙在醬裡挖 6 個洞，各打一顆蛋，蓋鍋小火 6 分鐘，蛋白凝固、蛋黃半熟。",
-    "撒回臘腸片和黑胡椒，烤餅烤熱，配酸奶油沾著吃。"
-   ]
-  },
-  "tip": {
-   "en": "Want firmer yolks? Give it one more minute under the lid.",
-   "zh": "蛋黃想更熟就多蓋 1 分鐘。"
-  }
- },
- {
-  "id": "air-fryer-crispy-fish-sandwich",
-  "title": {
-   "en": "Air Fryer Crispy Fish Sandwich",
-   "zh": "氣炸魚排三明治"
-  },
-  "serves": 4,
-  "minutes": 15,
-  "kcal": 590,
-  "difficulty": "easy",
-  "cuisine": "quick",
-  "cuisineName": {
-   "en": "Quick (microwave / air fryer)",
-   "zh": "快速料理"
-  },
-  "image": "recipes/air-fryer-crispy-fish-sandwich.jpg",
-  "credit": {
-   "photographer": "FOX ^.ᆽ.^= ∫",
-   "url": "https://www.pexels.com/photo/crispy-chicken-pieces-in-modern-air-fryer-35285814/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Coated fish fillets 4 fillets",
-     "zh": "裹粉魚排 4 片"
-    },
-    "families": [
-     "fish_fillet_coated"
-    ]
-   },
-   {
-    "name": {
-     "en": "English muffins 4",
-     "zh": "英式瑪芬 4 個"
-    },
-    "families": [
-     "english_muffin"
-    ]
-   },
-   {
-    "name": {
-     "en": "Aioli 4 tbsp",
-     "zh": "蒜味美乃滋 4 大匙"
-    },
-    "families": [
-     "aioli"
-    ]
-   },
-   {
-    "name": {
-     "en": "Lemon juice 1 tbsp",
-     "zh": "檸檬汁 1 大匙"
-    },
-    "families": [
-     "lemon_juice"
-    ]
-   },
-   {
-    "name": {
-     "en": "Cabbage 150 g, finely shredded",
-     "zh": "高麗菜 150 g，切細絲"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "Cheddar cheese 4 slices",
-     "zh": "切達起司 4 片"
-    },
-    "families": [
-     "cheese_cheddar_organic"
-    ]
-   }
-  ],
-  "staples": {
-   "en": "Black pepper",
-   "zh": "黑胡椒"
-  },
-  "steps": {
-   "en": [
-    "Air fry the fish at 200°C in one layer for 10 minutes, turning once, until golden and crisp to the touch.",
-    "Mix aioli with lemon juice; toss the cabbage with half of it for a quick slaw.",
-    "Split the muffins and warm them in the air fryer for the last 2 minutes.",
-    "Spread the remaining aioli on the bottoms, add cheese, the hot fish and the slaw.",
-    "Pepper and close with the tops."
-   ],
-   "zh": [
-    "氣炸鍋 200°C，魚排單層放，氣炸 10 分鐘，中途翻面，表面金黃、按下去酥脆。",
-    "蒜味美乃滋和檸檬汁拌勻，高麗菜絲用一半的醬拌成沙拉。",
-    "瑪芬對半剖開，氣炸最後 2 分鐘放進去烤熱。",
-    "下半片抹剩下的醬，放起司片、熱魚排、高麗菜沙拉。",
-    "撒黑胡椒，蓋上上半片。"
-   ]
-  },
-  "tip": {
-   "en": "Cheese under the hot fillet melts without any extra step.",
-   "zh": "起司壓在熱魚排下面就會融化。"
-  }
- },
- {
-  "id": "microwave-butter-chicken-with-naan",
-  "title": {
-   "en": "Microwave Butter Chicken with Naan",
-   "zh": "微波奶油雞咖哩配烤餅"
-  },
-  "serves": 4,
-  "minutes": 15,
-  "kcal": 650,
-  "difficulty": "easy",
-  "cuisine": "quick",
-  "cuisineName": {
-   "en": "Quick (microwave / air fryer)",
-   "zh": "快速料理"
-  },
-  "image": "recipes/microwave-butter-chicken-with-naan.jpg",
-  "credit": {
-   "photographer": "Alberta Studios",
-   "url": "https://www.pexels.com/photo/cooked-food-on-white-ceramic-plate-10615283/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Butter chicken recipe base 1 jar (about 500 g)",
-     "zh": "奶油雞料理包 1 包（約 500 g）"
-    },
-    "families": [
-     "recipe_base_butter_chicken"
-    ]
-   },
-   {
-    "name": {
-     "en": "Shredded cooked chicken 400 g",
-     "zh": "手撕熟雞肉 400 g"
-    },
-    "families": [
-     "chicken_shredded"
-    ]
-   },
-   {
-    "name": {
-     "en": "Naan bread 4",
-     "zh": "印度烤餅 4 片"
-    },
-    "families": [
-     "naan_bread"
-    ]
-   },
-   {
-    "name": {
-     "en": "Natural Greek yoghurt 100 g",
-     "zh": "希臘原味優格 100 g"
-    },
-    "families": [
-     "yoghurt_greek_natural_unsweetened"
-    ]
-   },
-   {
-    "name": {
-     "en": "Broccoli ½ head, small florets",
-     "zh": "花椰菜 半顆，切小朵"
-    },
-    "families": [
-     "broccoli"
-    ]
-   },
-   {
-    "name": {
-     "en": "Microwave rice pouches 1 pouch (250 g)",
-     "zh": "即食米飯 1 包（250 g）"
-    },
-    "families": [
-     "rice_microwave_pouch"
-    ]
-   }
-  ],
-  "staples": {
-   "en": "",
-   "zh": ""
-  },
-  "steps": {
-   "en": [
-    "Microwave the broccoli with 2 tbsp water, covered, 3 minutes until bright green.",
-    "Mix chicken and the sauce in a large bowl, cover and microwave 5 minutes, stirring once, until bubbling and piping hot.",
-    "Stir in the broccoli and half the yoghurt; microwave 1 more minute.",
-    "Microwave rice 2 minutes; sprinkle the naan with water and microwave 40 seconds until soft and warm.",
-    "Serve the curry with rice and naan, topped with the remaining yoghurt."
-   ],
-   "zh": [
-    "花椰菜放可微波碗加 2 大匙水，蓋上微波 3 分鐘，顏色鮮綠。",
-    "雞肉絲和料理包醬倒進大碗拌勻，蓋上微波 5 分鐘，中途攪一次，醬冒泡、雞肉燙手。",
-    "拌入花椰菜和一半優格，再微波 1 分鐘。",
-    "米飯微波 2 分鐘；烤餅噴一點水，微波 40 秒變軟熱。",
-    "咖哩配飯和烤餅，頂上放剩下的優格。"
-   ]
-  },
-  "tip": {
-   "en": "Add the yoghurt at the end so it keeps its tang.",
-   "zh": "優格最後放，酸味才留得住。"
-  }
- },
- {
-  "id": "air-fryer-wedges-nuggets-platter",
-  "title": {
-   "en": "Air Fryer Wedges & Nuggets Platter",
-   "zh": "氣炸薯角雞塊拼盤"
-  },
-  "serves": 4,
-  "minutes": 20,
-  "kcal": 700,
-  "difficulty": "easy",
-  "cuisine": "quick",
-  "cuisineName": {
-   "en": "Quick (microwave / air fryer)",
-   "zh": "快速料理"
-  },
-  "image": "recipes/air-fryer-wedges-nuggets-platter.jpg",
-  "credit": {
-   "photographer": "FOX ^.ᆽ.^= ∫",
-   "url": "https://www.pexels.com/photo/crispy-chicken-pieces-in-modern-air-fryer-35285814/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Frozen potato wedges 750 g",
-     "zh": "冷凍薯角 750 g"
-    },
-    "families": [
-     "potato_wedge_frozen"
-    ]
-   },
-   {
-    "name": {
-     "en": "Free-range chicken nuggets 500 g",
-     "zh": "放養雞塊 500 g"
-    },
-    "families": [
-     "chicken_nugget_free_range"
-    ]
-   },
-   {
-    "name": {
-     "en": "BBQ sauce 100 ml",
-     "zh": "燒烤醬 100 ml"
-    },
-    "families": [
-     "bbq_sauce"
-    ]
-   },
-   {
-    "name": {
-     "en": "Sour cream 150 g",
-     "zh": "酸奶油 150 g"
-    },
-    "families": [
-     "sour_cream"
-    ]
-   },
-   {
-    "name": {
-     "en": "Spring onion 2, sliced",
-     "zh": "蔥 2 支，切蔥花"
-    },
-    "families": []
-   },
-   {
-    "name": {
-     "en": "BBQ rub 2 tsp",
-     "zh": "燒烤香料粉 2 小匙"
-    },
-    "families": [
-     "bbq_rub"
-    ]
-   },
-   {
-    "name": {
-     "en": "Cucumber 1, cut into sticks",
-     "zh": "小黃瓜 1 條，切條"
-    },
-    "families": []
-   }
-  ],
-  "staples": {
-   "en": "",
-   "zh": ""
-  },
-  "steps": {
-   "en": [
-    "Toss the wedges with BBQ rub and air fry at 200°C for 12 minutes, shaking once, until the edges are golden and crisp.",
-    "Push the wedges aside, add nuggets and cook 8 more minutes, turning once, until golden outside and white all the way through.",
-    "Mix sour cream with spring onion for a dip.",
-    "Plate wedges and nuggets with BBQ sauce, the sour cream dip and cucumber sticks.",
-    "Eat hot."
-   ],
-   "zh": [
-    "薯角撒燒烤香料粉拌勻，氣炸鍋 200°C 先炸 12 分鐘，中途搖一次，邊緣金黃酥脆。",
-    "薯角推到一邊，雞塊放進去再炸 8 分鐘，翻面一次，雞塊表面金黃、剝開裡面全白。",
-    "酸奶油拌蔥花做沾醬。",
-    "薯角和雞塊擺盤，燒烤醬、蔥花酸奶油、小黃瓜條放旁邊。",
-    "趁熱吃。"
-   ]
-  },
-  "tip": {
-   "en": "Start the wedges first so both finish at the same time.",
-   "zh": "薯角先炸再放雞塊，兩樣才會同時剛好。"
-  }
- },
- {
-  "id": "honey-cinnamon-yoghurt-cups",
-  "title": {
-   "en": "Honey Cinnamon Yoghurt Cups",
-   "zh": "蜂蜜肉桂優格杯"
-  },
-  "serves": 4,
-  "minutes": 10,
-  "kcal": 320,
-  "difficulty": "easy",
-  "cuisine": "dessert",
-  "cuisineName": {
-   "en": "Dessert",
-   "zh": "甜點"
-  },
-  "image": "recipes/honey-cinnamon-yoghurt-cups.jpg",
-  "credit": {
-   "photographer": "Denys Gromov",
-   "url": "https://www.pexels.com/photo/dessert-in-a-bowl-6769486/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Natural Greek yoghurt 500 g",
-     "zh": "希臘原味優格 500 g"
-    },
-    "families": [
-     "yoghurt_greek_natural_unsweetened"
-    ]
-   },
-   {
-    "name": {
-     "en": "Manuka honey 4 tbsp",
-     "zh": "麥盧卡蜂蜜 4 大匙"
-    },
-    "families": [
-     "honey_manuka"
-    ]
-   },
-   {
-    "name": {
-     "en": "Ground cinnamon 1 tsp",
-     "zh": "肉桂粉 1 小匙"
-    },
-    "families": [
-     "cinnamon_ground"
-    ]
-   },
-   {
-    "name": {
-     "en": "Granola 120 g",
-     "zh": "格蘭諾拉麥片 120 g"
-    },
-    "families": [
-     "granola"
-    ]
-   },
-   {
-    "name": {
-     "en": "Dried cranberries 40 g",
-     "zh": "蔓越莓乾 40 g"
-    },
-    "families": [
-     "dried_cranberry"
-    ]
-   },
-   {
-    "name": {
-     "en": "Banana 2, sliced",
-     "zh": "香蕉 2 根，切片"
-    },
-    "families": []
-   }
-  ],
-  "staples": {
-   "en": "",
-   "zh": ""
-  },
-  "steps": {
-   "en": [
-    "Stir cinnamon and 2 tbsp honey into the yoghurt until evenly pale brown with no white streaks.",
-    "Put a layer of granola (about 2 tbsp) in each of 4 glasses.",
-    "Spoon in half the yoghurt, add banana slices, then the rest of the yoghurt.",
-    "Top with the remaining granola and the cranberries.",
-    "Drizzle ½ tbsp honey over each just before eating."
-   ],
-   "zh": [
-    "優格加肉桂粉和 2 大匙蜂蜜拌勻，顏色變淡棕、看不到白色條紋。",
-    "4 個杯子各鋪一層麥片（約 2 大匙）。",
-    "舀一半的優格進杯，放香蕉片，再蓋上剩下的優格。",
-    "頂上放剩下的麥片和蔓越莓乾。",
-    "吃之前各淋半大匙蜂蜜。"
-   ]
-  },
-  "tip": {
-   "en": "Add the granola right before eating so it stays crunchy.",
-   "zh": "麥片吃之前才放才會脆。"
-  }
- },
- {
-  "id": "no-bake-peanut-butter-cookie-ice-cream-cups",
-  "title": {
-   "en": "No-bake Peanut Butter Cookie Ice Cream Cups",
-   "zh": "免烤花生醬餅乾冰淇淋杯"
-  },
-  "serves": 4,
-  "minutes": 15,
-  "kcal": 560,
-  "difficulty": "easy",
-  "cuisine": "dessert",
-  "cuisineName": {
-   "en": "Dessert",
-   "zh": "甜點"
-  },
-  "image": "recipes/no-bake-peanut-butter-cookie-ice-cream-cups.jpg",
-  "credit": {
-   "photographer": "ROMAN ODINTSOV",
-   "url": "https://www.pexels.com/photo/photo-of-cupcakes-with-sprinkles-5846193/",
-   "source": "Pexels"
-  },
-  "ingredients": [
-   {
-    "name": {
-     "en": "Chocolate cream biscuits 12",
-     "zh": "巧克力夾心餅 12 片"
-    },
-    "families": [
-     "chocolate_cream_biscuit"
-    ]
-   },
-   {
-    "name": {
-     "en": "Peanut butter 100 g",
-     "zh": "花生醬 100 g"
-    },
-    "families": [
-     "peanut_butter"
-    ]
-   },
-   {
-    "name": {
-     "en": "Unsalted butter 40 g, melted",
-     "zh": "無鹽奶油 40 g，融化"
-    },
-    "families": [
-     "butter_unsalted"
-    ]
-   },
-   {
-    "name": {
-     "en": "Ice cream (tub) 500 ml",
-     "zh": "桶裝冰淇淋 500 ml"
-    },
-    "families": [
-     "ice_cream_tub"
-    ]
-   },
-   {
-    "name": {
-     "en": "Choc chip cookies 4, crumbled",
-     "zh": "巧克力豆餅乾 4 片，捏碎"
-    },
-    "families": [
-     "cookie_choc_chip"
-    ]
-   }
-  ],
-  "staples": {
-   "en": "",
-   "zh": ""
-  },
-  "steps": {
-   "en": [
-    "Crush the biscuits in a bag with a rolling pin to coarse crumbs, then mix in the melted butter until it holds together when squeezed.",
-    "Press the crumbs into 4 cups and freeze 5 minutes to set.",
-    "Microwave the peanut butter 20 seconds until it flows.",
-    "Scoop ice cream into the cups and drizzle 1 tbsp peanut butter over each.",
-    "Top with crumbled cookies and the remaining peanut butter. Eat straight away."
-   ],
-   "zh": [
-    "夾心餅放袋子裡用擀麵棍敲碎成粗砂狀，倒入融化的奶油拌到捏得成團。",
-    "餅乾屑分進 4 個杯子壓實，冷凍 5 分鐘定型。",
-    "花生醬微波 20 秒變流動狀。",
-    "冰淇淋挖進杯子，每杯淋 1 大匙花生醬。",
-    "撒碎巧克力豆餅乾，剩下的花生醬淋在最上面，馬上吃。"
-   ]
-  },
-  "tip": {
-   "en": "A quick zap makes the peanut butter pourable.",
-   "zh": "花生醬微波一下才淋得開。"
-  }
- }
 ]

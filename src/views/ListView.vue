@@ -11,11 +11,13 @@ import { t } from '../composables/useI18n'
 import type { Group } from '../lib/types'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
+import { useStorePrices } from '../composables/useStorePrices'
 import { aiEnabled } from '../lib/aiRecipe'
 import GradientButton from '../components/GradientButton.vue'
 
 const { items, add, has, addFreeText, remove, clear, setQty, rename, setPrice, toggle, split, oneStop, oneStopFrom, oneStopMissing, requestPrices, priceQueueAhead } = useList()
 const { activeStores, groups, familyAlt } = useSpecials()
+const { priceAt } = useStorePrices()
 /** One stop：這家沒有這樣東西時，推薦它最便宜的同類（§8）。只是建議，不算進總價。 */
 function altText(storeId: string, key: string | null): string | null {
   const g = key ? groups.value.get(key) : undefined
@@ -49,9 +51,18 @@ function missingNames(s: OsStore): string {
   return names.slice(0, 2).join('、') + (names.length > 2 ? t('list.andMore', { n: names.length - 2 }) : '')
 }
 /** 這家沒有 → 別家最便宜的特價在哪 */
-function buyAt(key: string | null): string | null {
-  const g = key ? groups.value.get(key) : undefined
-  return g ? t('list.buyAt', { s: g.best.store.name, v: money(dealPrice(g.best.special)) }) : null
+function buyAt(storeId: string, key: string | null): string | null {
+  if (!key) return null
+  const g = groups.value.get(key)
+  let best: { name: string; price: number; shelf: boolean } | null = g && g.best.store.id !== storeId ? { name: g.best.store.name, price: dealPrice(g.best.special), shelf: false } : null
+  for (const d of activeStores.value) {   // 別家查到的現價（原價）也算（2026-09-11）
+    if (d.store.id === storeId) continue
+    const sp = priceAt(d.store.id, key)
+    if (!sp?.available || sp.price == null) continue
+    const p = sp.multi_buy && sp.multi_buy.qty > 0 ? sp.multi_buy.total / sp.multi_buy.qty : sp.price
+    if (!best || p < best.price) best = { name: d.store.name, price: p, shelf: !sp.is_special }
+  }
+  return best ? t(best.shelf ? 'list.buyAtShelf' : 'list.buyAt', { s: best.name, v: money(best.price) }) : null
 }
 /** 展開哪一家：預設第一家（結論那家）；點一下切換，再點收合 */
 const expanded = ref<string | null>(null)
@@ -144,15 +155,16 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
           </div>
           <div v-for="l in b.lines" :key="l.item.id" class="lrow row">
             <button class="cb" :class="{ on: l.item.checked }" @click="toggle(l.item.id)">✓</button>
-            <ProductThumb :special="l.offer.special" variant="sq" class="list-tn" />
+            <ProductThumb v-if="l.offer?.special ?? thumbFor(l.item.key)" :special="(l.offer?.special ?? thumbFor(l.item.key))!" variant="sq" class="list-tn" />
+            <div v-else class="tn sq list-tn ph" />
             <RouterLink class="nm" :class="{ done: l.item.checked }" :to="productLink(l.item.key as string)">
               <div class="t">{{ l.item.name }}</div>
-              <div class="s ell">{{ b.store.name }}<template v-if="unitLabel(l.offer.special)"> · {{ unitLabel(l.offer.special) }}</template></div>
+              <div class="s ell">{{ b.store.name }}<template v-if="l.offer && unitLabel(l.offer.special)"> · {{ unitLabel(l.offer.special) }}</template><template v-else-if="l.shelf"> · {{ l.shelf.is_special ? t('list.tagSpecial') : t('list.regularPrice') }}</template></div>
             </RouterLink>
             <div class="step">
               <button @click="setQty(l.item.id, l.item.qty - 1)"><i>−</i></button>{{ l.item.qty }}<button @click="setQty(l.item.id, l.item.qty + 1)"><i>+</i></button>
             </div>
-            <div class="p">{{ money(l.total) }}</div>
+            <div class="p" :class="{ muted: l.shelf && !l.shelf.is_special }">{{ money(l.total) }}</div>
             <button class="del" :aria-label="t('list.remove')" @click="remove(l.item.id)"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" /></svg></button>
           </div>
         </div>
@@ -219,7 +231,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
                 <component :is="l.item.key ? 'RouterLink' : 'div'" class="nm" :to="l.item.key ? productLink(l.item.key) : undefined">
                   <div class="t">{{ l.item.name }} × {{ l.item.qty }}</div>
                   <div v-if="altText(s.card.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">{{ altText(s.card.store.id, l.item.key) }}</div>
-                  <div v-else-if="buyAt(l.item.key)" class="s ell" style="color: var(--ink-2)">{{ buyAt(l.item.key) }}</div>
+                  <div v-else-if="buyAt(s.card.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">{{ buyAt(s.card.store.id, l.item.key) }}</div>
                 </component>
                 <div class="p muted">—</div>
               </div>
