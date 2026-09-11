@@ -245,7 +245,7 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
         <button class="btn" style="flex: 1" :disabled="inList" @click="addToList">
           {{ inList ? t('p.added') : t('p.addToList') }}
         </button>
-        <button v-if="isIn" class="btn ghost" style="width: 126px; font-size: 16px" @click="toggleWatch(pkey)">
+        <button v-if="isIn" class="btn ghost" style="min-width: 126px; width: auto; padding: 0 12px; font-size: 16px; white-space: nowrap; flex: none" @click="toggleWatch(pkey)">
           {{ isWatched(pkey) ? t('p.followed') : t('p.follow') }}
         </button>
         <RouterLink v-else class="btn ghost" to="/signin" style="width: 126px; font-size: 14px; display: flex; align-items: center; justify-content: center">

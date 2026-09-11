@@ -102,7 +102,7 @@ function others(g: Group): string {
               <div class="price" style="margin-top: 0; font-size: 20px">
                 {{ money(dealPrice(g.best.special)) }}<span v-if="priceSuffix(g.best.special)" class="unit">{{ priceSuffix(g.best.special) }}</span>
               </div>
-              <button class="link" style="margin-top: 4px; font-size: 12px" @click.prevent.stop="toggleWatch(g.key)">
+              <button class="btn ghost" style="margin-top: 6px; margin-left: auto; width: auto; height: 30px; padding: 0 10px; font-size: 12.5px; border-radius: 9px; white-space: nowrap" @click.prevent.stop="toggleWatch(g.key)">
                 {{ t('watching.unfollow') }}
               </button>
             </div>
@@ -125,7 +125,7 @@ function others(g: Group): string {
               <div class="t ell" style="font-size: 14.5px">{{ names[k] ?? '…' }}</div>
               <div class="s ell">{{ t('cmp.noSpecial') }}</div>
             </div>
-            <button class="link" style="flex: none; font-size: 12px" @click="toggleWatch(k)">
+            <button class="btn ghost" style="flex: none; width: auto; height: 30px; padding: 0 10px; font-size: 12.5px; border-radius: 9px; white-space: nowrap" @click="toggleWatch(k)">
               {{ t('watching.unfollow') }}
             </button>
           </div>

@@ -40,7 +40,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'watching.sub': { en: '{n} items · they show on the home page when on special', zh: '{n} 項 · 有特價時會出現在首頁' },
   'watching.onSpecial': { en: 'On special this week', zh: '本週有特價' },
   'watching.noSpecial': { en: 'No special at your stores this week', zh: '你的店本週沒特價' },
-  'watching.unfollow': { en: 'Unfollow', zh: '取消關注' },
+  'watching.unfollow': { en: 'Remove', zh: '移除' },
   'watching.empty': { en: "You're not following anything yet", zh: '還沒關注任何商品' },
   'watching.emptyHint': { en: 'Open a product and tap ☆ Follow.', zh: '打開商品，按 ☆ 關注。' },
   'watching.signIn': { en: 'Sign in with Google to follow items.', zh: '要用 Google 登入才能關注商品。' },
