@@ -202,7 +202,6 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'list.aiBtnSignIn': { en: 'AI recipe · sign in', zh: 'AI 食譜 · 需登入' },
   'list.aiSub': { en: 'Two dishes from what is on your list, priced with this week\'s specials.', zh: '用清單裡的食材想 2 道菜，要買的配本週特價。' },
   'list.add': { en: 'Add', zh: '加入' },
-  'list.saved': { en: 'Saved on this device', zh: '存在這台裝置' },
   'list.freeText': { en: 'free text · not matched', zh: '自由輸入 · 未配對' },
   'list.go': { en: 'Go to {s}: {n} of {m} items, {v}', zh: '去 {s}：{m} 樣買得到 {n} 樣，{v}' },
   'list.goNone': { en: 'No prices yet for these stores.', zh: '這幾家還沒有任何價格。' },

@@ -122,7 +122,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
             <div class="t ell" style="font-size: 13.5px">{{ displayName(g.best.special) }}</div>
             <div class="s ell">{{ g.best.store.name }} · {{ money(dealPrice(g.best.special)) }}</div>
           </div>
-          <button class="btn ghost" style="height: 34px; padding: 0 14px; font-size: 13px; flex: none" @click="add(g.key, displayName(g.best.special))">{{ t('list.add') }}</button>
+          <button class="btn ghost" style="height: 34px; width: auto; padding: 0 14px; font-size: 13px; flex: none" @click="add(g.key, displayName(g.best.special))">{{ t('list.add') }}</button>
         </div>
       </div>
     </div>
@@ -268,7 +268,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
     </div>
 
     <div class="footbar">
-      <span>{{ t('list.saved') }}</span>
+      <span />
       <button v-if="isIn && items.length" class="link" @click="share">{{ shared === 'copied' ? t('list.shared') : t('list.share') }}</button>
       <RouterLink v-else-if="!isIn && items.length" class="link" to="/signin">{{ t('list.shareSignIn') }}</RouterLink>
       <span v-else>{{ t('common.items', { n: items.length }) }}</span>
