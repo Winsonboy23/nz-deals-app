@@ -4,6 +4,9 @@
 來源：桌面筆記《今天的整理：問題與解法》（2026-09-13）＋ 當天直接查 Supabase 本週（2026-09-14 那週）資料的結果。
 爬蟲與 price-worker 在 Mac mini 上，不在這個 repo；這份是給爬蟲那邊的規格。前端六項已於 2026-09-15 做完（commit f54e7e2）。
 
+> **進度（2026-09-15 晚）**：爬蟲已進私人 repo Winsonboy23/nz-deals-crawler。第 1–5 節已實作並在單店試跑通過（commits 1a5330b、be3aeee、6f9e809、30155d8、001b543），第 6 節試跑中。**尚未上線**：正式爬蟲一行未換。資料庫四個 migration 都已套上（2026-09-15 晚查證：specials 多了 badges、is_special、regular_price、member_price 四個空欄位；crawl_stores 多了 slices、badges、tree；catalog 表已建、0 列），報告寫 003／004 未套是寫報告當時的狀態。上線時機待決定（每小時測試抓取 9/19 中午結束後上比較安全）。完整報告見桌面 `backend-report-2026-09-15.md`。
+> 報告也修正了這份規格的三個錯誤，已一併改在下文：Fresh Deal 漏抓的真正原因、Mainland Edam 是兩家搞混、第 4 節驗收 SQL 要用 `\y`。
+
 ---
 
 ## 0. 查證到的現況（改之前的基準線）
@@ -14,7 +17,7 @@
 | 綠超 promo_type（4 店合計） | Special 5,523、PercentageOff_* 3,938、Multibuy_Special 577、LowPrice 341、Multibuy_FreshDeal 88、Multibuy_LowPrice 37、**FreshDeal（單價型）0、MemberPrice 0** |
 | 綠超 club_only=true | **0 筆**（筆記說會員價有 1,008 項） |
 | Hastings 綠超 fruit-and-vegetables | **21 筆**（筆記說 Fresh Deal 就有 51 項） |
-| Hastings 綠超 pantry | 1,218 筆（網站分類寫 1,378） |
+| Hastings 綠超 pantry | 1,218 筆（網站分類寫 1,378）。**後查：不是漏抓**，1,218 是換成紅超分類後的數字，照綠超自己的分類資料庫有 1,370 筆 |
 | 紅超 club_only=true | 7,617 筆，一般價存在 was_price |
 | 黃超 | 全部 Special / Multibuy，沒有 was_price |
 | 同店同 product_id 重複 | 0（已用編號去重） |
@@ -27,7 +30,7 @@
 
 ## 1. 先全抓，徽章存成獨立欄位（筆記問題一）
 
-**問題**：綠超單價型 Fresh Deal（只有一個價、綠色圓標）一筆都沒進來；抓的時候用「有沒有原價／有沒有多件」判斷是不是特價，判斷放太前面。
+**問題**：綠超單價型 Fresh Deal（只有一個價、綠色圓標）一筆都沒進來。**真正原因（後端查證）**：爬蟲走的是超市 API 的促銷篩選清單，而超市的促銷篩選（連 All Promotions）本來就不含單價型 Fresh Deal、Clearance，也刻意沒帶會員價；程式本身並沒有用原價或多件來判斷。解法不變：整個分類翻，再看徽章。
 
 **規格**
 - 抓到的商品一律寫入，不在抓取階段過濾。
@@ -44,7 +47,7 @@
 
 ## 2. 價格欄位拆清楚，綠超會員價要抓進來（筆記問題三、四）
 
-**問題**：綠超 Member Price 目前 0 筆；紅超會員價用 was_price 存一般價，欄位語意被借用；筆記觀察的 Mainland Edam 700g 綠超「會員 $9.99 / 非會員 $13.89」在資料庫是 $11.50 Special（was 13.90），對不起來，要查爬蟲怎麼讀綠超的價格欄。
+**問題**：綠超 Member Price 目前 0 筆（9/4 時判斷不登入看不到，現在不登入也看得到，在徽章資料 MemberPrice.promotionalPrice）；紅超會員價用 was_price 存一般價，欄位語意被借用。原本寫的「Mainland Edam 700g 對不起來」**是筆記把兩家搞混**：綠超 700g 資料庫 $11.50／原價 $13.90 與網站一致；「會員 $9.99／非會員 $13.89」是紅超 Mild & Creamy Edam 700g 9/7 那週的 Clubcard 價，資料庫也存對了。爬蟲沒讀錯。
 
 **規格**
 - 新增 `regular_price numeric`：單件一般價，**永遠要有值**（有特價時是原價；只有會員價時是非會員價；沒折扣時等於 price）。
@@ -86,7 +89,8 @@
 - 回填現有 products 表，並重跑受影響的 name_matches。
 
 **驗收**
-- `select count(*) from products where display_name ~* '^(\S+( \S+)?) \1\b'` 為 0。
+- `select display_name from products where display_name ~* '^(\S+( \S+)?) \1\y'` 回填後剩下的應該都是本來就疊字的品牌（Chop Chop、Cha Cha、Mogu Mogu，約 40 筆）。注意 Postgres 的字邊界是 `\y`，`\b` 是倒退鍵，用 `\b` 永遠回 0。
+- 回填腳本要等新版爬蟲上線後才能跑，不然舊版下一次又把重複名字寫回去。
 
 ---
 
@@ -139,5 +143,6 @@
 | Crown Pumpkin | Hastings 綠超 | 查得到，price 3.99 |
 | Broccoli | Hastings 黃超 | price 單買價、multi_buy 若有則 qty/total |
 | Avocado | Hastings 黃超 | 搜「Avocado」不能回「沒有資料」 |
-| Mainland Edam 700g | Havelock North 紅超 | member_price、regular_price 各自正確，club_only 為真 |
+| Mainland Mild & Creamy Edam 700g（有 Clubcard 特價那週） | Havelock North 紅超 | member_price 9.99、regular_price 13.89、club_only 為真 |
+| Mainland Cheese Edam 700g | Hastings 綠超 | price 11.50、regular_price 13.90、member_price 空（人人都有的 Special） |
 | 任一綠超 Member Price 商品 | 任一綠超 | member_price 非空 |
