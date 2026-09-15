@@ -2,7 +2,7 @@ import { computed } from 'vue'
 import raw from '../data/recipes.json'
 import { useSpecials } from './useSpecials'
 import { lang } from './useI18n'
-import { dealPrice } from '../lib/compare'
+import { rankPrice } from '../lib/compare'
 import { chainOf } from '../lib/format'
 import type { ChainId, Offer, Store } from '../lib/types'
 
@@ -80,12 +80,12 @@ function cheapest(fams: string[], storeId?: string): Offer | null {
   for (const f of fams) {
     for (const o of families.value.get(f) ?? []) {
       if (storeId && o.store.id !== storeId) continue
-      if (!best || dealPrice(o.special) < dealPrice(best.special)) best = o
+      if (!best || rankPrice(o.special) < rankPrice(best.special)) best = o
     }
   }
   return best
 }
-const costOf = (ms: IngredientMatch[]) => ms.filter((m) => !m.ingredient.optional || m.offer).reduce((s, m) => s + (m.offer ? dealPrice(m.offer.special) : 0), 0)
+const costOf = (ms: IngredientMatch[]) => ms.filter((m) => !m.ingredient.optional || m.offer).reduce((s, m) => s + (m.offer ? rankPrice(m.offer.special) : 0), 0)
 
 /** Recipes ranked by how many ingredients are on special at the selected stores (design C1). */
 const ranked = computed<RankedRecipe[]>(() => {
@@ -101,8 +101,8 @@ const ranked = computed<RankedRecipe[]>(() => {
     plans.sort((a, b) => b.onSpecial - a.onSpecial || a.cost - b.cost)
     const oneStore = plans[0]?.onSpecial ? plans[0] : null
     const r: RankedRecipe = { recipe, matches, oneStore, onSpecial, total: required.length, chains, estCost: 0, perServe: Infinity, rank: 0 }
-    r.estCost = toAdd(r).reduce((s, m) => s + (m.offer ? dealPrice(m.offer.special) : 0), 0)
-    const reqCost = required.reduce((s, m) => s + (m.offer ? dealPrice(m.offer.special) : 0), 0)
+    r.estCost = toAdd(r).reduce((s, m) => s + (m.offer ? rankPrice(m.offer.special) : 0), 0)
+    const reqCost = required.reduce((s, m) => s + (m.offer ? rankPrice(m.offer.special) : 0), 0)
     r.perServe = onSpecial ? reqCost / Math.max(1, recipe.serves) : Infinity
     return r
   })

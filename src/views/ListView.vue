@@ -6,7 +6,7 @@ import ProductThumb from '../components/ProductThumb.vue'
 import { useList, type ListItem, type OneStopCard } from '../composables/useList'
 import { useSpecials } from '../composables/useSpecials'
 import { chainClass, chainName, displayName, money, unitLabel } from '../lib/format'
-import { dealPrice } from '../lib/compare'
+import { rankPrice } from '../lib/compare'
 import { t } from '../composables/useI18n'
 import type { Group } from '../lib/types'
 import { useAuth } from '../composables/useAuth'
@@ -27,7 +27,7 @@ function altText(storeId: string, key: string | null): string | null {
   const o = g ? familyAlt(g, storeId) : null
   if (!g || !o) return null
   const same = !!o.unitUnit && o.unitUnit === g.best.unitUnit   // 單位一樣才寫單價
-  return t('cmp.familyAlt', { n: displayName(o.special), v: (same && unitLabel(o.special)) || money(dealPrice(o.special)) })
+  return t('cmp.familyAlt', { n: displayName(o.special), v: (same && unitLabel(o.special)) || money(rankPrice(o.special)) })
 }
 /** 清單照片：One stop 這家沒特價時，拿同一樣商品在別家的資料來顯示圖（圖是跟商品走的）。 */
 const thumbFor = (key: string | null) => (key ? groups.value.get(key)?.best.special ?? null : null)
@@ -57,12 +57,12 @@ function missingNames(s: OsStore): string {
 function buyAt(storeId: string, key: string | null): string | null {
   if (!key) return null
   const g = groups.value.get(key)
-  let best: { name: string; price: number; shelf: boolean } | null = g && g.best.store.id !== storeId ? { name: g.best.store.name, price: dealPrice(g.best.special), shelf: false } : null
+  let best: { name: string; price: number; shelf: boolean } | null = g && g.best.store.id !== storeId ? { name: g.best.store.name, price: rankPrice(g.best.special), shelf: false } : null
   for (const d of activeStores.value) {   // 別家查到的現價（原價）也算（2026-09-11）
     if (d.store.id === storeId) continue
     const sp = priceAt(d.store.id, key)
     if (!sp?.available || sp.price == null) continue
-    const p = sp.multi_buy && sp.multi_buy.qty > 0 ? sp.multi_buy.total / sp.multi_buy.qty : sp.price
+    const p = rankPrice({ price: sp.price })
     if (!best || p < best.price) best = { name: d.store.name, price: p, shelf: !sp.is_special }
   }
   return best ? t(best.shelf ? 'list.buyAtShelf' : 'list.buyAt', { s: best.name, v: money(best.price) }) : null
@@ -134,7 +134,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
           <span class="dot" :class="chainClass(g.best.store.id)" />
           <div class="grow" style="min-width: 0">
             <div class="t ell" style="font-size: 13.5px">{{ displayName(g.best.special) }}</div>
-            <div class="s ell">{{ g.best.store.name }} · {{ money(dealPrice(g.best.special)) }}</div>
+            <div class="s ell">{{ g.best.store.name }} · {{ money(rankPrice(g.best.special)) }}</div>
           </div>
           <button class="btn ghost" style="height: 34px; width: auto; padding: 0 14px; font-size: 13px; flex: none" @click="add(g.key, displayName(g.best.special))">{{ t('list.add') }}</button>
         </div>

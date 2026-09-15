@@ -1,27 +1,26 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import ProductThumb from '../components/ProductThumb.vue'
+import PriceLine from '../components/PriceLine.vue'
 import { useSpecials } from '../composables/useSpecials'
-import { dealPrice } from '../lib/compare'
-import { chainClass, displayName, money, priceSuffix, unitLabel, wasPriceOf } from '../lib/format'
+import { rankPrice } from '../lib/compare'
+import { chainClass, chainOf, displayName, money, unitLabel } from '../lib/format'
 import { chainBadge, t } from '../composables/useI18n'
 import type { Group } from '../lib/types'
 
 const { topDeduped } = useSpecials()
 const rows = computed(() => topDeduped.value.slice(0, 10).map((x) => x.g))
 
+/** 名字下面那行：單價；黃超沒單價就寫低價標籤。原價、會員價、湊件都在右邊價格的說明行（PriceLine）。 */
 function detail(g: Group): string {
   const s = g.best.special
-  if (s.club_only) return `Clubcard · ${unitLabel(s) ?? money(s.price)}`
-  const was = wasPriceOf(s)
-  if (was) return `was ${money(was)}`
-  return unitLabel(s) ?? t('tag.low')
+  return unitLabel(s) ?? (chainOf(s.store_id) === 'paknsave' ? t('tag.low') : '')
 }
 function others(g: Group): string {
   return t('cmp.others', {
     v: g.offers
       .slice(1)
-      .map((o) => money(dealPrice(o.special)))
+      .map((o) => money(rankPrice(o.special)))
       .join(' · '),
   })
 }
@@ -56,10 +55,7 @@ function others(g: Group): string {
         </div>
         <div style="text-align: right; flex: none">
           <div class="price" style="margin-top: 0; font-size: 20px">
-            {{ money(dealPrice(g.best.special))
-            }}<span v-if="priceSuffix(g.best.special)" class="unit">
-              {{ priceSuffix(g.best.special) }}</span
-            >
+            <PriceLine :special="g.best.special" detail align="right" />
           </div>
           <div v-if="g.payGap" class="gap">{{ t('cmp.gap', { v: money(g.payGap) }) }}</div>
         </div>

@@ -2,11 +2,12 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import TagChip from '../components/TagChip.vue'
+import PriceLine from '../components/PriceLine.vue'
 import { bi, useRecipes, type IngredientMatch } from '../composables/useRecipes'
 import { useList } from '../composables/useList'
 import { lang, t } from '../composables/useI18n'
-import { dealPrice, primaryTag } from '../lib/compare'
-import { chainClass, chainName, displayName, money, unitLabel, wasPriceOf } from '../lib/format'
+import { primaryTag, rankPrice } from '../lib/compare'
+import { chainClass, chainName, displayName, money, unitLabel } from '../lib/format'
 
 const route = useRoute()
 const { byId } = useRecipes()
@@ -21,7 +22,7 @@ const mode = ref<'one' | 'cheap'>('one')
 const view = computed<IngredientMatch[]>(() => (r.value ? (mode.value === 'one' && r.value.oneStore ? r.value.oneStore.matches : r.value.matches) : []))
 const adding = computed(() => view.value.filter((m) => !m.ingredient.optional || m.offer))
 const priced = computed(() => adding.value.filter((m) => m.offer).length)
-const estCost = computed(() => adding.value.reduce((s, m) => s + (m.offer ? dealPrice(m.offer.special) : 0), 0))
+const estCost = computed(() => adding.value.reduce((s, m) => s + (m.offer ? rankPrice(m.offer.special) : 0), 0))
 const addLabel = computed(() =>
   priced.value
     ? t('recipes.add', { n: adding.value.length, v: money(estCost.value) })
@@ -40,9 +41,7 @@ function addAll() {
 function sub(m: IngredientMatch): string {
   if (!m.offer) return t('recipes.noSpecial')
   const s = m.offer.special
-  const parts = [chainName(s.store_id), displayName(s)]
-  const was = wasPriceOf(s)
-  if (was) parts.push(t('recipes.was', { v: money(was) }))
+  const parts = [chainName(s.store_id), displayName(s)]   // 原價、一般價、湊件價在右邊價格的說明行（PriceLine）
   const u = unitLabel(s)
   if (u) parts.push(u)
   return parts.join(' · ')
@@ -113,7 +112,7 @@ async function share() {
               <div class="s ell">{{ sub(m) }}</div>
             </div>
             <div style="text-align: right; flex: none">
-              <div class="p">{{ m.offer ? money(dealPrice(m.offer.special)) : '—' }}</div>
+              <div class="p"><PriceLine v-if="m.offer" :special="m.offer.special" detail align="right" /><template v-else>—</template></div>
               <TagChip v-if="m.offer && primaryTag(m.offer.special)" :tag="primaryTag(m.offer.special)!" style="margin-top: 4px" />
               <span v-else-if="!m.offer" class="tag low" style="margin-top: 4px">{{ t('recipes.notOnSpecial') }}</span>
             </div>

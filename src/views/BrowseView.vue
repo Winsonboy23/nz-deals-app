@@ -7,7 +7,7 @@ import { useStores } from '../composables/useStores'
 import { useSettings } from '../composables/useSettings'
 import { useCategories } from '../composables/useCategories'
 import { catLevel, chainClass, chainName, chainOf, isFresh } from '../lib/format'
-import { toOffer } from '../lib/compare'
+import { offerValue, toOffer } from '../lib/compare'
 import { catName, t } from '../composables/useI18n'
 import { readCache, writeCache } from '../lib/cache'
 import { catRank } from '../lib/catOrder'
@@ -82,7 +82,7 @@ const sections = computed<Section[]>(() => {
   const out: Section[] = []
   for (const [id, b] of buckets) {
     const fresh = isFresh(id)
-    const value = (o: Offer) => (fresh && o.unit ? o.unit : o.deal)
+    const value = (o: Offer) => offerValue(o, fresh)   // 生鮮用每公斤，其他用單件價（compare.ts）
     out.push({
       id,
       label: catName(nameOf(id)),

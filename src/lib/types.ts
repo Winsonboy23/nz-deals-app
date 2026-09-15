@@ -71,8 +71,8 @@ export interface Category {
 export interface Offer {
   store: Store
   special: Special
-  /** price used for comparison: multi-buy unit price when there is one */
-  deal: number
+  /** The ranking price: the single-unit shelf price (compare.ts rankPrice). Multi-buy and club are conditions, not the basis. */
+  price: number
   unit: number | null
   unitUnit: string | null
 }

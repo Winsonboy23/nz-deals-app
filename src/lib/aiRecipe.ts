@@ -136,7 +136,7 @@ const POOL_QUOTA: Array<[string, number]> = [
   ['frozen', 2],
   ['bakery', 2],
 ]
-const rank = (a: Group, b: Group) => discountDepth(b.best.special) - discountDepth(a.best.special) || a.best.deal - b.best.deal
+const rank = (a: Group, b: Group) => discountDepth(b.best.special) - discountDepth(a.best.special) || a.best.price - b.best.price
 
 /**
  * 候選池：從你的店這週的特價挑約 40 樣。只挑烹飪分類；每個同類（family_key）只留最便宜的一樣；
@@ -153,7 +153,7 @@ export function buildPool(groups: Map<string, Group>, exclude: Set<string>): Poo
       continue
     }
     const have = byFamily.get(f)
-    if (!have || g.best.deal < have.best.deal) byFamily.set(f, g)
+    if (!have || g.best.price < have.best.price) byFamily.set(f, g)
   }
   const buckets = new Map<string, Map<string, Group[]>>()
   for (const g of [...byFamily.values(), ...loose]) {
@@ -174,7 +174,7 @@ export function buildPool(groups: Map<string, Group>, exclude: Set<string>): Poo
         if (n >= quota) break
         const g = l[i]
         if (g) {
-          out.push({ id: g.key, name: displayName(g.best.special), price: Math.round(g.best.deal * 100) / 100, store: chainShort(g.best.store.id) })
+          out.push({ id: g.key, name: displayName(g.best.special), price: Math.round(g.best.price * 100) / 100, store: chainShort(g.best.store.id) })
           n += 1
         }
       }

@@ -2,17 +2,9 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import ProductThumb from './ProductThumb.vue'
 import TagChip from './TagChip.vue'
-import { dealPrice, tagsFor } from '../lib/compare'
-import {
-  catParts,
-  chainClass,
-  chainOf,
-  displayName,
-  money,
-  priceSuffix,
-  unitLabel,
-  wasPriceOf,
-} from '../lib/format'
+import PriceLine from './PriceLine.vue'
+import { rankPrice, tagsFor } from '../lib/compare'
+import { catParts, chainClass, chainOf, displayName, money, unitLabel } from '../lib/format'
 import { useSpecials } from '../composables/useSpecials'
 import { useCategories } from '../composables/useCategories'
 import { useList } from '../composables/useList'
@@ -21,7 +13,6 @@ import { useSync } from '../composables/useSync'
 import { catName, chainBadge, lang, t, useI18n } from '../composables/useI18n'
 import type { HistoryRow } from '../composables/useSpecials'
 import { shortDate } from '../lib/week'
-import type { Special } from '../lib/types'
 
 const props = defineProps<{ pkey: string }>()
 const emit = defineEmits<{ close: [] }>()
@@ -93,7 +84,7 @@ const weeksSeen = computed(() => [...new Set(hist.value.map((h) => h.week_start)
 const histStores = computed(() =>
   activeStores.value.map((d) => d.store.id).filter((id) => hist.value.some((h) => h.store_id === id)),
 )
-const histDeal = (h: HistoryRow) => dealPrice({ price: h.price, multi_buy: h.multi_buy } as Special)
+const histDeal = (h: HistoryRow) => rankPrice(h)   // 歷史也用單件價比，跟現在的價一致
 function priceAt(week: string, storeId: string): number | null {
   const rows = hist.value.filter((h) => h.week_start === week && h.store_id === storeId)
   return rows.length ? Math.min(...rows.map(histDeal)) : null
@@ -103,7 +94,7 @@ const lowest8 = computed(() => {
   if (!b) return false
   const weeks = weeksSeen.value.filter((w) => priceAt(w, b.store.id) != null)
   if (weeks.length < 2) return false
-  return weeks.every((w) => dealPrice(b.special) <= (priceAt(w, b.store.id) as number) + 0.001)
+  return weeks.every((w) => rankPrice(b.special) <= (priceAt(w, b.store.id) as number) + 0.001)
 })
 
 function addToList() {
@@ -112,12 +103,10 @@ function addToList() {
 }
 const inList = computed(() => has(props.pkey))
 
-function detailLine(storeId: string, hasWas: number | null, unit: string | null): string {
+/** 店名下面那行：黃超寫「低價標籤」，其他店寫單價。原價、一般價、湊件價都在價格旁邊的說明行（PriceLine）。 */
+function detailLine(storeId: string, unit: string | null): string {
   if (chainOf(storeId) === 'paknsave') return t('p.lowPrice')
-  const bits: string[] = []
-  if (hasWas) bits.push(`was ${money(hasWas)}`)
-  if (unit) bits.push(unit)
-  return bits.join(' · ')
+  return unit ?? ''
 }
 </script>
 
@@ -164,7 +153,7 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
             <span class="sec ell">{{ t('cmp.cheapest', { s: best.store.name }) }}</span>
           </div>
           <div class="sub" style="margin-top: 4px; font-size: 13px">
-            {{ detailLine(best.store.id, wasPriceOf(best.special), unitLabel(best.special)) }}
+            {{ detailLine(best.store.id, unitLabel(best.special)) }}
           </div>
           <div v-if="group.payGap" class="gap" style="margin-top: 3px">
             {{ t('cmp.gap', { v: money(group.payGap) }) }}
@@ -172,11 +161,8 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
           </div>
           <div v-if="lowest8" class="gap" style="margin-top: 3px">✓ {{ t('p.lowest8') }}</div>
         </div>
-        <div class="price" style="font-size: 36px; margin-top: 0; flex: none">
-          {{ money(dealPrice(best.special)) }}
-          <span v-if="priceSuffix(best.special)" class="unit" style="font-size: 14px">
-            {{ priceSuffix(best.special) }}
-          </span>
+        <div class="price" style="font-size: 36px; margin-top: 0; flex: none; max-width: 56%">
+          <PriceLine :special="best.special" detail align="right" wrap />
         </div>
       </div>
 
@@ -189,14 +175,9 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
           <div class="bar" :class="chainClass(o.store.id)" style="height: 36px; align-self: center" />
           <div class="grow">
             <div class="t ell" style="font-size: 16px">{{ o.store.name }}</div>
-            <div class="s ell">
-              <template v-if="o.special.club_only">{{ t('p.clubNeeded') }}</template>
-              <template v-else>
-                {{ detailLine(o.store.id, wasPriceOf(o.special), unitLabel(o.special)) }}
-              </template>
-            </div>
+            <div class="s ell">{{ detailLine(o.store.id, unitLabel(o.special)) }}</div>
           </div>
-          <div class="p" style="font-size: 21px">{{ money(dealPrice(o.special)) }}</div>
+          <div class="p" style="font-size: 21px"><PriceLine :special="o.special" detail align="right" /></div>
         </div>
       </div>
 
@@ -233,9 +214,13 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
               <div class="t ell" style="font-size: 14px">{{ displayName(o.special) }}</div>
               <div class="s ell">{{ o.store.name }}</div>
             </div>
+            <!-- 同類可比用單價比，所以單價大字；單件價（含 [卡]／[N 件] 標記）在下面一行，跟卡片、主比價列標得一樣 -->
             <div style="text-align: right; flex: none">
-              <div class="p" style="font-size: 17px">{{ unitLabel(o.special) ?? money(dealPrice(o.special)) }}</div>
-              <div v-if="unitLabel(o.special)" class="small muted">{{ money(dealPrice(o.special)) }}</div>
+              <template v-if="unitLabel(o.special)">
+                <div class="p" style="font-size: 17px">{{ unitLabel(o.special) }}</div>
+                <div class="small muted" style="margin-top: 2px"><PriceLine :special="o.special" align="right" /></div>
+              </template>
+              <div v-else class="p" style="font-size: 17px"><PriceLine :special="o.special" align="right" /></div>
             </div>
           </RouterLink>
         </div>
@@ -261,7 +246,7 @@ function detailLine(storeId: string, hasWas: number | null, unit: string | null)
         <div v-for="o in group.offers" :key="o.store.id" class="ell">
           <span class="dot" :class="chainClass(o.store.id)" style="display: inline-block; margin-right: 6px" />
           <b style="color: var(--ink)">{{ chainBadge(o.store.id) }}</b>
-          {{ o.special.name }}
+          {{ displayName(o.special) }}
           <a
             v-if="o.special.product_url"
             :href="o.special.product_url"

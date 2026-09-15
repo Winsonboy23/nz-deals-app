@@ -1,25 +1,54 @@
-import type { Group, Offer, Special, Store } from './types'
+import type { Group, MultiBuy, Offer, Special, Store } from './types'
 import { chainOf } from './format'
 
-export type TagKind = 'half' | 'pct' | 'save' | 'multi' | 'club' | 'low'
+export type TagKind = 'half' | 'pct' | 'save' | 'low'
 export interface Tag {
   kind: TagKind
-  /** percent for 'pct', dollars for 'save', qty/total for 'multi' */
+  /** percent for 'pct', dollars for 'save' */
   pct?: number
   amount?: number
-  qty?: number
-  total?: number
-}
-
-/** Price a multi-buy is compared at: the price you pay per unit once the deal is met. */
-export function dealPrice(s: Special): number {
-  if (s.multi_buy && s.multi_buy.qty > 0) return s.multi_buy.total / s.multi_buy.qty
-  return s.price
 }
 
 /**
- * §8 tag vocabulary. PAK'nSAVE never gets a was-price/savings tag; New World club prices always
- * carry the CLUBCARD outline. The discount tags need a was-price, which only WW/NW publish.
+ * The one number every list ranks and displays by: the single-unit shelf price (2026-09-15).
+ * Multi-buy and Clubcard are conditions shown next to the price (PriceLine.vue), never the basis.
+ * Before this, one store's row was ranked at its "2 for $3" unit price while the next store's row
+ * used its single price — two rulers in one list.
+ */
+export function rankPrice(s: { price: number }): number {
+  return s.price
+}
+
+/** Per-unit price once a multi-buy is met ("2 for $3" → 1.50). For the detail line only. */
+export function multiUnitPrice(s: { multi_buy: MultiBuy | null }): number | null {
+  const m = s.multi_buy
+  return m && m.qty > 0 ? m.total / m.qty : null
+}
+
+/** What you pay for `qty` units: every full bundle at the multi-buy price, the remainder at the single price. */
+export function costFor(s: { price: number; multi_buy: MultiBuy | null }, qty: number): number {
+  const m = s.multi_buy
+  if (!m || m.qty <= 0 || qty < m.qty) return s.price * qty
+  return Math.floor(qty / m.qty) * m.total + (qty % m.qty) * s.price
+}
+
+/** Sort value of an offer inside a list: $/kg (or $/L) when the list compares by unit and the row has one, else the price. */
+export function offerValue(o: Offer, byUnit = false): number {
+  return byUnit && o.unit != null && o.unit > 0 ? o.unit : o.price
+}
+
+/** Order for "similar items" (同類可比): unit price when both share a unit, rows with a unit price first, then price. */
+export function byUnitThenPrice(a: Offer, b: Offer): number {
+  if (a.unit != null && b.unit != null && a.unitUnit === b.unitUnit) return a.unit - b.unit
+  if (a.unit != null && b.unit == null) return -1
+  if (a.unit == null && b.unit != null) return 1
+  return a.price - b.price
+}
+
+/**
+ * §8 tag vocabulary — discount badges only. PAK'nSAVE publishes no was-price, so it never gets a
+ * savings tag and gets the LOW PRICE label instead. Clubcard and multi-buy are conditions, not
+ * discounts: they live on the price line (PriceLine.vue) so every price carries its own conditions.
  */
 export function tagsFor(s: Special): Tag[] {
   const out: Tag[] = []
@@ -31,8 +60,6 @@ export function tagsFor(s: Special): Tag[] {
     else if (off >= 0.4) out.push({ kind: 'pct', pct: Math.round(off * 100) })
     else out.push({ kind: 'save', amount: was - s.price })
   }
-  if (s.multi_buy) out.push({ kind: 'multi', qty: s.multi_buy.qty, total: s.multi_buy.total })
-  if (s.club_only) out.push({ kind: 'club' })
   if (chain === 'paknsave' && out.length === 0) out.push({ kind: 'low' })
   return out
 }
@@ -40,7 +67,7 @@ export function tagsFor(s: Special): Tag[] {
 /** The single tag shown on a thumbnail. */
 export function primaryTag(s: Special): Tag | null {
   const tags = tagsFor(s)
-  const order: TagKind[] = ['half', 'pct', 'save', 'multi', 'club', 'low']
+  const order: TagKind[] = ['half', 'pct', 'save', 'low']
   for (const k of order) {
     const t = tags.find((x) => x.kind === k)
     if (t) return t
@@ -56,20 +83,18 @@ export function discountDepth(s: Special): number {
 }
 
 export function toOffer(store: Store, special: Special): Offer {
-  const deal = dealPrice(special)
-  const ratio = special.price > 0 ? deal / special.price : 1
   return {
     store,
     special,
-    deal,
-    unit: special.unit_price != null ? special.unit_price * ratio : null,
+    price: rankPrice(special),
+    unit: special.unit_price,
     unitUnit: special.unit_price_unit ? special.unit_price_unit.toLowerCase() : null,
   }
 }
 
 /**
  * Rank offers for one product_key. Compare on unit price when every offer shares the same unit,
- * otherwise on the price you pay. Never produces a "more expensive" statement — the caller only
+ * otherwise on the single-unit price. Never produces a "more expensive" statement — the caller only
  * ever renders the cheapest and the gap.
  */
 export function buildGroup(key: string, all: Offer[]): Group {
@@ -78,19 +103,19 @@ export function buildGroup(key: string, all: Offer[]): Group {
   const perStore = new Map<string, Offer>()
   for (const o of all) {
     const cur = perStore.get(o.store.id)
-    if (!cur || o.deal < cur.deal) perStore.set(o.store.id, o)
+    if (!cur || o.price < cur.price) perStore.set(o.store.id, o)
   }
   const offers = [...perStore.values()]
   const units = new Set(offers.map((o) => o.unitUnit))
   const byUnit =
     offers.length > 1 && units.size === 1 && offers.every((o) => o.unit != null && o.unit > 0)
-  const value = (o: Offer) => (byUnit ? (o.unit as number) : o.deal)
+  const value = (o: Offer) => offerValue(o, byUnit)
   const sorted = [...offers].sort((a, b) => value(a) - value(b))
   const gap = sorted.length > 1 ? value(sorted[1]) - value(sorted[0]) : null
   // What the shopper actually saves by walking to the cheapest store, in dollars paid.
   const payGap =
-    sorted.length > 1 ? Math.max(0, Math.min(...sorted.slice(1).map((o) => o.deal)) - sorted[0].deal) : null
-  const cheapestPaid = offers.reduce((a, b) => (b.deal < a.deal ? b : a))
+    sorted.length > 1 ? Math.max(0, Math.min(...sorted.slice(1).map((o) => o.price)) - sorted[0].price) : null
+  const cheapestPaid = offers.reduce((a, b) => (b.price < a.price ? b : a))
   const unitDecided = byUnit && cheapestPaid.store.id !== sorted[0].store.id
   return { key, offers: sorted, best: sorted[0], gap, payGap, byUnit, unitDecided }
 }

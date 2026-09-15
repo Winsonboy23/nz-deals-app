@@ -11,7 +11,7 @@ import { daysLeft } from '../lib/week'
 import { t } from '../composables/useI18n'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
-import { dealPrice } from '../lib/compare'
+import PriceLine from '../components/PriceLine.vue'
 import { bi, useRecipes } from '../composables/useRecipes'
 import { chainName } from '../lib/format'
 import { useSiteSettings } from '../composables/useSiteSettings'
@@ -142,7 +142,7 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
                 <div class="t ell" style="font-size: 14px">{{ displayName(g.best.special) }}</div>
                 <div class="s ell">{{ g.best.store.name }}</div>
               </div>
-              <div class="p" style="font-size: 17px">{{ money(dealPrice(g.best.special)) }}</div>
+              <div class="p" style="font-size: 17px"><PriceLine :special="g.best.special" align="right" /></div>
             </RouterLink>
           </div>
         </div>

@@ -5,8 +5,9 @@ import { supabase } from '../lib/supabase'
 import { useSpecials } from '../composables/useSpecials'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
-import { dealPrice } from '../lib/compare'
-import { chainClass, chainName, displayName, money, priceSuffix, unitLabel, wasPriceOf } from '../lib/format'
+import PriceLine from '../components/PriceLine.vue'
+import { rankPrice } from '../lib/compare'
+import { chainClass, chainName, chainOf, displayName, money, unitLabel } from '../lib/format'
 import { chainBadge, t } from '../composables/useI18n'
 import type { Group } from '../lib/types'
 
@@ -36,16 +37,14 @@ watch(
   { immediate: true },
 )
 
+/** 名字下面那行：單價；黃超沒單價就寫低價標籤。原價、會員價、湊件都在右邊價格的說明行（PriceLine）。 */
 function detail(g: Group): string {
   const s = g.best.special
-  if (s.club_only) return `Clubcard · ${unitLabel(s) ?? money(s.price)}`
-  const was = wasPriceOf(s)
-  if (was) return `was ${money(was)}`
-  return unitLabel(s) ?? t('tag.low')
+  return unitLabel(s) ?? (chainOf(s.store_id) === 'paknsave' ? t('tag.low') : '')
 }
 function others(g: Group): string {
   if (g.offers.length < 2) return ''
-  return t('cmp.others', { v: g.offers.slice(1).map((o) => money(dealPrice(o.special))).join(' · ') })
+  return t('cmp.others', { v: g.offers.slice(1).map((o) => money(rankPrice(o.special))).join(' · ') })
 }
 </script>
 
@@ -100,7 +99,7 @@ function others(g: Group): string {
             </div>
             <div style="text-align: right; flex: none">
               <div class="price" style="margin-top: 0; font-size: 20px">
-                {{ money(dealPrice(g.best.special)) }}<span v-if="priceSuffix(g.best.special)" class="unit">{{ priceSuffix(g.best.special) }}</span>
+                <PriceLine :special="g.best.special" detail align="right" />
               </div>
               <button class="btn ghost" style="margin-top: 6px; margin-left: auto; width: auto; height: 30px; padding: 0 10px; font-size: 12.5px; border-radius: 9px; white-space: nowrap" @click.prevent.stop="toggleWatch(g.key)">
                 {{ t('watching.unfollow') }}

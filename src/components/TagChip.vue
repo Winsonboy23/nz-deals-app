@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// 折扣徽章（半價／省 N%／省 $N／低價標籤）。會員卡、湊件不是折扣是條件，改在 PriceLine 的價格旁邊標（2026-09-15）。
 import { computed } from 'vue'
 import type { Tag } from '../lib/compare'
 import { money } from '../lib/format'
@@ -15,10 +16,6 @@ const label = computed(() => {
       return t('tag.pct', { p: g.pct ?? 0 })
     case 'save':
       return t('tag.save', { v: money(g.amount ?? 0) })
-    case 'multi':
-      return t('tag.multi', { q: g.qty ?? 0, v: money(g.total ?? 0) })
-    case 'club':
-      return t('tag.club')
     default:
       return t('tag.low')
   }

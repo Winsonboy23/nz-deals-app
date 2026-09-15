@@ -4,7 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import StoreOfferCard from '../components/StoreOfferCard.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { chainClass, displayName, money, unitLabel } from '../lib/format'
-import { dealPrice } from '../lib/compare'
+import { rankPrice } from '../lib/compare'
+import { rangeKey, stackBy, type Stack } from '../lib/stack'
 import { t } from '../composables/useI18n'
 import type { Group, Offer } from '../lib/types'
 
@@ -13,15 +14,29 @@ const router = useRouter()
 const { rows, groups, activeStores, familyAlt } = useSpecials()
 
 const q = ref(String(route.query.q ?? ''))
+const PAGE = 20
+const shown = ref(PAGE)
+/** 攤開的疊（key） */
+const opened = ref<Set<string>>(new Set())
 watch(q, (v) => {
+  shown.value = PAGE
+  opened.value = new Set()
   void router.replace({ path: '/search', query: v ? { q: v } : {} })
 })
+// 網址的 ?q= 變了（返回鍵、分享連結）也要跟著換；以前只在進頁面時讀一次。
+// 只看 /search 本身：商品面板開在搜尋頁上面時 route 是 /p/…，那時不能把關鍵字清掉。
+watch(
+  () => (route.path === '/search' ? String(route.query.q ?? '') : null),
+  (v) => {
+    if (v != null && v !== q.value) q.value = v
+  },
+)
 
 /** Match on the store's own name, brand and the shared product key. */
-const results = computed<Group[]>(() => {
+const matches = computed<Group[]>(() => {
   const needle = q.value.trim().toLowerCase()
   if (needle.length < 2) return []
-  // 整個字命中（\bbeef mince）排前面，只是字串裡剛好有的排後面；同分看幾家店有，再看價格。
+  // 整個字命中（\bbeef mince）排前面，只是字串裡剛好有的排後面；同分看幾家店有，再看單件價。
   const word = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`)
   const hits = new Map<string, number>()
   for (const { special } of rows.value) {
@@ -35,20 +50,35 @@ const results = computed<Group[]>(() => {
   return [...hits.entries()]
     .map(([k, score]) => ({ g: groups.value.get(k), score }))
     .filter((x): x is { g: Group; score: number } => !!x.g)
-    .sort(
-      (a, b) =>
-        a.score - b.score || b.g.offers.length - a.g.offers.length || a.g.best.deal - b.g.best.deal,
-    )
-    .slice(0, 20)
+    .sort((a, b) => a.score - b.score || b.g.offers.length - a.g.offers.length || a.g.best.price - b.g.best.price)
     .map((x) => x.g)
 })
+/**
+ * 同品牌、同分類、同價、同條件的疊成一疊（Cadbury 14 支 $1.20 一格，點開才看口味）。以前硬切 20 筆，一頁被同價的
+ * 塞滿，真正划算的那個反而擠不進來（2026-09-15）。排好才疊，所以每疊的頭就是排最前面的那個。
+ */
+const stacks = computed<Stack<Group>[]>(() =>
+  stackBy(matches.value, (g) => {
+    const s = g.best.special
+    return `${rangeKey(s) ?? 'k|' + g.key}|${rankPrice(s).toFixed(2)}|${s.club_only ? 'c' : ''}|${s.multi_buy?.qty ?? ''}`
+  }),
+)
+const visible = computed(() => stacks.value.slice(0, shown.value))
+const isOpen = (k: string) => opened.value.has(k)
+function toggle(k: string) {
+  const next = new Set(opened.value)
+  if (next.has(k)) next.delete(k)
+  else next.add(k)
+  opened.value = next
+}
+const shownGroups = (st: Stack<Group>) => (isOpen(st.key) ? st.items : [st.head])
 
 function missing(g: Group): string[] {
   return activeStores.value
     .filter((d) => !g.offers.some((o) => o.store.id === d.store.id))
     .map((d) => d.store.name)
 }
-/** 沒特價的店：各列一個最便宜的同類；同一樣東西在幾家店就合成一行（最便宜的那家）。 */
+/** 沒資料的店：各列一個最便宜的同類；同一樣東西在幾家店就合成一行（最便宜的那家）。 */
 function alts(g: Group): Array<{ best: Offer; n: number }> {
   const byKey = new Map<string, Offer[]>()
   for (const d of activeStores.value) {
@@ -61,14 +91,14 @@ function alts(g: Group): Array<{ best: Offer; n: number }> {
     else byKey.set(k, [o])
   }
   return [...byKey.values()].map((offers) => {
-    offers.sort((a, b) => a.deal - b.deal)
+    offers.sort((a, b) => a.price - b.price)
     return { best: offers[0], n: offers.length }
   })
 }
 /** 單位一樣才寫每公斤／每公升價（$20/kg 對 $2.47 ea 比不了）；不一樣只寫價格。 */
 function altPrice(g: Group, o: Offer): string {
   const same = !!o.unitUnit && o.unitUnit === g.best.unitUnit
-  return (same && unitLabel(o.special)) || money(dealPrice(o.special))
+  return (same && unitLabel(o.special)) || money(rankPrice(o.special))
 }
 function missingClasses(g: Group): string[] {
   return activeStores.value
@@ -93,7 +123,7 @@ function missingClasses(g: Group): string[] {
       </div>
     </div>
 
-    <div v-if="q.trim().length >= 2 && !results.length" class="pad" style="margin-top: 22px">
+    <div v-if="q.trim().length >= 2 && !stacks.length" class="pad" style="margin-top: 22px">
       <div class="empty">
         <div style="font-size: 22px; color: #c4c4c0; line-height: 1">?</div>
         <div class="h3" style="margin-top: 9px; font-size: 15.5px">
@@ -103,53 +133,67 @@ function missingClasses(g: Group): string[] {
       </div>
     </div>
 
-    <template v-for="g in results" :key="g.key">
-      <div class="pad" style="margin-top: 14px">
-        <div class="sec ell">
-          {{ t('search.lowToHigh', { n: displayName(g.best.special) }) }}
+    <template v-for="st in visible" :key="st.key">
+      <template v-for="g in shownGroups(st)" :key="g.key">
+        <div class="pad" style="margin-top: 14px">
+          <div class="sec ell">
+            {{ t('search.lowToHigh', { n: displayName(g.best.special) }) }}
+          </div>
         </div>
-      </div>
-      <div class="pad">
-        <StoreOfferCard
-          v-for="o in g.offers"
-          :key="o.store.id"
-          :offer="o"
-          :best="g.offers.length >= 2 && o === g.best"
-        />
-        <div v-if="g.offers.length < 2" style="margin-top: 7px">
-          <span class="tag only" style="font-size: 10px">{{ t('cmp.only') }}</span>
+        <div class="pad">
+          <StoreOfferCard
+            v-for="o in g.offers"
+            :key="o.store.id"
+            :offer="o"
+            :best="g.offers.length >= 2 && o === g.best"
+          />
+          <div v-if="g.offers.length < 2" style="margin-top: 7px">
+            <span class="tag only" style="font-size: 10px">{{ t('cmp.only') }}</span>
+          </div>
         </div>
-      </div>
-      <div v-if="missing(g).length" class="pad" style="margin-top: 8px">
-        <div class="note" style="display: flex; align-items: center; gap: 10px">
-          <span class="dots">
-            <span
-              v-for="(c, i) in missingClasses(g)"
-              :key="i"
-              class="dot"
-              :class="c"
-              style="opacity: 0.42"
-            />
-          </span>
-          <span class="ell" style="font-size: 12px; font-weight: 600; color: var(--ink-2)">
-            {{ t('cmp.noSpecialCount', { n: missing(g).length }) }}
-          </span>
+        <div v-if="missing(g).length" class="pad" style="margin-top: 8px">
+          <div class="note" style="display: flex; align-items: center; gap: 10px">
+            <span class="dots">
+              <span
+                v-for="(c, i) in missingClasses(g)"
+                :key="i"
+                class="dot"
+                :class="c"
+                style="opacity: 0.42"
+              />
+            </span>
+            <span class="ell" style="font-size: 12px; font-weight: 600; color: var(--ink-2)">
+              {{ t('cmp.noSpecialCount', { n: missing(g).length }) }}
+            </span>
+          </div>
+          <RouterLink
+            v-for="a in alts(g)"
+            :key="a.best.special.product_key ?? a.best.special.product_id"
+            class="note"
+            :to="`/p/${encodeURIComponent(a.best.special.product_key ?? '')}`"
+            style="margin-top: 6px; display: flex; align-items: center; gap: 10px"
+          >
+            <span class="dot" :class="chainClass(a.best.store.id)" />
+            <span class="ell" style="font-size: 12px; font-weight: 600; color: var(--ink-2)">
+              {{ a.n > 1
+                ? t('cmp.familyAltMany', { k: a.n, n: displayName(a.best.special), v: altPrice(g, a.best) })
+                : t('cmp.familyAltAt', { s: a.best.store.name, n: displayName(a.best.special), v: altPrice(g, a.best) }) }}
+            </span>
+          </RouterLink>
         </div>
-        <RouterLink
-          v-for="a in alts(g)"
-          :key="a.best.special.product_key ?? a.best.special.product_id"
-          class="note"
-          :to="`/p/${encodeURIComponent(a.best.special.product_key ?? '')}`"
-          style="margin-top: 6px; display: flex; align-items: center; gap: 10px"
-        >
-          <span class="dot" :class="chainClass(a.best.store.id)" />
-          <span class="ell" style="font-size: 12px; font-weight: 600; color: var(--ink-2)">
-            {{ a.n > 1
-              ? t('cmp.familyAltMany', { k: a.n, n: displayName(a.best.special), v: altPrice(g, a.best) })
-              : t('cmp.familyAltAt', { s: a.best.store.name, n: displayName(a.best.special), v: altPrice(g, a.best) }) }}
-          </span>
-        </RouterLink>
+      </template>
+      <!-- 同價同條件的其他款：收在一顆按鈕裡，點開才攤 -->
+      <div v-if="st.items.length > 1" class="pad" style="margin-top: 8px">
+        <button class="chip" :class="{ on: isOpen(st.key) }" @click="toggle(st.key)">
+          {{ isOpen(st.key) ? t('search.stackHide') : t('search.stack', { n: st.items.length - 1 }) }}
+        </button>
       </div>
     </template>
+
+    <div v-if="shown < stacks.length" class="pad" style="margin-top: 16px">
+      <button class="btn ghost" style="width: 100%" @click="shown += PAGE">
+        {{ t('search.more', { n: Math.min(PAGE, stacks.length - shown) }) }}
+      </button>
+    </div>
   </div>
 </template>

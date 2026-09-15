@@ -2,16 +2,14 @@
 import { computed } from 'vue'
 import ProductThumb from './ProductThumb.vue'
 import TagChip from './TagChip.vue'
-import { dealPrice, primaryTag } from '../lib/compare'
-import { chainClass, money, priceSuffix, unitLabel, wasPriceOf } from '../lib/format'
-import { t } from '../composables/useI18n'
+import PriceLine from './PriceLine.vue'
+import { primaryTag } from '../lib/compare'
+import { chainClass, displayName, unitLabel } from '../lib/format'
 import type { Offer } from '../lib/types'
 
 const props = defineProps<{ offer: Offer; best?: boolean }>()
 const s = computed(() => props.offer.special)
 const tag = computed(() => primaryTag(s.value))
-const was = computed(() => wasPriceOf(s.value))
-const note = computed(() => (s.value.club_only ? t('p.clubNeeded') : ''))
 const to = computed(() => (s.value.product_key ? `/p/${encodeURIComponent(s.value.product_key)}` : ''))
 </script>
 
@@ -37,19 +35,14 @@ const to = computed(() => (s.value.product_key ? `/p/${encodeURIComponent(s.valu
           {{ offer.store.name }}
         </span>
       </div>
+      <!-- 紅超、黃超的 name 沒有品牌和容量（另外兩欄），要用 displayName 拼回去，不然到貨架前對不到（2026-09-15） -->
       <div class="t ell" style="font-size: 15px; font-weight: 700; margin-top: 4px">
-        {{ s.name }}
+        {{ displayName(s) }}
       </div>
       <div v-if="unitLabel(s)" class="s">{{ unitLabel(s) }}</div>
     </div>
-    <div style="text-align: right; flex: none">
-      <div class="price" style="margin-top: 0">
-        {{ money(dealPrice(s)) }}<span v-if="priceSuffix(s)" class="unit">{{ priceSuffix(s) }}</span>
-      </div>
-      <div class="small muted" style="margin-top: 4px">
-        <s v-if="was">{{ money(was) }}</s>
-        <template v-else>{{ note }}</template>
-      </div>
+    <div style="text-align: right; flex: none; max-width: 48%">
+      <div class="price" style="margin-top: 0"><PriceLine :special="s" detail align="right" /></div>
       <div v-if="tag" style="margin-top: 5px"><TagChip :tag="tag" /></div>
     </div>
   </RouterLink>

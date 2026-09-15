@@ -32,7 +32,8 @@ let polling = false
 const RETRY_MS = 2 * 60 * 1000
 const GIVE_UP_MS = 90 * 1000   // 常駐程式閒 30 分鐘會關瀏覽器，第一個人要多等 20–30 秒開瀏覽器
 
-const dealOf = (p: StorePrice) => (p.multi_buy && p.multi_buy.qty > 0 ? p.multi_buy.total / p.multi_buy.qty : Number(p.price))
+/** 同 key 多個編號時挑哪個：單件價低的（全站都用單件價比，湊件不算；compare.ts rankPrice） */
+const priceOf = (p: StorePrice) => Number(p.price)
 const nzDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland', year: 'numeric', month: '2-digit', day: '2-digit' })
 /** 這週一（NZ）之後查的才算數 */
 const fresh = (p: StorePrice) => nzDate.format(new Date(p.fetched_at)) >= nzMonday()
@@ -72,7 +73,7 @@ async function load(storeIds: string[], keys: string[], force = false): Promise<
         const k = `${raw.store_id}|${raw.product_key}`
         const cur = map.get(k)
         const row: StorePrice = { ...raw, price: raw.price != null ? Number(raw.price) : null, was_price: raw.was_price != null ? Number(raw.was_price) : null, unit_price: raw.unit_price != null ? Number(raw.unit_price) : null }
-        if (!cur || (row.available && (!cur.available || dealOf(row) < dealOf(cur)))) map.set(k, row)
+        if (!cur || (row.available && (!cur.available || priceOf(row) < priceOf(cur)))) map.set(k, row)
       }
     }
     if (sig === lastSig) byStoreKey.value = map

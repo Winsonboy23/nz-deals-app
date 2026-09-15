@@ -7,7 +7,7 @@ import type { AiIngredient, AiRecipe } from '../lib/aiRecipe'
 import { useSpecials } from '../composables/useSpecials'
 import { useList } from '../composables/useList'
 import { chainName, displayName, money } from '../lib/format'
-import { dealPrice } from '../lib/compare'
+import { rankPrice } from '../lib/compare'
 import { t } from '../composables/useI18n'
 import type { Group, Offer, Store } from '../lib/types'
 
@@ -49,7 +49,7 @@ const oneStore = computed<{ store: Store; n: number; cost: number; m: number } |
       const p = pickAt(b.group as Group, d.store.id)
       if (p) {
         n += 1
-        cost += dealPrice(p.offer.special)
+        cost += rankPrice(p.offer.special)
       }
     }
     if (!best || n > best.n || (n === best.n && cost < best.cost)) best = { store: d.store, n, cost, m: buys.length }
@@ -79,7 +79,7 @@ const lines = computed<Line[]>(() =>
       name: displayName(o.special),
       qty: ing.qty,
       kind,
-      price: dealPrice(o.special),
+      price: rankPrice(o.special),
       store: chainName(o.store.id),
       link: o.special.product_key ? `/p/${encodeURIComponent(o.special.product_key)}` : '',
       note,

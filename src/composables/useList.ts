@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { readCache, writeCache } from '../lib/cache'
-import { dealPrice } from '../lib/compare'
+import { costFor, rankPrice } from '../lib/compare'
 import type { Offer, Special, Store, StorePrice } from '../lib/types'
 import { useSpecials } from './useSpecials'
 import { useStorePrices } from './useStorePrices'
@@ -115,13 +115,16 @@ const split = computed<{ buckets: SplitBucket[]; unmatched: ListItem[]; total: n
   for (const item of items.value) {
     // 最便宜的來源：特價（groups）或後端查到的現價（store_prices，2026-09-11 起也算進最省）
     const g = item.key ? groups.value.get(item.key) : undefined
-    let best: { store: Store; offer?: Offer; shelf?: StorePrice; price: number } | null = g ? { store: g.best.store, offer: g.best, price: dealPrice(g.best.special) } : null
+    // 挑店用單件價（rankPrice）；算總價用 costFor——買到湊件數才算湊件價（2026-09-15）
+    let best: { store: Store; offer?: Offer; shelf?: StorePrice; price: number; total: number } | null = g
+      ? { store: g.best.store, offer: g.best, price: rankPrice(g.best.special), total: costFor(g.best.special, item.qty) }
+      : null
     if (item.key) {
       for (const d of activeStores.value) {
         const sp = storePrices.priceAt(d.store.id, item.key)
         if (!sp?.available || sp.price == null) continue
-        const p = sp.multi_buy && sp.multi_buy.qty > 0 ? sp.multi_buy.total / sp.multi_buy.qty : sp.price
-        if (!best || p < best.price) best = { store: d.store, shelf: sp, price: p }
+        const p = rankPrice({ price: sp.price })
+        if (!best || p < best.price) best = { store: d.store, shelf: sp, price: p, total: costFor({ price: sp.price, multi_buy: sp.multi_buy }, item.qty) }
       }
     }
     if (!best) {
@@ -129,7 +132,7 @@ const split = computed<{ buckets: SplitBucket[]; unmatched: ListItem[]; total: n
       if (item.price) othersTotal += item.price * item.qty
       continue
     }
-    const line: SplitLine = { item, offer: best.offer, shelf: best.offer ? undefined : best.shelf, total: best.price * item.qty }
+    const line: SplitLine = { item, offer: best.offer, shelf: best.offer ? undefined : best.shelf, total: best.total }
     total += line.total
     const b = map.get(best.store.id)
     if (b) {
@@ -149,7 +152,7 @@ const split = computed<{ buckets: SplitBucket[]; unmatched: ListItem[]; total: n
 
 /**
  * One card per store. We only hold specials, so an item a store has no special for is
- * "no special this week · price unknown" — never "more expensive".
+ * "no data this week · price unknown" — never "more expensive".
  */
 const oneStop = computed<OneStopCard[]>(() => {
   const cards: OneStopCard[] = []
@@ -165,7 +168,7 @@ const oneStop = computed<OneStopCard[]>(() => {
       const offer = g?.offers.find((o) => o.store.id === d.store.id)
       if (offer) {
         known += 1
-        const t = dealPrice(offer.special) * item.qty
+        const t = costFor(offer.special, item.qty)
         total += t
         lines.push({ item, special: offer.special, total: t })
       } else if (item.price) {
@@ -179,7 +182,7 @@ const oneStop = computed<OneStopCard[]>(() => {
         const sp = storePrices.priceAt(d.store.id, item.key)
         if (sp?.available && sp.price != null) {
           known += 1
-          const t = (sp.multi_buy && sp.multi_buy.qty > 0 ? sp.multi_buy.total / sp.multi_buy.qty : sp.price) * item.qty
+          const t = costFor({ price: sp.price, multi_buy: sp.multi_buy }, item.qty)
           total += t
           lines.push({ item, special: null, total: t, shelf: sp })
         } else if (sp && !sp.available) {

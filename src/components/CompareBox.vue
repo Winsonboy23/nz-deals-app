@@ -2,8 +2,9 @@
 import { computed } from 'vue'
 import ProductThumb from './ProductThumb.vue'
 import TagChip from './TagChip.vue'
-import { dealPrice, primaryTag } from '../lib/compare'
-import { chainClass, chainName, chainOf, displayName, money, unitLabel, wasPriceOf } from '../lib/format'
+import PriceLine from './PriceLine.vue'
+import { primaryTag, rankPrice } from '../lib/compare'
+import { chainClass, chainName, chainOf, displayName, unitLabel } from '../lib/format'
 import { t } from '../composables/useI18n'
 import type { Group, Offer } from '../lib/types'
 
@@ -16,7 +17,7 @@ interface Row { key: string; label: string; offer: Offer; isBest: boolean }
 const rows = computed<Row[]>(() => {
   const byChainPrice = new Map<string, Offer[]>()
   for (const o of props.group.offers) {
-    const k = `${chainOf(o.store.id)}|${dealPrice(o.special).toFixed(2)}`
+    const k = `${chainOf(o.store.id)}|${rankPrice(o.special).toFixed(2)}`
     const list = byChainPrice.get(k)
     if (list) list.push(o)
     else byChainPrice.set(k, [o])
@@ -60,11 +61,10 @@ const rows = computed<Row[]>(() => {
             :tag="primaryTag(r.offer.special)!"
             style="height: 17px; font-size: 10px; margin-right: 5px"
           />
-          <s v-if="wasPriceOf(r.offer.special)">{{ money(wasPriceOf(r.offer.special)!) }}</s>
-          <span v-else-if="unitLabel(r.offer.special)">{{ unitLabel(r.offer.special) }}</span>
+          <span v-if="unitLabel(r.offer.special)">{{ unitLabel(r.offer.special) }}</span>
         </div>
       </div>
-      <div class="p">{{ money(dealPrice(r.offer.special)) }}</div>
+      <div class="p"><PriceLine :special="r.offer.special" detail align="right" /></div>
       <div
         style="font-family: 'Inter Tight', Inter, sans-serif; font-weight: 900; font-size: 16px; flex: none; width: 14px"
       >

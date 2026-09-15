@@ -3,9 +3,11 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ProductThumb from '../components/ProductThumb.vue'
 import TagChip from '../components/TagChip.vue'
+import PriceLine from '../components/PriceLine.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { useCategories } from '../composables/useCategories'
-import { dealPrice, discountDepth, primaryTag } from '../lib/compare'
+import { discountDepth, primaryTag, rankPrice } from '../lib/compare'
+import { rangeKey, stackBy, type Stack } from '../lib/stack'
 import { catLevel, chainClass, chainName, chainOf, displayName, money } from '../lib/format'
 import { catName, t } from '../composables/useI18n'
 import type { ChainId, Group, Special, Store } from '../lib/types'
@@ -58,7 +60,7 @@ const counts = computed(() => {
   return [...m.entries()]
 })
 const showPns = computed(() => pnsCount.value > 0 && (chain.value === 'all' || chain.value === 'paknsave'))
-const pnsRows = computed<Stack[]>(() => {
+const pnsRows = computed<Stack<Row>[]>(() => {
   if (!showPns.value) return []
   const list: Row[] = canCompare.value
     ? pnsDeals.value.map((g) => ({ store: g.best.store, special: g.best.special, group: g as Group | null }))
@@ -66,29 +68,18 @@ const pnsRows = computed<Stack[]>(() => {
   return stack(list.filter((r) => cat.value === 'all' || catLevel(r.special.category_id, 1) === cat.value)).slice(0, 60)
 })
 function others(g: Group): string {
-  return t('cmp.others', { v: g.offers.slice(1).map((o) => money(dealPrice(o.special))).join(' · ') })
+  return t('cmp.others', { v: g.offers.slice(1).map((o) => money(rankPrice(o.special))).join(' · ') })
 }
 /** 疊卡片（2026-09-08）：同品牌同第二層分類合成一張卡（Cadbury 17 款），點「N 款」在原地攤開，不換頁。
  *  進來的清單已按折扣深排序，所以每疊的第一個就是最划算的，疊的順序也跟著。 */
 interface Row { store: Store; special: Special; group?: Group | null }
-interface Stack { key: string; head: Row; items: Row[] }
 const COLS = 3
-const cat2 = (id: string | null) => (id ? id.split('/').slice(0, 2).join('/') : '')
-function stack(list: Row[]): Stack[] {
-  const map = new Map<string, Row[]>()
-  for (const r of list) {
-    const b = (r.special.brand ?? '').trim().toLowerCase()
-    const k = b ? `${b}|${cat2(r.special.category_id)}` : `1|${r.store.id}|${r.special.product_id}`
-    const cur = map.get(k)
-    if (cur) cur.push(r)
-    else map.set(k, [r])
-  }
-  return [...map.entries()].map(([key, items]) => ({ key, head: items[0], items }))
-}
+/** 同品牌同第二層分類疊一疊（lib/stack.ts，搜尋頁也用同一個）；沒品牌的自己一格。 */
+const stack = (list: Row[]): Stack<Row>[] => stackBy(list, (r) => rangeKey(r.special) ?? `1|${r.store.id}|${r.special.product_id}`)
 /** 攤開的那一疊；攤開的面板要放在「那一列的最後一張之後」，不然那列會被切斷。 */
 const opened = ref<string | null>(null)
 const toggle = (k: string) => (opened.value = opened.value === k ? null : k)
-function expandAfter(list: Stack[], sec: string): number {
+function expandAfter(list: Stack<Row>[], sec: string): number {
   const i = list.findIndex((x) => sec + x.key === opened.value)
   return i < 0 ? -1 : Math.min(list.length - 1, Math.floor(i / COLS) * COLS + COLS - 1)
 }
@@ -102,7 +93,7 @@ function go(r: Row) {
   if (r.special.product_key) void router.push(`/p/${encodeURIComponent(r.special.product_key)}`)
 }
 
-const rows = computed<Stack[]>(() =>
+const rows = computed<Stack<Row>[]>(() =>
   stack(byChain.value.filter((r) => cat.value === 'all' || catLevel(r.special.category_id, 1) === cat.value)).slice(0, 60),
 )
 </script>
@@ -158,21 +149,7 @@ const rows = computed<Stack[]>(() =>
               {{ t('card.variants', { n: st.items.length }) }}
             </button>
           </ProductThumb>
-          <div class="price">
-            {{ money(st.head.special.price)
-            }}<span
-              v-if="st.head.special.was_price"
-              style="
-                font-size: 12px;
-                color: var(--ink-3);
-                text-decoration: line-through;
-                font-weight: 600;
-                margin-left: 6px;
-                letter-spacing: 0;
-              "
-              >{{ money(st.head.special.was_price) }}</span
-            >
-          </div>
+          <div class="price"><PriceLine :special="st.head.special" detail /></div>
           <div class="name" style="margin-top: 6px">{{ displayName(st.head.special) }}</div>
           <div v-if="primaryTag(st.head.special)" style="margin-top: 7px">
             <TagChip :tag="primaryTag(st.head.special)!" />
@@ -187,7 +164,7 @@ const rows = computed<Stack[]>(() =>
               :to="r.special.product_key ? `/p/${encodeURIComponent(r.special.product_key)}` : ''"
             >
               <ProductThumb :special="r.special" variant="tn" style="width: 100%; height: 78px" />
-              <div class="p" style="margin-top: 5px; font-size: 15px">{{ money(dealPrice(r.special)) }}</div>
+              <div class="p" style="margin-top: 5px; font-size: 15px"><PriceLine :special="r.special" /></div>
               <div class="s" style="line-height: 1.25">{{ displayName(r.special) }}</div>
             </RouterLink>
           </div>
@@ -220,7 +197,7 @@ const rows = computed<Stack[]>(() =>
                 {{ t('card.variants', { n: st.items.length }) }}
               </button>
             </ProductThumb>
-            <div class="price">{{ money(dealPrice(st.head.special)) }}</div>
+            <div class="price"><PriceLine :special="st.head.special" detail /></div>
             <div class="name" style="margin-top: 6px">{{ displayName(st.head.special) }}</div>
             <div v-if="st.head.group" class="others" style="margin-top: 6px">{{ others(st.head.group!) }}</div>
           </div>
@@ -233,7 +210,7 @@ const rows = computed<Stack[]>(() =>
                 :to="r.special.product_key ? `/p/${encodeURIComponent(r.special.product_key)}` : ''"
               >
                 <ProductThumb :special="r.special" variant="tn" style="width: 100%; height: 78px" />
-                <div class="p" style="margin-top: 5px; font-size: 15px">{{ money(dealPrice(r.special)) }}</div>
+                <div class="p" style="margin-top: 5px; font-size: 15px"><PriceLine :special="r.special" /></div>
                 <div class="s" style="line-height: 1.25">{{ displayName(r.special) }}</div>
               </RouterLink>
             </div>

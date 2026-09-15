@@ -1,8 +1,8 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import { supabase } from '../lib/supabase'
-import { readCache, writeCache } from '../lib/cache'
+import { dropPrefix, readCache, writeCache } from '../lib/cache'
 import { nzMonday, weeksBack } from '../lib/week'
-import { buildGroup, discountDepth, toOffer } from '../lib/compare'
+import { buildGroup, byUnitThenPrice, discountDepth, toOffer } from '../lib/compare'
 import { catLevel, isFood, isFresh } from '../lib/format'
 import type { Group, MultiBuy, Offer, Special, Store } from '../lib/types'
 import { useStores } from './useStores'
@@ -61,6 +61,8 @@ export interface StoreData {
   stale: boolean
   rows: Special[]
   error: string | null
+  /** stores.last_fetched_at 當時的值：爬蟲又跑過（值變了）就重抓 */
+  fetchedAt: string | null
 }
 
 const { selectedStores } = useStores()
@@ -70,8 +72,13 @@ const byStore = shallowRef<Record<string, StoreData>>({})
 const loading = ref(false)
 const thisWeek = ref(nzMonday())
 
+// :f4 = 同類 key 改成不帶分類之後；:f5 = Woolworths 分類改第三層對照（2026-09-08 回填）；
+// :f6 = key 帶 stores.last_fetched_at——爬蟲一天抓兩三次，以前 key 只有店＋週，週一開過 app 就一整週看同一份（2026-09-15）
+const CACHE_VER = 'f6'
+
 async function fetchStore(store: Store): Promise<StoreData> {
-  const cacheKey = `sp:${store.id}:${thisWeek.value}:f5`   // :f4 = 同類 key 改成不帶分類之後；:f5 = Woolworths 分類改第三層對照（2026-09-08 回填）
+  const fetchedAt = store.last_fetched_at ?? null
+  const cacheKey = `sp:${store.id}:${thisWeek.value}:${fetchedAt ?? 'na'}:${CACHE_VER}`
   const cached = readCache<Packed>(cacheKey)
   if (cached?.cols) {
     return {
@@ -80,6 +87,7 @@ async function fetchStore(store: Store): Promise<StoreData> {
       stale: !!cached.week && cached.week !== thisWeek.value,
       rows: unpack(cached),
       error: null,
+      fetchedAt,
     }
   }
   // This week if the store has it, otherwise that store's most recent week.
@@ -90,9 +98,9 @@ async function fetchStore(store: Store): Promise<StoreData> {
     .lte('week_start', thisWeek.value)
     .order('week_start', { ascending: false })
     .limit(1)
-  if (head.error) return { store, week: null, stale: false, rows: [], error: head.error.message }
+  if (head.error) return { store, week: null, stale: false, rows: [], error: head.error.message, fetchedAt }
   const week = (head.data?.[0]?.week_start as string | undefined) ?? null
-  if (!week) return { store, week: null, stale: false, rows: [], error: null }
+  if (!week) return { store, week: null, stale: false, rows: [], error: null, fetchedAt }
 
   const rows: Special[] = []
   let cols: string = COLS_FAMILY
@@ -107,7 +115,7 @@ async function fetchStore(store: Store): Promise<StoreData> {
       cols = COLS
       page = await supabase.from('specials').select(cols).eq('store_id', store.id).eq('week_start', week).range(off, off + PAGE - 1)
     }
-    if (page.error) return { store, week, stale: week !== thisWeek.value, rows, error: page.error.message }
+    if (page.error) return { store, week, stale: week !== thisWeek.value, rows, error: page.error.message, fetchedAt }
     const got = (page.data ?? []) as unknown as Array<Special & { products?: { family_key: string | null; family_name_en: string | null; family_name_zh: string | null } | null }>
     for (const r of got) {
       const { products, ...rest } = r
@@ -115,22 +123,34 @@ async function fetchStore(store: Store): Promise<StoreData> {
     }
     if (got.length < PAGE) break
   }
+  dropPrefix(`sp:${store.id}:`)   // 這家店上一次抓取的快取丟掉，不然每次抓取都留一份會塞爆 localStorage
   writeCache(cacheKey, pack(week, rows), 'sp:')
-  return { store, week, stale: week !== thisWeek.value, rows, error: null }
+  return { store, week, stale: week !== thisWeek.value, rows, error: null, fetchedAt }
+}
+
+/** 同一家店同時只抓一次：App 啟動時 watch(selectedStores) 跟 onMounted 都會叫 load()，以前會各打一次 Supabase。 */
+const inflight = new Map<string, Promise<StoreData>>()
+function fetchOnce(store: Store): Promise<StoreData> {
+  const have = inflight.get(store.id)
+  if (have) return have
+  const p = fetchStore(store).finally(() => inflight.delete(store.id))
+  inflight.set(store.id, p)
+  return p
 }
 
 async function load(): Promise<void> {
   const stores = selectedStores.value
   const next: Record<string, StoreData> = {}
+  const missing: Store[] = []
   for (const s of stores) {
     const have = byStore.value[s.id]
-    if (have) next[s.id] = have
+    if (have) next[s.id] = have   // 舊的先留著顯示，新的抓到再換
+    if (!have || have.fetchedAt !== (s.last_fetched_at ?? null)) missing.push(s)   // 爬蟲又跑過了 → 重抓
   }
   byStore.value = next
-  const missing = stores.filter((s) => !next[s.id])
   if (!missing.length) return
   loading.value = true
-  const results = await Promise.all(missing.map(fetchStore))
+  const results = await Promise.all(missing.map(fetchOnce))
   const merged = { ...byStore.value }
   for (const r of results) merged[r.store.id] = r
   byStore.value = merged
@@ -201,14 +221,7 @@ function familyOffers(special: Special, limit = 8): Offer[] {
   if (!special.family_key) return []
   // 同品牌的口味在商品頁另外一排（variantsOf），這裡只列別的牌子
   const list = (families.value.get(special.family_key) ?? []).filter((o) => o.special.product_key !== special.product_key && (!norm(special.brand) || norm(o.special.brand) !== norm(special.brand)))
-  return list
-    .sort((a, b) => {
-      if (a.unit != null && b.unit != null && a.unitUnit === b.unitUnit) return a.unit - b.unit
-      if (a.unit != null && b.unit == null) return -1
-      if (a.unit == null && b.unit != null) return 1
-      return a.deal - b.deal
-    })
-    .slice(0, limit)
+  return list.sort(byUnitThenPrice).slice(0, limit)
 }
 /** 同品牌、同類、不同口味／規格的其他商品（Moccona 三種咖啡）。沒品牌就沒有。 */
 const norm = (b: string | null | undefined) => (b ?? '').trim().toLowerCase()

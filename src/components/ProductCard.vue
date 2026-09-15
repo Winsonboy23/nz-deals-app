@@ -2,8 +2,9 @@
 import { computed } from 'vue'
 import ProductThumb from './ProductThumb.vue'
 import TagChip from './TagChip.vue'
-import { primaryTag, dealPrice } from '../lib/compare'
-import { chainClass, displayName, money, priceSuffix, unitLabel, wasPriceOf } from '../lib/format'
+import PriceLine from './PriceLine.vue'
+import { primaryTag, rankPrice } from '../lib/compare'
+import { chainClass, displayName, money } from '../lib/format'
 import { chainBadge, t } from '../composables/useI18n'
 import type { Group, Offer } from '../lib/types'
 
@@ -11,8 +12,6 @@ const props = defineProps<{ offer: Offer; group?: Group | null; variants?: numbe
 
 const s = computed(() => props.offer.special)
 const tag = computed(() => primaryTag(s.value))
-const was = computed(() => wasPriceOf(s.value))
-const unit = computed(() => unitLabel(s.value))
 const isBest = computed(
   () => !!props.group && props.group.offers.length >= 2 && props.group.best.store.id === props.offer.store.id,
 )
@@ -21,7 +20,7 @@ const others = computed(() => {
   if (!g || g.offers.length < 2) return ''
   const rest = g.offers.filter((o) => o.store.id !== props.offer.store.id)
   if (!rest.length) return ''
-  return t('cmp.others', { v: rest.map((o) => money(dealPrice(o.special))).join(' · ') })
+  return t('cmp.others', { v: rest.map((o) => money(rankPrice(o.special))).join(' · ') })
 })
 const to = computed(() => (s.value.product_key ? `/p/${encodeURIComponent(s.value.product_key)}` : ''))
 </script>
@@ -36,14 +35,7 @@ const to = computed(() => (s.value.product_key ? `/p/${encodeURIComponent(s.valu
       <TagChip v-if="tag" :tag="tag" deal />
       <span v-if="variants && variants > 1" class="tag variants">{{ t('card.variants', { n: variants }) }}</span>
     </ProductThumb>
-    <div class="price">
-      {{ money(s.price) }}<span v-if="priceSuffix(s)" class="unit">{{ priceSuffix(s) }}</span>
-    </div>
-    <div class="meta">
-      <s v-if="was">{{ money(was) }}</s>
-      <span v-if="was && unit"> · </span>
-      <span v-if="unit">{{ unit }}</span>
-    </div>
+    <div class="price"><PriceLine :special="s" detail unit /></div>
     <div class="name">{{ displayName(s) }}</div>
     <div v-if="others" class="others">{{ others }}</div>
   </RouterLink>
