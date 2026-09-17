@@ -40,6 +40,16 @@ onMounted(async () => {
   if (selectedIds.value.length) await load()
 })
 
+// 從背景切回來：問一下店有沒有新抓過（last_fetched_at），有就重拿。以前只在啟動時拿，App 掛在背景的人一直看舊的（2026-09-17）。
+// 5 分鐘內問過就不再問，免得每次切視窗都打 Supabase。
+let lastCheck = Date.now()
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible' || Date.now() - lastCheck < 5 * 60_000) return
+  lastCheck = Date.now()
+  await loadStores()
+  if (selectedIds.value.length) await load()
+})
+
 function closeSheet() {
   void router.replace(backPath.value)
 }
