@@ -161,6 +161,8 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'browse.byKg': { en: 'by $/kg', zh: '依每公斤' },
   'browse.byPrice': { en: 'by price', zh: '依價格' },
   'browse.empty': { en: 'No data here this week.', zh: '這個分類本週沒有資料。' },
+  'browse.showAll': { en: 'Show all {n}', zh: '看全部 {n} 樣' },
+  'browse.showLess': { en: 'Show less', zh: '收起' },
 
   'search.placeholder': { en: "Search this week's specials", zh: '搜尋本週特價' },
   'search.clear': { en: 'Clear', zh: '清除' },
@@ -363,6 +365,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'fresh.title': { en: 'Fresh, by $/kg', zh: '生鮮，每公斤' },
   'fresh.meat': { en: 'Meat & poultry', zh: '肉與家禽' },
   'fresh.produce': { en: 'Fruit & veg', zh: '蔬果' },
+  'fresh.multi': { en: '{q} for {v}', zh: '{q} 件 {v}' },
 }
 
 const lang = ref<Lang>(readCache<Lang>('lang') ?? 'zh')

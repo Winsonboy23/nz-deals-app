@@ -74,7 +74,8 @@ const thisWeek = ref(nzMonday())
 
 // :f4 = 同類 key 改成不帶分類之後；:f5 = Woolworths 分類改第三層對照（2026-09-08 回填）；
 // :f6 = key 帶 stores.last_fetched_at——爬蟲一天抓兩三次，以前 key 只有店＋週，週一開過 app 就一整週看同一份（2026-09-15）
-const CACHE_VER = 'f6'
+// :f7 = Woolworths 補第三層、洋芋片／熟食肉／生菜對到紅超黃超同一個分類（2026-09-17 回填）
+const CACHE_VER = 'f7'
 
 async function fetchStore(store: Store): Promise<StoreData> {
   const fetchedAt = store.last_fetched_at ?? null

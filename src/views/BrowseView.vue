@@ -56,7 +56,21 @@ function pickCat(id: string) {
   recent = [id, ...recent.filter((x) => x !== id)].slice(0, 8)
   writeCache('recentCats', recent)
 }
-watch([cat, chain, foodOnly], () => (shown.value = 6))
+/** 每段先列前幾個，其餘收在「看全部」（2026-09-17：以前硬切、沒有按鈕，客人找不到藍莓）。 */
+const COMPARE_MAX = 4
+const SINGLES_MAX = 9
+const opened = ref<Set<string>>(new Set())
+const isOpen = (id: string) => opened.value.has(id)
+function toggleSec(id: string) {
+  const next = new Set(opened.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  opened.value = next
+}
+watch([cat, chain, foodOnly], () => {
+  shown.value = 6
+  opened.value = new Set()
+})
 
 interface Section {
   id: string
@@ -162,16 +176,21 @@ function toggleFood() {
           {{ sec.fresh ? t('browse.byKg') : t('browse.byPrice') }}
         </div>
       </div>
-      <div v-for="g in sec.compare.slice(0, 4)" :key="g.key" class="cmp-flush">
+      <div v-for="g in isOpen(sec.id) ? sec.compare : sec.compare.slice(0, COMPARE_MAX)" :key="g.key" class="cmp-flush">
         <CompareBox :group="g" />
       </div>
       <div v-if="sec.singles.length" class="grid3">
         <ProductCard
-          v-for="o in sec.singles.slice(0, 9)"
+          v-for="o in isOpen(sec.id) ? sec.singles : sec.singles.slice(0, SINGLES_MAX)"
           :key="o.store.id + o.special.product_id"
           :offer="o"
           :group="o.special.product_key ? groups.get(o.special.product_key) : null"
         />
+      </div>
+      <div v-if="sec.compare.length > COMPARE_MAX || sec.singles.length > SINGLES_MAX" class="pad" style="margin-top: 8px">
+        <button class="chip" :class="{ on: isOpen(sec.id) }" @click="toggleSec(sec.id)">
+          {{ isOpen(sec.id) ? t('browse.showLess') : t('browse.showAll', { n: sec.compare.length + sec.singles.length }) }}
+        </button>
       </div>
     </template>
 

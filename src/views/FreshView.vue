@@ -36,6 +36,20 @@ watch([tab, chain], () => {
   cat.value = 'all'
 })
 
+/** 每類先列最便宜的 8 樣，其餘收在「看全部」（2026-09-17：以前硬切 8 樣，Jazz 蘋果排第 10 就看不到）。 */
+const ROWS_MAX = 8
+const opened = ref<Set<string>>(new Set())
+const isOpen = (id: string) => opened.value.has(id)
+function toggleSec(id: string) {
+  const next = new Set(opened.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  opened.value = next
+}
+watch([tab, chain, cat], () => {
+  opened.value = new Set()
+})
+
 const sections = computed<Array<{ id: string; label: string; total: number; rows: Row[] }>>(() => {
   const want = L1[tab.value]
   const map = new Map<string, Row[]>()
@@ -51,7 +65,7 @@ const sections = computed<Array<{ id: string; label: string; total: number; rows
     else map.set(id, [r])
   }
   return [...map.entries()]
-    .map(([id, rows]) => ({ id, label: catName(nameOf(id)), total: rows.length, rows: rows.slice(0, 8) }))
+    .map(([id, rows]) => ({ id, label: catName(nameOf(id)), total: rows.length, rows }))
     .sort((a, b) => catRank(a.id) - catRank(b.id))   // 超市自己的順序（雞肉→牛肉→…→植物替代），不按最便宜
 })
 
@@ -114,7 +128,7 @@ function note(r: Row): string {
       <div class="sec">{{ sec.label }}</div>
       <div style="margin-top: 2px">
         <RouterLink
-          v-for="r in sec.rows"
+          v-for="r in isOpen(sec.id) ? sec.rows : sec.rows.slice(0, ROWS_MAX)"
           :key="r.store.id + r.special.product_id"
           class="lrow"
           :to="r.special.product_key ? `/p/${encodeURIComponent(r.special.product_key)}` : ''"
@@ -134,8 +148,17 @@ function note(r: Row): string {
             >
               {{ money(r.special.price) }}
             </div>
+            <!-- 湊件價（2026-09-17）：排序照舊用單件的每公斤，這裡只把條件寫出來 -->
+            <div v-if="r.special.multi_buy && r.special.multi_buy.qty > 1" class="small muted" style="margin-top: 2px">
+              {{ t('fresh.multi', { q: r.special.multi_buy.qty, v: money(r.special.multi_buy.total) }) }}
+            </div>
           </div>
         </RouterLink>
+      </div>
+      <div v-if="sec.total > ROWS_MAX" style="margin-top: 8px">
+        <button class="chip" :class="{ on: isOpen(sec.id) }" @click="toggleSec(sec.id)">
+          {{ isOpen(sec.id) ? t('browse.showLess') : t('browse.showAll', { n: sec.total }) }}
+        </button>
       </div>
     </div>
 
