@@ -49,15 +49,27 @@ const variantsEl = ref<HTMLElement>()
 let dragY0 = 0
 function dragStart(e: TouchEvent) {
   dragY0 = e.touches[0].clientY
+  if (sheetEl.value) sheetEl.value.style.transition = 'none'   // 拉的時候要貼著手指，不能有延遲
 }
 function dragMove(e: TouchEvent) {
   const dy = Math.max(0, e.touches[0].clientY - dragY0)
   if (sheetEl.value) sheetEl.value.style.transform = `translate(-50%, ${dy}px)`
 }
 function dragEnd(e: TouchEvent) {
+  const el = sheetEl.value
+  if (!el) return
   const dy = e.changedTouches[0].clientY - dragY0
-  if (sheetEl.value) sheetEl.value.style.transform = ''
-  if (dy > 70) emit('close')
+  el.style.transition = 'transform .3s var(--ease-sheet)'
+  if (dy > 70) {
+    // 從手指放開的地方繼續往下滑出去，不要先彈回原位再重播離場動畫（會看到一跳）
+    el.style.transform = 'translate(-50%, 100%)'
+    emit('close')
+    return
+  }
+  el.style.transform = ''   // 沒拉夠：順順地滑回去
+  setTimeout(() => {
+    if (sheetEl.value === el) el.style.transition = ''
+  }, 320)
 }
 watch(
   () => props.pkey,

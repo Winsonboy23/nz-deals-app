@@ -63,7 +63,9 @@ function closeSheet() {
       <component :is="Component" />
     </Transition>
   </RouterView>
-  <Transition name="sheet">
+  <!-- Vue 只看「根元素」有沒有 transition 來決定等多久才把它拿掉。商品面板的根是一層空 div，
+       動畫寫在裡面的 .bsheet / .dim 上，所以 Vue 以為 0 秒 → 關的時候直接消失。講明時間它才會等。 -->
+  <Transition name="sheet" :duration="{ enter: 340, leave: 300 }">
     <ProductSheet v-if="sheetKey" :pkey="sheetKey" @close="closeSheet" />
   </Transition>
   <TabBar v-if="showTabs" />
