@@ -133,6 +133,10 @@ async function fetchStore(store: Store): Promise<StoreData> {
 
 /** 同一家店同時只抓一次：App 啟動時 watch(selectedStores) 跟 onMounted 都會叫 load()，以前會各打一次 Supabase。 */
 const inflight = new Map<string, Promise<StoreData>>()
+// 2026-09-20：Supabase 偶爾一次拿不到（測試者一開 App 紅超黃超空的、只有綠超），以前錯了就一直空到下次切回來才重拿。
+// 現在錯的那幾家 3、8、20 秒後自動重抓，最多三次；成功就歸零。
+let retries = 0
+let retryTimer: number | undefined
 function fetchOnce(store: Store): Promise<StoreData> {
   const have = inflight.get(store.id)
   if (have) return have
@@ -158,6 +162,18 @@ async function load(): Promise<void> {
     const merged = { ...byStore.value }
     for (const r of results) merged[r.store.id] = r
     byStore.value = merged
+    const failed = results.filter((r) => r.error)
+    for (const r of failed) console.warn(`[specials] ${r.store.name}: ${r.error}`)
+    if (failed.length && retries < 3) {
+      const delay = [3000, 8000, 20000][retries++]!
+      clearTimeout(retryTimer)
+      retryTimer = window.setTimeout(() => {
+        const next = { ...byStore.value }
+        for (const r of failed) if (next[r.store.id]?.error) delete next[r.store.id]
+        byStore.value = next
+        void load()
+      }, delay)
+    } else if (!failed.length) retries = 0
   } finally {
     fetching.value = false
   }
