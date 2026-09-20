@@ -44,6 +44,21 @@ const variants = computed(() => {
 // 換口味／規格後，讓那排按鈕留在螢幕原位；面板不要跳回最上面（iOS Safari 沒有 scroll anchoring）。
 const sheetEl = ref<HTMLElement>()
 const variantsEl = ref<HTMLElement>()
+
+// 上面那條把手（2026-09-20 測試者回報「點了沒反應」）：以前只是裝飾。現在點一下關；手指按著往下拉，面板跟著走，拉超過 70px 放開就關。
+let dragY0 = 0
+function dragStart(e: TouchEvent) {
+  dragY0 = e.touches[0].clientY
+}
+function dragMove(e: TouchEvent) {
+  const dy = Math.max(0, e.touches[0].clientY - dragY0)
+  if (sheetEl.value) sheetEl.value.style.transform = `translate(-50%, ${dy}px)`
+}
+function dragEnd(e: TouchEvent) {
+  const dy = e.changedTouches[0].clientY - dragY0
+  if (sheetEl.value) sheetEl.value.style.transform = ''
+  if (dy > 70) emit('close')
+}
 watch(
   () => props.pkey,
   async () => {
@@ -119,7 +134,9 @@ function detailLine(storeId: string, unit: string | null): string {
   <div>
   <div class="dim" @click="emit('close')" />
   <div ref="sheetEl" class="bsheet">
-    <div class="grab" />
+    <button class="grab-btn" type="button" :aria-label="t('common.done')" @click="emit('close')" @touchstart.passive="dragStart" @touchmove.passive="dragMove" @touchend="dragEnd" @touchcancel="dragEnd">
+      <div class="grab" />
+    </button>
     <template v-if="group && best">
       <div style="display: flex; gap: 14px; align-items: flex-start">
         <ProductThumb

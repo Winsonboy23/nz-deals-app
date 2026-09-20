@@ -96,6 +96,22 @@ input {
   padding-bottom: calc(26px + env(safe-area-inset-bottom));
 }
 
+/* 商品頁把手：整條 44px 高都能點，點了關；touch-action:none 讓往下拉不會變成捲動 */
+.grab-btn {
+  display: block;
+  width: 100%;
+  padding: 16px 0 12px;
+  margin: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.grab-btn .grab {
+  margin: 0 auto;
+}
+
 /* Horizontal rails scroll for real */
 .chips.nowrap,
 .hscroll {
