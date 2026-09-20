@@ -231,7 +231,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
           </div>
           <template v-if="isOpen(s.card.store.id)">
             <template v-if="s.none.length">
-              <div class="grp">{{ t('list.grpNone', { n: s.none.length }) }}</div>
+              <div class="grp">{{ t('list.grpNone', { s: chainName(s.card.store.id), n: s.none.length }) }}</div>
               <div v-for="l in s.none" :key="l.item.id" class="lrow row" style="padding-left: 12px">
                 <ProductThumb v-if="thumbFor(l.item.key)" :special="thumbFor(l.item.key)!" variant="sq" class="list-tn" />
                 <div v-else class="tn sq list-tn ph" />

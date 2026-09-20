@@ -217,7 +217,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'list.andMore': { en: ' and {n} more', zh: ' 等 {n} 樣' },
   'list.allAt': { en: 'Everything in one trip: {s}, {v}', zh: '全部買齊的是 {s}：{v}' },
   'list.missingN': { en: 'missing {n}', zh: '缺 {n}' },
-  'list.grpNone': { en: 'Not here ({n})', zh: '這家沒有（{n}）' },
+  'list.grpNone': { en: "{s} doesn't sell these ({n})", zh: '{s} 沒賣（{n}）' },
   'list.grpUnsure': { en: 'Unsure ({n})', zh: '不確定（{n}）' },
   'list.grpHave': { en: 'Available ({n})', zh: '買得到（{n}）' },
   'list.buyAt': { en: 'Get at {s} for {v}', zh: '去 {s} 買 {v}' },
