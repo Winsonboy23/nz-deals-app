@@ -65,11 +65,13 @@ export interface StoreData {
   fetchedAt: string | null
 }
 
-const { selectedStores } = useStores()
+const { selectedStores, loading: storesLoading } = useStores()
 const { foodOnly } = useSettings()
 
 const byStore = shallowRef<Record<string, StoreData>>({})
-const loading = ref(false)
+const fetching = ref(false)
+/** 給畫面看的「還在拿」：自己在抓特價，或店的清單還沒回來、手上又一筆特價都沒有（App 一開始先等 stores 才抓特價，那幾百毫秒不該寫「0 項特價」）。 */
+const loading = computed(() => fetching.value || (storesLoading.value && !Object.keys(byStore.value).length))
 const thisWeek = ref(nzMonday())
 
 // :f4 = 同類 key 改成不帶分類之後；:f5 = Woolworths 分類改第三層對照（2026-09-08 回填）；
@@ -150,12 +152,15 @@ async function load(): Promise<void> {
   }
   byStore.value = next
   if (!missing.length) return
-  loading.value = true
-  const results = await Promise.all(missing.map(fetchOnce))
-  const merged = { ...byStore.value }
-  for (const r of results) merged[r.store.id] = r
-  byStore.value = merged
-  loading.value = false
+  fetching.value = true
+  try {
+    const results = await Promise.all(missing.map(fetchOnce))
+    const merged = { ...byStore.value }
+    for (const r of results) merged[r.store.id] = r
+    byStore.value = merged
+  } finally {
+    fetching.value = false
+  }
 }
 
 watch(selectedStores, () => void load(), { deep: true })

@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import StoreOfferCard from '../components/StoreOfferCard.vue'
+import Loading from '../components/Loading.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { chainClass, displayName, money, unitLabel } from '../lib/format'
 import { rankPrice } from '../lib/compare'
@@ -11,7 +12,7 @@ import type { Group, Offer } from '../lib/types'
 
 const route = useRoute()
 const router = useRouter()
-const { rows, groups, activeStores, familyAlt } = useSpecials()
+const { rows, groups, activeStores, familyAlt, loading } = useSpecials()
 
 const q = ref(String(route.query.q ?? ''))
 const PAGE = 20
@@ -123,7 +124,8 @@ function missingClasses(g: Group): string[] {
       </div>
     </div>
 
-    <div v-if="q.trim().length >= 2 && !stacks.length" class="pad" style="margin-top: 22px">
+    <Loading v-if="loading && q.trim().length >= 2 && !stacks.length" />
+    <div v-else-if="q.trim().length >= 2 && !stacks.length" class="pad" style="margin-top: 22px">
       <div class="empty">
         <div style="font-size: 22px; color: #c4c4c0; line-height: 1">?</div>
         <div class="h3" style="margin-top: 9px; font-size: 15.5px">

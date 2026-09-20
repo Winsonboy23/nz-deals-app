@@ -6,6 +6,7 @@
 // 這頁只求能用。
 import { onMounted, onUnmounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
+import Loading from '../Loading.vue'
 
 const err = ref('')
 const BIG = 30
@@ -210,7 +211,7 @@ onUnmounted(() => clearInterval(timer))
 
     <!-- ① 沒把握的 -->
     <div class="sec" style="margin-bottom: 8px">GPT 沒把握的（把握 &lt; 60%）</div>
-    <div v-if="lowLoading" class="sub muted">載入中…</div>
+    <Loading v-if="lowLoading" inline />
     <div v-else-if="!low.length" class="empty"><div class="h3">沒有</div></div>
     <div v-else class="box" style="margin-bottom: 22px; max-height: 460px; overflow: auto">
       <div v-for="r in low" :key="r.product_key" class="lrow" style="padding: 10px 14px; flex-wrap: wrap">
@@ -235,7 +236,7 @@ onUnmounted(() => clearInterval(timer))
 
     <!-- ② 塞太多樣的 -->
     <div class="sec" style="margin-bottom: 8px">一個同類塞太多樣（≥ {{ BIG }}）</div>
-    <div v-if="bigLoading" class="sub muted">整表讀取中…</div>
+    <Loading v-if="bigLoading" inline text="整表讀取中…" />
     <div v-else-if="!big.length" class="empty"><div class="h3">沒有</div></div>
     <div v-else class="box" style="margin-bottom: 22px">
       <div v-for="b in big" :key="b.family_key">

@@ -2,13 +2,14 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStores } from '../composables/useStores'
+import Loading from '../components/Loading.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { chainClass, chainOf } from '../lib/format'
 import { t } from '../composables/useI18n'
 import type { RankedStore } from '../composables/useStores'
 
 const router = useRouter()
-const { loaded, locating, coords, query, ranked, selectedIds, islands, loadStores, locate, toggle, preselect } =
+const { loaded, loading, locating, coords, query, ranked, selectedIds, islands, loadStores, locate, toggle, preselect } =
   useStores()
 const { load } = useSpecials()
 
@@ -177,7 +178,8 @@ async function done() {
     </div>
 
     <div class="pad">
-      <div v-if="!ranked.length" class="empty sub">{{ t('stores.none') }}</div>
+      <Loading v-if="loading && !ranked.length" />
+      <div v-else-if="!ranked.length" class="empty sub">{{ t('stores.none') }}</div>
       <template v-else>
         <div v-if="chosen.length" class="box">
           <button

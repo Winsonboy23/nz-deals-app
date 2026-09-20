@@ -3,6 +3,7 @@
 import { onMounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
 import { useSiteSettings } from '../../composables/useSiteSettings'
+import Loading from '../Loading.vue'
 
 const err = ref('')
 const saved = ref(false)
@@ -72,7 +73,7 @@ onMounted(() => void load())
 <template>
   <div>
     <div v-if="err" class="note" style="margin-bottom: 12px; color: #b00020">{{ err }}</div>
-    <div v-if="loading" class="sub muted">載入中…</div>
+    <Loading v-if="loading" inline />
 
     <template v-else>
       <div class="box" style="margin-bottom: 16px">

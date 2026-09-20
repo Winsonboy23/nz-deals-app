@@ -6,9 +6,11 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
 import { useCategories } from '../../composables/useCategories'
 import type { Category } from '../../lib/types'
+import Loading from '../Loading.vue'
 
 const { byId, loadCategories } = useCategories()
 const err = ref('')
+const loading = ref(true)
 const today = new Date().toISOString().slice(0, 10)
 
 /* ---------- 下拉用的 Foodstuffs 路徑（只列第二、三層） ---------- */
@@ -153,11 +155,9 @@ const fmtTime = (iso: string) => (iso ? new Date(iso).toLocaleString('zh-TW', { 
 
 let timer = 0
 onMounted(() => {
-  void loadCategories()
-  void loadUnmapped()
-  void loadManual()
-  void loadJobs()
-  void loadZh()
+  void Promise.all([loadCategories(), loadUnmapped(), loadManual(), loadJobs(), loadZh()]).finally(() => {
+    loading.value = false
+  })
   timer = window.setInterval(loadJobs, 10000)
 })
 onUnmounted(() => clearInterval(timer))
@@ -175,7 +175,8 @@ onUnmounted(() => clearInterval(timer))
       </div>
       <button class="chip" @click="recat">回填本週</button>
     </div>
-    <div v-if="!unmapped.length" class="empty" style="margin-bottom: 16px">
+    <Loading v-if="loading && !unmapped.length" />
+    <div v-else-if="!unmapped.length" class="empty" style="margin-bottom: 16px">
       <div class="h3">沒有對不到的路徑</div>
       <div class="s" style="margin-top: 4px">最新一次抓取每筆都對得到分類。</div>
     </div>
@@ -214,7 +215,8 @@ onUnmounted(() => clearInterval(timer))
 
     <!-- 手動對過的 -->
     <div class="sec" style="margin-bottom: 8px">手動對過的（{{ manual.length }}）</div>
-    <div v-if="!manual.length" class="sub muted" style="margin-bottom: 22px">還沒有。</div>
+    <Loading v-if="loading && !manual.length" inline style="margin-bottom: 22px" />
+    <div v-else-if="!manual.length" class="sub muted" style="margin-bottom: 22px">還沒有。</div>
     <div v-else class="box" style="margin-bottom: 22px; max-height: 300px; overflow: auto">
       <div v-for="m in manual" :key="m.level + m.ww_path" class="lrow" style="padding: 8px 14px">
         <div class="grow">
@@ -228,7 +230,7 @@ onUnmounted(() => clearInterval(timer))
     <!-- 分類中文 -->
     <div class="hrow" style="margin-bottom: 8px">
       <div class="grow">
-        <div class="sec">分類中文（{{ zh.length }}）</div>
+        <div class="sec">分類中文（{{ zh.length }}）<Loading v-if="loading && !zh.length" inline style="display: inline-flex; margin-left: 8px; padding: 0" /></div>
         <div class="s muted">改完點別的地方就存。App 下次開就看得到。</div>
       </div>
       <div class="field" style="height: 40px; font-size: 14px; width: 220px; flex: none">

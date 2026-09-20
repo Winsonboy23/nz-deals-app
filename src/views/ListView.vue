@@ -3,6 +3,7 @@
 // 最下面「AI 食譜」→ /ai-recipes 用清單裡的食材想 2 道菜。
 import { computed, ref, watch } from 'vue'
 import ProductThumb from '../components/ProductThumb.vue'
+import Loading from '../components/Loading.vue'
 import { useList, type ListItem, type OneStopCard } from '../composables/useList'
 import { useSpecials } from '../composables/useSpecials'
 import { chainClass, chainName, displayName, money, unitLabel } from '../lib/format'
@@ -17,8 +18,8 @@ import { aiEnabled } from '../lib/aiRecipe'
 import GradientButton from '../components/GradientButton.vue'
 
 const { items, add, has, addFreeText, remove, clear, setQty, rename, setPrice, toggle, split, oneStop, oneStopFrom, oneStopMissing, requestPrices, priceQueueAhead } = useList()
-const { activeStores, groups, familyAlt } = useSpecials()
-const { priceAt } = useStorePrices()
+const { activeStores, groups, familyAlt, loading } = useSpecials()
+const { priceAt, loading: pricesLoading } = useStorePrices()
 /** 後台的開關：即時查價關了就不送單，AI 食譜關了按鈕變灰 */
 const { livePrices, aiRecipes } = useSiteSettings()
 /** One stop：這家沒有這樣東西時，推薦它最便宜的同類（§8）。只是建議，不算進總價。 */
@@ -149,6 +150,8 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
       </div>
     </div>
 
+    <Loading v-else-if="loading && !activeStores.length" />
+
     <!-- D1 · 最省：每項分到最便宜的店 -->
     <template v-else-if="mode === 'split'">
       <div v-for="b in split.buckets" :key="b.store.id" class="pad" style="margin-top: 8px">
@@ -212,7 +215,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
       <div v-if="osStores.length" class="pad" style="margin-top: 8px">
         <div class="box os-sum">
           <div v-if="!livePrices" class="s" style="margin-bottom: 4px">{{ t('list.pricesPaused') }}</div>
-          <div v-else-if="anyPending" class="s pulse" style="margin-bottom: 4px">{{ t('list.checkingTop') }}{{ priceQueueAhead ? t('list.queueAhead', { n: priceQueueAhead }) : '' }}</div>
+          <div v-else-if="anyPending || pricesLoading" class="s pulse" style="margin-bottom: 4px">{{ t('list.checkingTop') }}{{ priceQueueAhead ? t('list.queueAhead', { n: priceQueueAhead }) : '' }}</div>
           <div v-if="winner && winner.have.length" class="os-go">{{ t('list.go', { s: winner.card.store.name, m: items.length, n: winner.have.length, v: osTotal(winner) }) }}</div>
           <div v-else class="os-go">{{ t('list.goNone') }}</div>
           <div v-if="winner && winner.none.length" class="s" style="margin-top: 3px">{{ t('list.missingNames', { names: missingNames(winner) }) }}</div>

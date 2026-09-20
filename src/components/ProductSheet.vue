@@ -3,6 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import ProductThumb from './ProductThumb.vue'
 import TagChip from './TagChip.vue'
 import PriceLine from './PriceLine.vue'
+import Loading from './Loading.vue'
 import { rankPrice, tagsFor } from '../lib/compare'
 import { catParts, chainClass, chainOf, displayName, money, unitLabel } from '../lib/format'
 import { useSpecials } from '../composables/useSpecials'
@@ -17,7 +18,7 @@ import { shortDate } from '../lib/week'
 const props = defineProps<{ pkey: string }>()
 const emit = defineEmits<{ close: [] }>()
 
-const { groupFor, familyOffers, variantsOf, history, activeStores, thisWeek } = useSpecials()
+const { groupFor, familyOffers, variantsOf, history, activeStores, thisWeek, loading } = useSpecials()
 const { nameOf } = useCategories()
 const { add, has } = useList()
 const { isIn } = useAuth()
@@ -71,12 +72,16 @@ const crumb = computed(() => {
 })
 // Phase 4：近 8 週價格。同店同週多筆取最便宜；至少兩週資料才說「近 8 週最低」。
 const hist = ref<HistoryRow[]>([])
+const histLoading = ref(false)
 watch(
   () => props.pkey,
   async (k) => {
     hist.value = []
+    histLoading.value = true
     const rows = await history(k)
-    if (k === props.pkey) hist.value = rows
+    if (k !== props.pkey) return
+    hist.value = rows
+    histLoading.value = false
   },
   { immediate: true },
 )
@@ -181,6 +186,7 @@ function detailLine(storeId: string, unit: string | null): string {
         </div>
       </div>
 
+      <Loading v-if="histLoading" inline style="margin-top: 12px" />
       <template v-if="weeksSeen.length >= 2">
         <div class="sec" style="margin-top: 16px">{{ t('p.history') }}</div>
         <div class="box" style="margin-top: 8px">
@@ -263,6 +269,7 @@ function detailLine(storeId: string, unit: string | null): string {
       <div class="sec" style="margin-top: 16px">{{ t('recipes.title') }}</div>
       <div class="sub muted" style="margin-top: 6px; font-size: 12.5px">{{ t('recipes.soon') }}</div>
     </template>
+    <Loading v-else-if="loading" />
     <template v-else>
       <div class="empty" style="margin-top: 10px">
         <div class="h3">{{ t('p.notFound') }}</div>

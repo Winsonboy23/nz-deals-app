@@ -4,6 +4,7 @@
 import { computed, onMounted, ref } from 'vue'
 import AdminFamily from './AdminFamily.vue'
 import ProductThumb from '../ProductThumb.vue'
+import Loading from '../Loading.vue'
 import { supabase } from '../../lib/supabase'
 import { money } from '../../lib/format'
 import type { Special } from '../../lib/types'
@@ -229,7 +230,7 @@ onMounted(() => {
       <div class="sub" style="margin-bottom: 10px">
         左邊 New World / PAK'nSAVE，右邊 Woolworths。點完會插一張派工單，Mac mini 上的 worker 10 秒內接走改字典。
       </div>
-      <div v-if="pairsLoading" class="sub muted">載入中…</div>
+      <Loading v-if="pairsLoading" inline />
       <div v-else-if="!openPairs.length" class="empty">
         <div class="h3">沒有待審的跨店配對</div>
         <div class="s" style="margin-top: 4px">週一 GPT 配對把握 &lt; 0.8 的才會進來。</div>
@@ -274,7 +275,7 @@ onMounted(() => {
       <div class="sub" style="margin-bottom: 10px">
         清單裡的商品在那家連鎖沒有編號時，worker 用名字去搜；規則判不出來的留在這裡。點「一樣」會直接寫進 product_ids。
       </div>
-      <div v-if="namesLoading" class="sub muted">載入中…</div>
+      <Loading v-if="namesLoading" inline />
       <div v-else-if="!toReview.length" class="empty">
         <div class="h3">沒有待審的名字配對</div>
       </div>

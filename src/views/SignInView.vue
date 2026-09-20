@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { t } from '../composables/useI18n'
@@ -6,6 +7,18 @@ import { t } from '../composables/useI18n'
 const router = useRouter()
 const { signIn, isIn } = useAuth()
 if (isIn.value) void router.replace('/me')
+
+/** 按了之後轉圈到 Google 頁面出現為止；失敗才會回來把圈圈收掉。 */
+const busy = ref(false)
+async function go() {
+  if (busy.value) return
+  busy.value = true
+  try {
+    await signIn()
+  } finally {
+    busy.value = false
+  }
+}
 </script>
 
 <template>
@@ -25,8 +38,9 @@ if (isIn.value) void router.replace('/me')
       </div>
     </div>
     <div class="pad" style="margin-top: 22px">
-      <button class="btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px" @click="signIn()">
-        <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.6 2.3 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13.3 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.8-6A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.7l7.9-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-3.8-13.5-9.3l-7.9 6C6.6 42.6 14.6 48 24 48z"/></svg>
+      <button class="btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px" :disabled="busy" @click="go">
+        <svg v-if="busy" class="spin" width="20" height="20" viewBox="0 0 46 46" aria-hidden="true"><circle cx="23" cy="23" r="19" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-dasharray="86 120" /></svg>
+        <svg v-else width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.6 2.3 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13.3 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.8-6A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.7l7.9-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-3.8-13.5-9.3l-7.9 6C6.6 42.6 14.6 48 24 48z"/></svg>
         {{ t('auth.google') }}
       </button>
     </div>

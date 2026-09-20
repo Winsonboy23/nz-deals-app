@@ -4,10 +4,12 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
 import { useStores } from '../../composables/useStores'
 import { nzMonday, nzToday } from '../../lib/week'
+import Loading from '../Loading.vue'
 
 const { all } = useStores()
 const storeName = computed(() => new Map(all.value.map((s) => [s.id, s.name])))
 const err = ref('')
+const loading = ref(true)
 
 interface Req {
   id: string
@@ -87,6 +89,7 @@ async function load() {
   reqs.value = (rows ?? []) as Req[]
   beat.value = ((hb ?? [])[0] as any) ?? null
   health.value = (hl ?? []) as Health[]
+  loading.value = false
   const got: Record<string, number> = {}
   for (const s of ['matched', 'review', 'none']) {
     const { count } = await supabase.from('name_matches').select('*', { count: 'exact', head: true }).eq('status', s)
@@ -130,7 +133,8 @@ onUnmounted(() => clearInterval(timer))
     <!-- Mac mini 健康（health 表，每 10 分鐘一列） -->
     <div class="sec" style="margin-bottom: 8px">Mac mini 健康</div>
     <div class="box" style="margin-bottom: 16px">
-      <div v-if="!latest" class="lrow" style="padding: 12px 14px"><div class="s muted">還沒有記錄。</div></div>
+      <div v-if="loading && !latest" class="lrow" style="padding: 12px 14px"><Loading inline /></div>
+      <div v-else-if="!latest" class="lrow" style="padding: 12px 14px"><div class="s muted">還沒有記錄。</div></div>
       <template v-else>
         <div class="lrow" style="padding: 12px 14px">
           <div class="grow">
@@ -165,7 +169,8 @@ onUnmounted(() => clearInterval(timer))
     </div>
 
     <div class="sec" style="margin-bottom: 8px">最近 20 張</div>
-    <div v-if="!reqs.length" class="sub muted">沒有單。</div>
+    <Loading v-if="loading && !reqs.length" inline />
+    <div v-else-if="!reqs.length" class="sub muted">沒有單。</div>
     <div v-else class="box" style="margin-bottom: 16px">
       <div v-for="r in reqs.slice(0, 20)" :key="r.id" class="lrow" style="padding: 10px 14px">
         <div class="grow">

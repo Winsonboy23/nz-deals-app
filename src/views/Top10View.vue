@@ -2,13 +2,14 @@
 import { computed } from 'vue'
 import ProductThumb from '../components/ProductThumb.vue'
 import PriceLine from '../components/PriceLine.vue'
+import Loading from '../components/Loading.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { rankPrice } from '../lib/compare'
 import { chainClass, chainOf, displayName, money, unitLabel } from '../lib/format'
 import { chainBadge, t } from '../composables/useI18n'
 import type { Group } from '../lib/types'
 
-const { topDeduped } = useSpecials()
+const { topDeduped, loading } = useSpecials()
 const rows = computed(() => topDeduped.value.slice(0, 10).map((x) => x.g))
 
 /** 名字下面那行：單價；黃超沒單價就寫低價標籤。原價、會員價、湊件都在右邊價格的說明行（PriceLine）。 */
@@ -60,7 +61,8 @@ function others(g: Group): string {
           <div v-if="g.payGap" class="gap">{{ t('cmp.gap', { v: money(g.payGap) }) }}</div>
         </div>
       </RouterLink>
-      <div v-if="!rows.length" class="empty sub" style="margin-top: 16px">
+      <Loading v-if="loading && !rows.length" />
+      <div v-else-if="!rows.length" class="empty sub" style="margin-top: 16px">
         {{ t('home.noCompare') }}
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import ProductThumb from '../components/ProductThumb.vue'
 import TagChip from '../components/TagChip.vue'
 import PriceLine from '../components/PriceLine.vue'
+import Loading from '../components/Loading.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { useCategories } from '../composables/useCategories'
 import { discountDepth, primaryTag, rankPrice } from '../lib/compare'
@@ -13,7 +14,7 @@ import { catName, t } from '../composables/useI18n'
 import type { ChainId, Group, Special, Store } from '../lib/types'
 
 const router = useRouter()
-const { deepDiscounts, comparable, rows: allRows, activeStores } = useSpecials()
+const { deepDiscounts, comparable, rows: allRows, activeStores, loading } = useSpecials()
 const { nameOf } = useCategories()
 const chain = ref<ChainId | 'all'>('all')
 /** 商品分類標籤（Foodstuffs 第一層）：全部 / 蔬果 / 肉類…，數字是目前超市篩選下的筆數。換超市就回到全部。 */
@@ -171,6 +172,7 @@ const rows = computed<Stack<Row>[]>(() =>
         </div>
       </template>
     </div>
+    <Loading v-else-if="loading && !pnsRows.length" />
     <div v-else-if="!pnsRows.length" class="pad" style="margin-top: 16px">
       <div class="empty sub">{{ t('browse.empty') }}</div>
     </div>
@@ -217,7 +219,7 @@ const rows = computed<Stack<Row>[]>(() =>
           </div>
         </template>
       </div>
-      <div v-else class="pad" style="margin-top: 12px">
+      <div v-else-if="!loading" class="pad" style="margin-top: 12px">
         <div class="empty sub">{{ t('browse.empty') }}</div>
       </div>
     </template>

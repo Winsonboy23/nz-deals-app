@@ -3,6 +3,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
 import { useStores } from '../../composables/useStores'
+import Loading from '../Loading.vue'
 
 const { all } = useStores()
 const storeName = computed(() => new Map(all.value.map((s) => [s.id, s.name])))
@@ -122,7 +123,7 @@ onUnmounted(() => clearInterval(timer))
     </div>
 
     <div class="sec" style="margin-bottom: 8px">每週抓取報告</div>
-    <div v-if="runsLoading" class="sub muted">載入中…</div>
+    <Loading v-if="runsLoading" inline />
     <div v-else-if="!runs.length" class="empty"><div class="h3">還沒有跑過</div></div>
     <div v-for="r in runs" :key="r.id" class="box" style="margin-bottom: 8px">
       <button class="lrow tap" style="padding: 12px 14px" @click="toggleRun(r)">

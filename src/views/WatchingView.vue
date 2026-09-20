@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import ProductThumb from '../components/ProductThumb.vue'
+import Loading from '../components/Loading.vue'
 import { supabase } from '../lib/supabase'
 import { useSpecials } from '../composables/useSpecials'
 import { useAuth } from '../composables/useAuth'
@@ -14,7 +15,7 @@ import type { Group } from '../lib/types'
 // 關注中：商品頁按 ☆ 的東西。這週你的店有特價的排上面（可點進商品頁），沒特價的排下面只列名字。
 const { isIn } = useAuth()
 const { watched, toggleWatch } = useSync()
-const { groups } = useSpecials()
+const { groups, loading } = useSpecials()
 
 const hits = computed<Group[]>(() =>
   [...watched.value].map((k) => groups.value.get(k)).filter((g): g is Group => !!g),
@@ -23,16 +24,22 @@ const missing = computed<string[]>(() => [...watched.value].filter((k) => !group
 
 /** 沒特價的商品只有 key，名字去 products 表查一次（公開讀）。 */
 const names = ref<Record<string, string>>({})
+const namesLoading = ref(false)
 watch(
   missing,
   async (keys) => {
     const need = keys.filter((k) => !(k in names.value))
     if (!need.length) return
-    const { data } = await supabase.from('products').select('key,display_name').in('key', need)
-    const next = { ...names.value }
-    for (const r of data ?? []) next[r.key as string] = r.display_name as string
-    for (const k of need) if (!(k in next)) next[k] = k.replace(/_/g, ' ')
-    names.value = next
+    namesLoading.value = true
+    try {
+      const { data } = await supabase.from('products').select('key,display_name').in('key', need)
+      const next = { ...names.value }
+      for (const r of data ?? []) next[r.key as string] = r.display_name as string
+      for (const k of need) if (!(k in next)) next[k] = k.replace(/_/g, ' ')
+      names.value = next
+    } finally {
+      namesLoading.value = false
+    }
   },
   { immediate: true },
 )
@@ -75,6 +82,7 @@ function others(g: Group): string {
       </div>
     </div>
 
+    <Loading v-else-if="(loading || namesLoading) && !hits.length" />
     <template v-else>
       <!-- 這週有特價 -->
       <template v-if="hits.length">

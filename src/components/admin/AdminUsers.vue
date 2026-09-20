@@ -3,6 +3,7 @@
 // 加上通知記錄、AI 食譜用量與最近生成的。只看不改。
 import { computed, onMounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
+import Loading from '../Loading.vue'
 
 const err = ref('')
 const loading = ref(true)
@@ -140,7 +141,7 @@ onMounted(() => void load())
 <template>
   <div>
     <div v-if="err" class="note" style="margin-bottom: 12px; color: #b00020">{{ err }}</div>
-    <div v-if="loading" class="sub muted">載入中…</div>
+    <Loading v-if="loading" inline />
 
     <template v-else>
       <div class="sec" style="margin-bottom: 8px">使用者（{{ users.length }}）</div>

@@ -2,11 +2,14 @@
 import { computed, ref } from 'vue'
 import { bi, useRecipes } from '../composables/useRecipes'
 import { useStores } from '../composables/useStores'
+import { useSpecials } from '../composables/useSpecials'
+import Loading from '../components/Loading.vue'
 import { t } from '../composables/useI18n'
 import { chainClass, chainName, chainShort, money } from '../lib/format'
 
 const { ranked } = useRecipes()
 const { selectedStores } = useStores()
+const { loading, totalSpecials } = useSpecials()
 const filter = ref<'all' | 'quick'>('all')
 const list = computed(() => ranked.value.filter((r) => filter.value === 'all' || r.recipe.minutes <= 30))
 const base = import.meta.env.BASE_URL
@@ -32,7 +35,8 @@ const base = import.meta.env.BASE_URL
       <RouterLink class="empty sub" to="/stores" style="display: block">{{ t('recipes.noStores') }}</RouterLink>
     </div>
 
-    <div class="pad" style="margin-top: 6px">
+    <Loading v-if="selectedStores.length && loading && !totalSpecials" />
+    <div v-else class="pad" style="margin-top: 6px">
       <RouterLink v-for="(r, i) in list" :key="r.recipe.id" class="rc" :to="`/recipes/${r.recipe.id}`">
         <div class="rc-img">
           <img :src="base + r.recipe.image" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" />

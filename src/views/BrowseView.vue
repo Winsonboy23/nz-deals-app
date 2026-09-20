@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import ProductCard from '../components/ProductCard.vue'
 import CompareBox from '../components/CompareBox.vue'
+import Loading from '../components/Loading.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { useStores } from '../composables/useStores'
 import { useSettings } from '../composables/useSettings'
@@ -13,7 +14,7 @@ import { readCache, writeCache } from '../lib/cache'
 import { catRank } from '../lib/catOrder'
 import type { ChainId, Group, Offer } from '../lib/types'
 
-const { rows, groups, level2 } = useSpecials()
+const { rows, groups, level2, loading } = useSpecials()
 const { selectedStores } = useStores()
 const { foodOnly } = useSettings()
 const { nameOf } = useCategories()
@@ -165,7 +166,8 @@ function toggleFood() {
       </button>
     </div>
 
-    <div v-if="!visible.length" class="pad" style="margin-top: 16px">
+    <Loading v-if="loading && !visible.length" />
+    <div v-else-if="!visible.length" class="pad" style="margin-top: 16px">
       <div class="empty sub">{{ t('browse.empty') }}</div>
     </div>
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import Loading from '../components/Loading.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { useCategories } from '../composables/useCategories'
 import { catLevel, chainClass, chainName, chainOf, displayName, money, wasPriceOf } from '../lib/format'
@@ -7,7 +8,7 @@ import { catName, t } from '../composables/useI18n'
 import { catRank } from '../lib/catOrder'
 import type { ChainId, Special, Store } from '../lib/types'
 
-const { freshByKg } = useSpecials()
+const { freshByKg, loading } = useSpecials()
 const { nameOf } = useCategories()
 
 const tab = ref<'meat' | 'produce'>('meat')
@@ -162,7 +163,8 @@ function note(r: Row): string {
       </div>
     </div>
 
-    <div v-if="!sections.length" class="pad" style="margin-top: 16px">
+    <Loading v-if="loading && !sections.length" />
+    <div v-else-if="!sections.length" class="pad" style="margin-top: 16px">
       <div class="empty sub">{{ t('browse.empty') }}</div>
     </div>
   </div>

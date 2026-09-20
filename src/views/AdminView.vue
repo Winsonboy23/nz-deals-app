@@ -9,6 +9,7 @@ import AdminLive from '../components/admin/AdminLive.vue'
 import AdminTaxonomy from '../components/admin/AdminTaxonomy.vue'
 import AdminUsers from '../components/admin/AdminUsers.vue'
 import AdminSettings from '../components/admin/AdminSettings.vue'
+import Loading from '../components/Loading.vue'
 import { useAdmin } from '../composables/useAdmin'
 
 const router = useRouter()
@@ -29,7 +30,7 @@ onUnmounted(() => document.body.classList.remove('admin'))
 
 <template>
   <div class="screen" style="padding-bottom: 60px">
-    <div v-if="isAdmin === null" class="pad sub muted" style="margin-top: 20px">檢查權限…</div>
+    <Loading v-if="isAdmin === null" text="檢查權限…" style="margin-top: 20px" />
     <template v-else-if="isAdmin">
       <div class="pad" style="margin-top: 8px">
         <RouterLink class="back" to="/me">‹ 我的</RouterLink>

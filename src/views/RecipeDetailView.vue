@@ -3,6 +3,8 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import TagChip from '../components/TagChip.vue'
 import PriceLine from '../components/PriceLine.vue'
+import Loading from '../components/Loading.vue'
+import { useSpecials } from '../composables/useSpecials'
 import { bi, useRecipes, type IngredientMatch } from '../composables/useRecipes'
 import { useList } from '../composables/useList'
 import { lang, t } from '../composables/useI18n'
@@ -11,6 +13,7 @@ import { chainClass, chainName, displayName, money, unitLabel } from '../lib/for
 
 const route = useRoute()
 const { byId } = useRecipes()
+const { loading } = useSpecials()
 const { add, addFreeText } = useList()
 const r = computed(() => byId(String(route.params.id)))
 const base = import.meta.env.BASE_URL
@@ -95,6 +98,7 @@ async function share() {
         <div class="s muted" style="font-size: 12.5px">{{ mode === 'one' && r.oneStore ? t('recipes.oneStoreSub', { s: chainName(r.oneStore.store.id) }) : t('recipes.cheapest') }}</div>
       </div>
       <div class="pad" style="margin-top: 10px">
+        <Loading v-if="loading" inline style="margin-bottom: 6px" />
         <div class="box">
           <component
             :is="m.offer ? 'RouterLink' : 'div'"
