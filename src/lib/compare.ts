@@ -1,5 +1,6 @@
 import type { Group, MultiBuy, Offer, Special, Store } from './types'
 import { chainOf } from './format'
+import { kgOf } from './size'
 
 export type TagKind = 'half' | 'pct' | 'save' | 'low'
 export interface Tag {
@@ -25,8 +26,13 @@ export function multiUnitPrice(s: { multi_buy: MultiBuy | null }): number | null
   return m && m.qty > 0 ? m.total / m.qty : null
 }
 
-/** What you pay for `qty` units: every full bundle at the multi-buy price, the remainder at the single price. */
-export function costFor(s: { price: number; multi_buy: MultiBuy | null }, qty: number): number {
+/**
+ * What you pay for `qty` units: every full bundle at the multi-buy price, the remainder at the single price.
+ * Sold per kg: price × kilos × qty, kilos from the name ("… Min Order 1.6kg" → 1.6), else 1 kg — so $17.99/kg pork
+ * shoulder at 1.6kg is $28.78, not $17.99, and every store is measured with the same ruler (一站 v2, 2026-09-24).
+ */
+export function costFor(s: { price: number; multi_buy: MultiBuy | null; price_unit?: string | null; size?: string | null; name?: string | null }, qty: number): number {
+  if ((s.price_unit ?? '').toLowerCase() === 'kg') return s.price * kgOf(s) * qty
   const m = s.multi_buy
   if (!m || m.qty <= 0 || qty < m.qty) return s.price * qty
   return Math.floor(qty / m.qty) * m.total + (qty % m.qty) * s.price
