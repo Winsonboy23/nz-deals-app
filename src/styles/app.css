@@ -284,6 +284,8 @@ button.btn{width:100%}
 .pl.right{justify-content:flex-end;text-align:right}
 .pl .cond{display:inline-block;flex:none;font-family:Inter,"Noto Sans TC",sans-serif;font-size:max(10px,.46em);font-weight:800;letter-spacing:0;line-height:1.35;padding:0 .4em;border-radius:.35em;border:1.5px solid var(--ink);color:var(--ink);background:var(--paper);white-space:nowrap;transform:translateY(-.08em)}
 .pl .cond.multi{background:var(--ink);color:#fff}
+/* 沒原價的促銷名（Fresh Deal／Low Price）：不是要做到的條件，是店家的標籤，灰底跟黃超的「低價標籤」同色 */
+.pl .cond.promo{background:#E9E9E6;color:#5F5F5C;border-color:#E9E9E6}
 .pl .pl-detail{flex-basis:100%;min-width:0;font-family:Inter,"Noto Sans TC",sans-serif;font-size:11.5px;font-weight:600;color:var(--ink-2);letter-spacing:0;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pl.wrap .pl-detail{white-space:normal}
 .pl .pl-detail s{color:var(--ink-3)}

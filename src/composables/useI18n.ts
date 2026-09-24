@@ -153,6 +153,9 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'price.multi': { en: 'BUY {q}', zh: '{q} 件' },
   'price.regular': { en: 'regular {v}', zh: '一般價 {v}' },
   'price.multiDetail': { en: '{q} for {v} ({u} each)', zh: '{q} 件 {v}（每件 {u}）' },
+  'price.freshDeal': { en: 'Fresh Deal', zh: '本週鮮價' },
+  'price.lowPrice': { en: 'Low Price', zh: '低價' },
+  'price.clearance': { en: 'Clearance', zh: '清倉' },
 
   'browse.title': { en: 'Browse', zh: '分類瀏覽' },
   'browse.foodOnly': { en: 'Food only', zh: '只看食品' },
