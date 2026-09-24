@@ -37,7 +37,7 @@ const GIVE_UP_MS = 90_000
 /** 同一個字 2 分鐘內不重送，直接用上次的結果 */
 const RETRY_MS = 2 * 60_000
 /** adopt_product 收的 key（帶小數規格的 1.5l、1.6kg 會被擋，見回報） */
-const KEY_RE = /^[a-z0-9_]{3,120}$/
+const KEY_RE = /^[a-z0-9_.]{3,120}$/
 const CAT_COLS = 'store_id,product_id,product_key,name,brand,size,price,price_unit,category_id,image_url'
 
 const { items, addFreeText, assignKey } = useList()
