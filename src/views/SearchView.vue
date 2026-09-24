@@ -7,6 +7,7 @@ import { useSpecials } from '../composables/useSpecials'
 import { chainClass, displayName, money, unitLabel } from '../lib/format'
 import { rankPrice } from '../lib/compare'
 import { rangeKey, stackBy, type Stack } from '../lib/stack'
+import { MIN_SCORE, matchScore, parseQuery } from '../lib/search'
 import { t } from '../composables/useI18n'
 import type { Group, Offer } from '../lib/types'
 
@@ -33,30 +34,32 @@ watch(
   },
 )
 
-/** Match on the store's own name, brand and the shared product key. */
+/**
+ * 拆成單字比對品牌 + 品名（lib/search.ts）：對到一半以上才列，對到越多排越前面；同分看幾家店有，再看單件價。
+ * 同一樣東西在不同店名字不一樣時，取分數最高的那家。
+ */
 const matches = computed<Group[]>(() => {
-  const needle = q.value.trim().toLowerCase()
-  if (needle.length < 2) return []
-  // 整個字命中（\bbeef mince）排前面，只是字串裡剛好有的排後面；同分看幾家店有，再看單件價。
-  const word = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`)
+  const query = parseQuery(q.value)
+  if (!query) return []
   const hits = new Map<string, number>()
   for (const { special } of rows.value) {
     const key = special.product_key
     if (!key) continue
-    const hay = `${special.brand ?? ''} ${special.name}`.toLowerCase()
-    if (!hay.includes(needle)) continue
-    const score = word.test(hay) ? 0 : 1
-    hits.set(key, Math.min(hits.get(key) ?? 99, score))
+    const score = matchScore(query, special)
+    if (score < MIN_SCORE) continue
+    hits.set(key, Math.max(hits.get(key) ?? 0, score))
   }
   return [...hits.entries()]
     .map(([k, score]) => ({ g: groups.value.get(k), score }))
     .filter((x): x is { g: Group; score: number } => !!x.g)
-    .sort((a, b) => a.score - b.score || b.g.offers.length - a.g.offers.length || a.g.best.price - b.g.best.price)
+    .sort((a, b) => b.score - a.score || b.g.offers.length - a.g.offers.length || a.g.best.price - b.g.best.price)
     .map((x) => x.g)
 })
 /**
  * 同品牌、同分類、同價、同條件的疊成一疊（Cadbury 14 支 $1.20 一格，點開才看口味）。以前硬切 20 筆，一頁被同價的
- * 塞滿，真正划算的那個反而擠不進來（2026-09-15）。排好才疊，所以每疊的頭就是排最前面的那個。
+ * 塞滿，真正划算的那個反而擠不進來（2026-09-15）。排好才疊，所以每疊的頭就是排最前面的那個：
+ * matches 先按對到幾成排，疊的面就是對到最多字的那款，疊跟疊之間也按各自最高分排（2026-09-24，Sealord 罐頭 9 款疊一起，
+ * 要找的那罐以前藏在後面）。
  */
 const stacks = computed<Stack<Group>[]>(() =>
   stackBy(matches.value, (g) => {
