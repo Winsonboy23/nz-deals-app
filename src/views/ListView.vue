@@ -18,13 +18,27 @@ import { useStorePrices } from '../composables/useStorePrices'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import { aiEnabled } from '../lib/aiRecipe'
 import GradientButton from '../components/GradientButton.vue'
+import MatchSheet from '../components/MatchSheet.vue'
+import { useFreeText } from '../composables/useFreeText'
 
-const { items, add, has, addFreeText, remove, clear, setQty, rename, setPrice, toggle, split, oneStop, oneStopFrom, oneStopMissing, requestPrices, priceQueueAhead, wantSubs, setSubCount } = useList()
+const { items, add, has, remove, clear, setQty, rename, setPrice, toggle, split, oneStop, oneStopFrom, oneStopMissing, requestPrices, priceQueueAhead, wantSubs, setSubCount } = useList()
 const { activeStores, groups, loading } = useSpecials()
 const { priceAt, loading: pricesLoading } = useStorePrices()
 const { asSpecial } = useCatalog()
 /** 後台的開關：即時查價關了就不送單，AI 食譜關了按鈕變灰 */
 const { livePrices, aiRecipes } = useSiteSettings()
+/** 自由輸入配對（規格 §4.3）：輸入框加的先配對；清單裡 key=null 的列有「配對」鈕；多個候選開 MatchSheet */
+const { addAndMatch, match, picker, choose, dismiss, busy, statusOf, notice } = useFreeText()
+/** 沒配對的自由輸入那列的小字：搜尋中… / 查不到 · 自由輸入；null = 照原本的寫法 */
+function freeStatus(i: ListItem): string | null {
+  const st = statusOf(i.id)
+  if (st === 'searching') return t('list.searching')
+  if (i.price) return null
+  if (st === 'notFound') return t('list.notFoundFree')
+  if (st === 'notFoundZh') return t('list.notFoundZh')
+  return null
+}
+const canMatch = (i: ListItem) => !i.key && statusOf(i.id) !== 'searching'
 /** 一站的替代品從這裡開始查（清單頁打開才查，「一站 · 起 $X」才含替代品） */
 wantSubs()
 /** 清單照片：One stop 這家沒特價時，拿同一樣商品在別家的資料來顯示圖（圖是跟商品走的）。 */
@@ -59,7 +73,7 @@ const osThumb = (l: OsLine) => l.special ?? (l.sub ? asSpecial(l.sub) : null) ??
 function unsureText(l: OsLine): string {
   if (l.state === 'pending') return t('list.checking')
   if (l.state === 'review') return t('list.stReview')
-  if (l.state === 'free') return t('list.freeText')
+  if (l.state === 'free') return freeStatus(l.item) ?? t('list.freeText')
   if (l.state === 'needCount') return t('list.stNeedCount')
   return t('list.stUnknown')
 }
@@ -119,7 +133,7 @@ const empty = computed(() => items.value.length === 0)
 const editing = ref<string | null>(null)
 
 function submit() {
-  addFreeText(draft.value)
+  addAndMatch(draft.value)
   draft.value = ''
 }
 function clearAll() {
@@ -155,6 +169,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
       </div>
       <button class="btn" style="width: 84px; height: 52px; font-size: 16px; border-radius: 14px; flex: none" @click="submit">{{ t('list.add') }}</button>
     </div>
+    <div v-if="notice" class="pad s notice" role="status">{{ notice }}</div>
 
     <div v-if="suggest.length" class="pad" style="margin-top: 12px">
       <div class="sec">{{ t('home.watched') }}</div>
@@ -194,6 +209,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
             <RouterLink class="nm" :class="{ done: l.item.checked }" :to="productLink(l.item.key as string)">
               <div class="t">{{ l.item.name }}</div>
               <div class="s ell">{{ b.store.name }}<template v-if="l.offer && unitLabel(l.offer.special)"> · {{ unitLabel(l.offer.special) }}</template><template v-else-if="l.shelf"> · {{ l.shelf.is_special ? t('list.tagSpecial') : t('list.regularPrice') }}</template></div>
+              <div v-if="l.item.typed" class="s ell typed">{{ t('list.typed', { q: l.item.typed }) }}</div>
             </RouterLink>
             <div class="step">
               <button @click="setQty(l.item.id, l.item.qty - 1)"><i>−</i></button>{{ l.item.qty }}<button @click="setQty(l.item.id, l.item.qty + 1)"><i>+</i></button>
@@ -216,8 +232,10 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
               <div class="tn sq list-tn ph" />
               <button class="nm" :class="{ done: i.checked }" @click="editing = editing === i.id ? null : i.id">
                 <div class="t">{{ i.name }}</div>
-                <div class="s ell">{{ i.price ? t('list.selfPrice') : t('list.noPriceYet') }}</div>
+                <div class="s ell" :class="{ pulse: statusOf(i.id) === 'searching' }">{{ freeStatus(i) ?? (i.price ? t('list.selfPrice') : t('list.noPriceYet')) }}</div>
+                <div v-if="i.typed" class="s ell typed">{{ t('list.typed', { q: i.typed }) }}</div>
               </button>
+              <button v-if="canMatch(i)" class="mbtn" @click="match(i.id)">{{ t('list.matchBtn') }}</button>
               <div class="step">
                 <button @click="setQty(i.id, i.qty - 1)"><i>−</i></button>{{ i.qty }}<button @click="setQty(i.id, i.qty + 1)"><i>+</i></button>
               </div>
@@ -277,13 +295,14 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
                 <div v-else class="tn sq list-tn ph" />
                 <component :is="l.item.key ? 'RouterLink' : 'div'" class="nm" :to="l.item.key ? productLink(l.item.key) : undefined">
                   <div class="t">{{ l.item.name }} × {{ l.item.qty }}</div>
-                  <div class="s ell" :class="{ pulse: l.state === 'pending' }">{{ unsureText(l) }}</div>
+                  <div class="s ell" :class="{ pulse: l.state === 'pending' || statusOf(l.item.id) === 'searching' }">{{ unsureText(l) }}</div>
                   <div v-if="l.state === 'needCount' && l.sub" class="s ell"><span class="stag sub">{{ t('list.tagSub') }}</span>{{ subName(l.sub) }} · {{ money(l.sub.price) }}<template v-if="countUnit(l.sub) === 'kg'">/kg</template></div>
                 </component>
                 <label v-if="l.state === 'needCount' && l.sub" class="cnt">
                   <input type="number" inputmode="decimal" min="0" step="1" placeholder="?" :aria-label="t('list.stNeedCount')" @change="onCount(s.card.store.id, l, $event)" />
                   <span>{{ countUnit(l.sub) }}</span>
                 </label>
+                <button v-if="canMatch(l.item)" class="mbtn" @click="match(l.item.id)">{{ t('list.matchBtn') }}</button>
                 <div class="p muted" :class="{ pulse: l.state === 'pending' }">{{ l.state === 'pending' ? '…' : l.state === 'free' ? '—' : '?' }}</div>
               </div>
             </template>
@@ -305,6 +324,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
                       <span v-if="l.own">{{ t('list.selfPrice') }}</span>
                     </div>
                   </component>
+                  <button v-if="canMatch(l.item)" class="mbtn" @click="match(l.item.id)">{{ t('list.matchBtn') }}</button>
                   <label v-if="l.count != null && l.sub" class="cnt">
                     <input type="number" inputmode="decimal" min="0" step="1" :value="l.count" :aria-label="t('list.stNeedCount')" @change="onCount(s.card.store.id, l, $event)" />
                     <span>{{ countUnit(l.sub) }}</span>
@@ -329,6 +349,13 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
       <RouterLink v-else class="btn ghost" to="/signin" style="font-size: 17px">{{ t('list.aiBtnSignIn') }}</RouterLink>
       <div class="s muted" style="margin-top: 8px; text-align: center; font-size: 12.5px; line-height: 1.4">{{ t('list.aiSub') }}</div>
     </div>
+
+    <!-- 自由輸入有好幾個候選：你是要哪一個？（掛到 body，才不會被頁面的轉場 transform 影響 fixed 定位） -->
+    <Teleport to="body">
+      <Transition name="sheet" :duration="{ enter: 340, leave: 300 }">
+        <MatchSheet v-if="picker" :key="picker.itemId" :picker="picker" :busy="busy" @choose="choose" @dismiss="dismiss" />
+      </Transition>
+    </Teleport>
 
     <div class="footbar">
       <span />
@@ -373,4 +400,8 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
 .ai-hint { display: block; width: 100%; text-align: left; background: none; padding: 0 12px 8px 60px; margin-top: -3px; font-size: 12.5px; line-height: 1.4; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
 .edit { gap: 8px; padding: 8px 10px 10px 42px; background: var(--paper-2); }
 .edit input::-webkit-outer-spin-button, .edit input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+/* 自由輸入配對：「配對」小鈕、原本打的字、輸入框下的一行提示 */
+.mbtn { flex: none; height: 26px; padding: 0 9px; border-radius: 13px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.typed { font-size: 11.5px; color: var(--ink-3); }
+.notice { margin-top: 6px; font-size: 12.5px; color: var(--ink-2); }
 </style>

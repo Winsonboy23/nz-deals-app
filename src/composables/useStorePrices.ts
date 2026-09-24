@@ -38,7 +38,8 @@ const nzDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland', 
 /** 這週一（NZ）之後查的才算數 */
 const fresh = (p: StorePrice) => nzDate.format(new Date(p.fetched_at)) >= nzMonday()
 
-function deviceId(): string {
+/** 送單的 p_caller 用（每裝置一天 200 張的額度照這個算）；自由輸入請 Mac mini 去搜也用同一個（useFreeText） */
+export function deviceId(): string {
   try {
     let id = localStorage.getItem('nzd:device')
     if (!id) {

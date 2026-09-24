@@ -16,6 +16,8 @@ export interface ListItem {
   checked: boolean
   /** 沒特價的自由項，使用者自己填的價格（選填）；算進「最省」總價，標「自己填的」 */
   price?: number | null
+  /** 自由輸入配對到商品後，原本打的字（清單上小字顯示；只存在這台裝置） */
+  typed?: string
 }
 
 /** 最省模式的一列：offer = 特價；shelf = 後端查到的現價（多半是原價，也可能是我們沒抓到的促銷）。兩者取一。 */
@@ -128,10 +130,13 @@ function add(key: string, name: string): void {
   items.value = [...items.value, { id: newId(), key, name, qty: 1, checked: false }]
 }
 
-function addFreeText(text: string): void {
+/** 回新項目的 id（清單頁的輸入框接著拿它去配對，useFreeText） */
+function addFreeText(text: string): string | null {
   const name = text.trim()
-  if (!name) return
-  items.value = [...items.value, { id: newId(), key: null, name, qty: 1, checked: false }]
+  if (!name) return null
+  const id = newId()
+  items.value = [...items.value, { id, key: null, name, qty: 1, checked: false }]
+  return id
 }
 
 /** 自由輸入配對到商品後（規格 §4.3）：這一項從 key=null 變成一般商品，之後照一般商品比價。
