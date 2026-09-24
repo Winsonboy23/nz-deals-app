@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// 價格只在這裡排版（2026-09-15）：大字永遠是「買一件多少錢」；有條件的旁邊加小框——[卡] 要會員卡、[2 件] 要湊件；
+// 價格只在這裡排版（2026-09-15）：大字是「買一件多少錢」；湊件的大字改成「2 件 $7.50」（2026-09-24，[2 件] 小框拿掉）；要會員卡的旁邊加 [卡] 小框；
 // 沒原價的綠超促銷加灰底小框（[本週鮮價]／[低價]／[清倉]，2026-09-24）。
 // detail 開著就多一行說明：一般價（會員價的）／幾件多少、每件多少（湊件的）／劃掉的原價；unit 開著再加每公斤／每 100 克。
 // 列表卡片、商品頁、同類可比清單都用這一個，三處才不會一處有標一處沒標。字級跟著外層（.price / .p）走。
@@ -28,7 +28,7 @@ const terms = computed(() => {
   const out: string[] = []
   if (s.value.club_only && was.value) out.push(t('price.regular', { v: money(was.value) }))
   if (multi.value) {
-    out.push(t('price.multiDetail', { q: multi.value.qty, v: money(multi.value.total), u: money(multiUnitPrice(s.value) as number) }))
+    out.push(t('price.multiDetail', { u: money(multiUnitPrice(s.value) as number), s: money(s.value.price) + (priceSuffix(s.value) ?? '') }))
   }
   return out
 })
@@ -40,9 +40,10 @@ const hasDetail = computed(() => !!props.detail && (terms.value.length > 0 || !!
 
 <template>
   <span class="pl" :class="{ right: align === 'right', wrap }">
-    <span class="pl-main">{{ money(s.price) }}<span v-if="priceSuffix(s)" class="unit">{{ priceSuffix(s) }}</span></span>
+    <!-- 湊件的大字是「2 件 $7.50」（2026-09-24 使用者：大字 $4.15 旁邊掛 [2 件] 看起來像 4.15 買兩件）；單買價退到說明行 -->
+    <span v-if="multi" class="pl-main"><span class="qty">{{ t('price.multiQty', { q: multi.qty }) }}</span>{{ money(multi.total) }}</span>
+    <span v-else class="pl-main">{{ money(s.price) }}<span v-if="priceSuffix(s)" class="unit">{{ priceSuffix(s) }}</span></span>
     <span v-if="s.club_only" class="cond club">{{ t('price.club') }}</span>
-    <span v-if="multi" class="cond multi">{{ t('price.multi', { q: multi.qty }) }}</span>
     <span v-if="promo" class="cond promo">{{ promo }}</span>
     <!-- 說明行的順序：條件（一般價／湊件）→ 劃掉的原價 → 單價；窄卡片截掉的是最後面的單價，不是條件 -->
     <span v-if="hasDetail" class="pl-detail">
