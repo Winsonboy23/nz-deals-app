@@ -21,14 +21,20 @@ const { groups } = useSpecials()
 const { items } = useList()
 const { isIn } = useAuth()
 
+/** 一站「大包裝剩下的做成明天的菜」帶來的食材（?anchor=<product_key>&name=…）：清單裡有就只勾它，沒有就多一列勾起來。 */
+const qAnchor = typeof route.query.anchor === 'string' ? route.query.anchor : ''
+const qName = typeof route.query.name === 'string' ? route.query.name.slice(0, 60) : ''
 /** 清單每一項：食物（可勾）或不算食材（灰掉）。清單裡沒對到特價的、手打的一律算食物。 */
-const rows = computed(() =>
-  items.value.map((i) => {
+const rows = computed(() => {
+  const out: Array<{ id: string; key: string | null; name: string; food: boolean; extra?: boolean }> = items.value.map((i) => {
     const g = i.key ? groups.value.get(i.key) : undefined
     return { id: i.id, key: i.key, name: g ? displayName(g.best.special) : i.name, food: !g || isCookingCategory(g.best.special.category_id) }
-  }),
-)
-const sel = ref<Set<string>>(new Set(rows.value.filter((r) => r.food).slice(0, MAX_ANCHORS).map((r) => r.id)))
+  })
+  if (qAnchor && !items.value.some((i) => i.key === qAnchor)) out.push({ id: `q:${qAnchor}`, key: qAnchor, name: qName || qAnchor, food: true, extra: true })
+  return out
+})
+const anchorRow = qAnchor ? rows.value.find((r) => r.key === qAnchor) : undefined
+const sel = ref<Set<string>>(new Set(anchorRow ? [anchorRow.id] : rows.value.filter((r) => r.food).slice(0, MAX_ANCHORS).map((r) => r.id)))
 const extras = ref<string[]>([])
 const draft = ref('')
 const prefs = ref<Prefs>(loadPrefs())
@@ -68,7 +74,7 @@ function setServes(n: number) {
 }
 
 const anchors = computed<Anchor[]>(() => [
-  ...rows.value.filter((r) => sel.value.has(r.id)).map((r) => (r.key && groups.value.has(r.key) ? { id: r.key, name: r.name } : { id: `free:${r.name}`, name: r.name })),
+  ...rows.value.filter((r) => sel.value.has(r.id)).map((r) => (r.key && (r.extra || groups.value.has(r.key)) ? { id: r.key, name: r.name } : { id: `free:${r.name}`, name: r.name })),
   ...extras.value.map((n) => ({ id: `free:${n}`, name: n })),
 ])
 const pool = computed(() => buildPool(groups.value, new Set(anchors.value.map((a) => a.id))))

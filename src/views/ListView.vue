@@ -2,13 +2,15 @@
 // 購物清單。✓ = 買到了（劃線變淡）。沒配對到特價的自由項放最後一張「其他」卡，可以自己填價格（算進最省總價）。
 // 最下面「AI 食譜」→ /ai-recipes 用清單裡的食材想 2 道菜。
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import ProductThumb from '../components/ProductThumb.vue'
 import Loading from '../components/Loading.vue'
-import { useList, type ListItem, type OneStopCard } from '../composables/useList'
+import { useList, type ListItem, type OneStopCard, type OsLine } from '../composables/useList'
 import { useSpecials } from '../composables/useSpecials'
+import { useCatalog, type Sub } from '../composables/useCatalog'
 import { chainClass, chainName, displayName, money, unitLabel } from '../lib/format'
 import { rankPrice } from '../lib/compare'
-import { t } from '../composables/useI18n'
+import { lang, t } from '../composables/useI18n'
 import type { Group } from '../lib/types'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
@@ -17,39 +19,65 @@ import { useSiteSettings } from '../composables/useSiteSettings'
 import { aiEnabled } from '../lib/aiRecipe'
 import GradientButton from '../components/GradientButton.vue'
 
-const { items, add, has, addFreeText, remove, clear, setQty, rename, setPrice, toggle, split, oneStop, oneStopFrom, oneStopMissing, requestPrices, priceQueueAhead } = useList()
-const { activeStores, groups, familyAlt, loading } = useSpecials()
+const { items, add, has, addFreeText, remove, clear, setQty, rename, setPrice, toggle, split, oneStop, oneStopFrom, oneStopMissing, requestPrices, priceQueueAhead, wantSubs, setSubCount } = useList()
+const { activeStores, groups, loading } = useSpecials()
 const { priceAt, loading: pricesLoading } = useStorePrices()
+const { asSpecial } = useCatalog()
 /** 後台的開關：即時查價關了就不送單，AI 食譜關了按鈕變灰 */
 const { livePrices, aiRecipes } = useSiteSettings()
-/** One stop：這家沒有這樣東西時，推薦它最便宜的同類（§8）。只是建議，不算進總價。 */
-function altText(storeId: string, key: string | null): string | null {
-  const g = key ? groups.value.get(key) : undefined
-  const o = g ? familyAlt(g, storeId) : null
-  if (!g || !o) return null
-  const same = !!o.unitUnit && o.unitUnit === g.best.unitUnit   // 單位一樣才寫單價
-  return t('cmp.familyAlt', { n: displayName(o.special), v: (same && unitLabel(o.special)) || money(rankPrice(o.special)) })
-}
+/** 一站的替代品從這裡開始查（清單頁打開才查，「一站 · 起 $X」才含替代品） */
+wantSubs()
 /** 清單照片：One stop 這家沒特價時，拿同一樣商品在別家的資料來顯示圖（圖是跟商品走的）。 */
 const thumbFor = (key: string | null) => (key ? groups.value.get(key)?.best.special ?? null : null)
 
 const mode = ref<'split' | 'one'>('split')
-/** 一站畫面用：每家分成 有 / 沒有 / 不確定 三組。oneStop 已按「買得到幾樣、再比總價」排好，第一家就是結論。 */
-type OsLine = OneStopCard['lines'][number]
+/** 一站畫面用：每家分成 有 / 沒有 / 不確定 三組。oneStop 已按「買得到幾樣、再比總價」排好，第一家就是結論。
+ *  有 = 特價、自己填的、查到的現價、替代品（估算）；沒有 = 沒有同一款、也找不到替代品；其他 = 不確定。 */
 interface OsStore { card: OneStopCard; have: OsLine[]; none: OsLine[]; unsure: OsLine[]; total: number; approx: boolean }
+const HAVE = new Set(['special', 'own', 'shelf', 'sub'])
 const osStores = computed<OsStore[]>(() =>
   oneStop.value.map((c) => {
-    const have = c.lines.filter((l) => !!(l.special || l.own || l.shelf))
-    const none = c.lines.filter((l) => !(l.special || l.own || l.shelf) && (l.notSold || l.nameState === 'none'))
-    const unsure = c.lines.filter((l) => !have.includes(l) && !none.includes(l))
-    return { card: c, have, none, unsure, total: c.total, approx: unsure.length > 0 }
+    const have = c.lines.filter((l) => HAVE.has(l.state))
+    const none = c.lines.filter((l) => l.state === 'none')
+    const unsure = c.lines.filter((l) => !HAVE.has(l.state) && l.state !== 'none')
+    return { card: c, have, none, unsure, total: c.total, approx: c.approx }
   }),
 )
 const winner = computed(() => osStores.value[0] ?? null)
 /** 全部買齊的那家（沒有「沒有」也沒有「不確定」）；跟結論那家不同時才多顯示一行 */
 const complete = computed(() => osStores.value.find((s) => !s.none.length && !s.unsure.length) ?? null)
 const anyPending = computed(() => oneStop.value.some((c) => c.pending > 0))
-const osTotal = (s: OsStore) => (s.approx ? t('list.approx', { v: money(s.total) }) : money(s.total))
+/** 一個價格都沒有的店寫「無法估算」，不寫「約 $0.00」（規格 §4.4） */
+const osTotal = (s: OsStore) => (!s.have.length ? t('list.noEstimate') : s.approx ? t('list.approx', { v: money(s.total) }) : money(s.total))
+const subsNote = (s: OsStore) => (s.card.subs ? t(s.card.subs === 1 ? 'list.withSub1' : 'list.withSubs', { n: s.card.subs }) : '')
+const subName = (sub: Sub) => displayName(asSpecial(sub))
+/** catalog 來的價格是翻貨架那天的（最多一週前），寫日期 */
+const seenDate = (iso: string) => new Intl.DateTimeFormat(lang.value === 'zh' ? 'zh-TW' : 'en-NZ', { month: 'numeric', day: 'numeric', timeZone: 'Pacific/Auckland' }).format(new Date(iso))
+/** 一站每一列的照片：特價 → 替代品 → 同一樣商品在別家的圖 */
+const osThumb = (l: OsLine) => l.special ?? (l.sub ? asSpecial(l.sub) : null) ?? thumbFor(l.item.key)
+/** 不確定那組每列寫清楚是哪一種不確定（規格 §4.4） */
+function unsureText(l: OsLine): string {
+  if (l.state === 'pending') return t('list.checking')
+  if (l.state === 'review') return t('list.stReview')
+  if (l.state === 'free') return t('list.freeText')
+  if (l.state === 'needCount') return t('list.stNeedCount')
+  return t('list.stUnknown')
+}
+/** 單位對不上時填的數量：替代品按公斤賣就是公斤，其他是個數 */
+const countUnit = (sub: Sub) => ((sub.price_unit ?? '').toLowerCase() === 'kg' ? 'kg' : t('list.countPcs'))
+function onCount(storeId: string, l: OsLine, e: Event) {
+  if (!l.sub) return
+  expanded.value = storeId   // 改數量可能讓這家換名次，留在展開的這家，不要跳去新的第一名
+  setSubCount(storeId, l.item.id, l.sub.product_id, Number((e.target as HTMLInputElement).value))
+}
+/** 大包裝的 AI 食譜提示：登入、AI 食譜開著、這列要買的一包比需要量大（規格 §4.5） */
+const router = useRouter()
+const aiHint = (l: OsLine) => isIn.value && aiEnabled && aiRecipes.value && !!l.bigPack
+function toAi(l: OsLine) {
+  const key = l.sub?.product_key ?? l.special?.product_key ?? l.item.key
+  if (!key) return
+  void router.push({ path: '/ai-recipes', query: { anchor: key, name: l.sub ? subName(l.sub) : l.item.name } })
+}
 function missingNames(s: OsStore): string {
   const names = s.none.map((l) => l.item.name)
   return names.slice(0, 2).join('、') + (names.length > 2 ? t('list.andMore', { n: names.length - 2 }) : '')
@@ -219,14 +247,14 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
           <div v-if="winner && winner.have.length" class="os-go">{{ t('list.go', { s: winner.card.store.name, m: items.length, n: winner.have.length, v: osTotal(winner) }) }}</div>
           <div v-else class="os-go">{{ t('list.goNone') }}</div>
           <div v-if="winner && winner.none.length" class="s" style="margin-top: 3px">{{ t('list.missingNames', { names: missingNames(winner) }) }}</div>
-          <div v-if="complete && winner && complete !== winner" class="s" style="margin-top: 3px">{{ t('list.allAt', { s: complete.card.store.name, v: money(complete.total) }) }}</div>
+          <div v-if="complete && winner && complete !== winner" class="s" style="margin-top: 3px">{{ t('list.allAt', { s: complete.card.store.name, v: osTotal(complete) }) }}</div>
         </div>
       </div>
       <div v-for="s in osStores" :key="s.card.store.id" class="pad" style="margin-top: 8px">
         <div class="box">
           <div class="ghead os-row" :class="chainClass(s.card.store.id)" role="button" @click="toggleStore(s.card.store.id)">
             <span class="ell">{{ s.card.store.name }}</span>
-            <span class="os-stat">{{ s.have.length }}/{{ items.length }} · {{ osTotal(s) }}<template v-if="s.none.length"> · {{ t('list.missingN', { n: s.none.length }) }}</template></span>
+            <span class="os-stat">{{ s.have.length }}/{{ items.length }}{{ subsNote(s) }} · {{ osTotal(s) }}<template v-if="s.none.length"> · {{ t('list.missingN', { n: s.none.length }) }}</template></span>
             <span class="chev" :class="{ open: isOpen(s.card.store.id) }">▾</span>
           </div>
           <template v-if="isOpen(s.card.store.id)">
@@ -237,8 +265,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
                 <div v-else class="tn sq list-tn ph" />
                 <component :is="l.item.key ? 'RouterLink' : 'div'" class="nm" :to="l.item.key ? productLink(l.item.key) : undefined">
                   <div class="t">{{ l.item.name }} × {{ l.item.qty }}</div>
-                  <div v-if="altText(s.card.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">{{ altText(s.card.store.id, l.item.key) }}</div>
-                  <div v-else-if="buyAt(s.card.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">{{ buyAt(s.card.store.id, l.item.key) }}</div>
+                  <div v-if="buyAt(s.card.store.id, l.item.key)" class="s ell" style="color: var(--ink-2)">{{ buyAt(s.card.store.id, l.item.key) }}</div>
                 </component>
                 <div class="p muted">—</div>
               </div>
@@ -246,30 +273,46 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
             <template v-if="s.unsure.length">
               <div class="grp">{{ t('list.grpUnsure', { n: s.unsure.length }) }}</div>
               <div v-for="l in s.unsure" :key="l.item.id" class="lrow row" style="padding-left: 12px">
-                <ProductThumb v-if="thumbFor(l.item.key)" :special="thumbFor(l.item.key)!" variant="sq" class="list-tn" />
+                <ProductThumb v-if="osThumb(l)" :special="osThumb(l)!" variant="sq" class="list-tn" />
                 <div v-else class="tn sq list-tn ph" />
                 <component :is="l.item.key ? 'RouterLink' : 'div'" class="nm" :to="l.item.key ? productLink(l.item.key) : undefined">
                   <div class="t">{{ l.item.name }} × {{ l.item.qty }}</div>
-                  <div class="s ell" :class="{ pulse: l.pending }">{{ l.pending ? t('list.checking') : l.item.key ? t('list.unsure') : t('list.freeText') }}</div>
+                  <div class="s ell" :class="{ pulse: l.state === 'pending' }">{{ unsureText(l) }}</div>
+                  <div v-if="l.state === 'needCount' && l.sub" class="s ell"><span class="stag sub">{{ t('list.tagSub') }}</span>{{ subName(l.sub) }} · {{ money(l.sub.price) }}<template v-if="countUnit(l.sub) === 'kg'">/kg</template></div>
                 </component>
-                <div class="p muted" :class="{ pulse: l.pending }">{{ l.pending ? '…' : l.item.key ? '?' : '—' }}</div>
+                <label v-if="l.state === 'needCount' && l.sub" class="cnt">
+                  <input type="number" inputmode="decimal" min="0" step="1" placeholder="?" :aria-label="t('list.stNeedCount')" @change="onCount(s.card.store.id, l, $event)" />
+                  <span>{{ countUnit(l.sub) }}</span>
+                </label>
+                <div class="p muted" :class="{ pulse: l.state === 'pending' }">{{ l.state === 'pending' ? '…' : l.state === 'free' ? '—' : '?' }}</div>
               </div>
             </template>
             <template v-if="s.have.length">
               <div class="grp">{{ t('list.grpHave', { n: s.have.length }) }}</div>
-              <div v-for="l in s.have" :key="l.item.id" class="lrow row" style="padding-left: 12px">
-                <ProductThumb v-if="l.special ?? thumbFor(l.item.key)" :special="(l.special ?? thumbFor(l.item.key))!" variant="sq" class="list-tn" />
-                <div v-else class="tn sq list-tn ph" />
-                <component :is="l.item.key ? 'RouterLink' : 'div'" class="nm" :class="{ done: l.item.checked }" :to="l.item.key ? productLink(l.item.key) : undefined">
-                  <div class="t">{{ l.item.name }} × {{ l.item.qty }}</div>
-                  <div class="s ell">
-                    <span v-if="l.special || l.shelf?.is_special" class="stag">{{ t('list.tagSpecial') }}</span>
-                    <span v-if="(l.special?.club_only) || l.shelf?.club_only" class="stag club">{{ t('tag.club') }}</span>
-                    <span v-if="l.own">{{ t('list.selfPrice') }}</span>
-                  </div>
-                </component>
-                <div class="p" :class="{ muted: l.shelf && !l.shelf.is_special }">{{ money(l.total) }}</div>
-              </div>
+              <template v-for="l in s.have" :key="l.item.id">
+                <div class="lrow row" style="padding-left: 12px">
+                  <ProductThumb v-if="osThumb(l)" :special="osThumb(l)!" variant="sq" class="list-tn" />
+                  <div v-else class="tn sq list-tn ph" />
+                  <component :is="l.item.key ? 'RouterLink' : 'div'" class="nm" :class="{ done: l.item.checked }" :to="l.item.key ? productLink(l.item.key) : undefined">
+                    <div class="t">{{ l.item.name }} × {{ l.item.qty }}</div>
+                    <template v-if="l.sub">
+                      <div class="s ell"><span class="stag sub">{{ l.sub.same ? t('list.tagShelfSame') : t('list.tagSub') }}</span><span v-if="l.sub.fromSpecial" class="stag">{{ t('list.tagSpecial') }}</span>{{ subName(l.sub) }}</div>
+                      <div v-if="!l.sub.fromSpecial && l.sub.seen_at" class="s ell seen">{{ t('list.seenAt', { d: seenDate(l.sub.seen_at) }) }}</div>
+                    </template>
+                    <div v-else class="s ell">
+                      <span v-if="l.special || l.shelf?.is_special" class="stag">{{ t('list.tagSpecial') }}</span>
+                      <span v-if="(l.special?.club_only) || l.shelf?.club_only" class="stag club">{{ t('tag.club') }}</span>
+                      <span v-if="l.own">{{ t('list.selfPrice') }}</span>
+                    </div>
+                  </component>
+                  <label v-if="l.count != null && l.sub" class="cnt">
+                    <input type="number" inputmode="decimal" min="0" step="1" :value="l.count" :aria-label="t('list.stNeedCount')" @change="onCount(s.card.store.id, l, $event)" />
+                    <span>{{ countUnit(l.sub) }}</span>
+                  </label>
+                  <div class="p" :class="{ muted: (l.shelf && !l.shelf.is_special) || l.estimated }"><small v-if="l.estimated" class="est">{{ t('list.approxShort') }}</small>{{ money(l.total) }}</div>
+                </div>
+                <button v-if="aiHint(l)" class="ai-hint" @click="toAi(l)">💡 {{ t('list.aiLeftover') }}</button>
+              </template>
             </template>
           </template>
         </div>
@@ -321,6 +364,13 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
 .del { width: 28px; height: 28px; flex: none; display: flex; align-items: center; justify-content: center; color: var(--ink-3); background: none; margin-left: -2px; }
 .del svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .ghead.other { background: var(--paper-2); color: var(--ink); }
+.stag.sub { background: var(--paper-2); color: var(--ink); border: 1px solid var(--line); }
+.seen { font-size: 11.5px; color: var(--ink-3); }
+.est { font-size: 11px; font-weight: 600; margin-right: 2px; color: var(--ink-3); }
+.cnt { display: flex; align-items: center; gap: 3px; flex: none; font-size: 12px; color: var(--ink-2); }
+.cnt input { width: 44px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); text-align: center; font-size: 14px; padding: 0 2px; }
+.cnt input::-webkit-outer-spin-button, .cnt input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.ai-hint { display: block; width: 100%; text-align: left; background: none; padding: 0 12px 8px 60px; margin-top: -3px; font-size: 12.5px; line-height: 1.4; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
 .edit { gap: 8px; padding: 8px 10px 10px 42px; background: var(--paper-2); }
 .edit input::-webkit-outer-spin-button, .edit input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 </style>
