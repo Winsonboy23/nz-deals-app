@@ -17,7 +17,12 @@ const { loading } = useSpecials()
 const { add, addFreeText } = useList()
 const r = computed(() => byId(String(route.params.id)))
 const added = ref(false)
-watch(() => route.params.id, () => (added.value = false))
+/** 寶寶支線（KiteWise 3-6）的開關：預設關、換一道食譜就關回去、不記住 */
+const baby = ref(false)
+watch(() => route.params.id, () => {
+  added.value = false
+  baby.value = false
+})
 
 /** 「用 2 個鍋 · 廚具：爐台、烤箱」；0 個鍋那段不寫，兩段都沒有就整行不顯示 */
 const kit = computed(() => {
@@ -28,6 +33,15 @@ const kit = computed(() => {
   if (appliances.length) parts.push(t('recipes.appliances', { s: appliances.map((a) => t('recipes.appliance.' + a)).join(lang.value === 'zh' ? '、' : ', ') }))
   return parts.join(' · ')
 })
+
+/** 寶寶支線：能最後才調味、有寶寶做法、知道第幾步後取出，三樣都有才給開關；有寫的月齡才列 */
+const babyLevels = computed(() => {
+  const x = r.value?.recipe
+  const b = x?.can_delay_seasoning && x.baby_split_step ? x.baby_branch : null
+  return b ? (['6', '9', '12'] as const).filter((a) => b[a]).map((a) => ({ age: a, text: b[a]! })) : []
+})
+/** 開關下面那行小字：「6／9／12 個月」 */
+const babyAges = computed(() => t('recipes.babyAge', { n: babyLevels.value.map((l) => l.age).join(lang.value === 'zh' ? '／' : ' / ') }))
 
 /** 同一家買齊（預設）／每樣各挑最便宜 */
 const mode = ref<'one' | 'cheap'>('one')
@@ -149,10 +163,30 @@ async function share() {
 
       <div class="pad" style="margin-top: 24px">
         <div class="h2">{{ t('recipes.method') }}</div>
-        <div v-for="(step, i) in r.recipe.steps[lang]" :key="i" class="rstep">
-          <b>{{ i + 1 }}</b>
-          <span>{{ step }}</span>
+        <div v-if="babyLevels.length" class="box" style="margin-top: 12px">
+          <div class="lrow" style="padding: 12px">
+            <div class="grow">
+              <div class="t">{{ t('recipes.baby') }}</div>
+              <div class="s">{{ babyAges }}</div>
+            </div>
+            <button class="tg" :class="{ off: !baby }" role="switch" :aria-checked="baby" :aria-label="t('recipes.baby')" @click="baby = !baby" />
+          </div>
         </div>
+        <div v-if="baby" class="babywarn">{{ t('recipes.babyWarn') }}</div>
+        <template v-for="(step, i) in r.recipe.steps[lang]" :key="i">
+          <div class="rstep">
+            <b>{{ i + 1 }}</b>
+            <span>{{ step }}</span>
+          </div>
+          <!-- 寶寶支線打開：第 baby_split_step 步做完先取出寶寶的份，下一步（調味）照常接下去 -->
+          <div v-if="baby && i + 1 === r.recipe.baby_split_step" class="babycard">
+            <div class="babycard-t">🍼 {{ t('recipes.babyStep') }}</div>
+            <div v-for="l in babyLevels" :key="l.age" class="babyage">
+              <b>{{ t('recipes.babyAge', { n: l.age }) }}</b>
+              {{ bi(l.text) }}
+            </div>
+          </div>
+        </template>
         <div v-if="r.recipe.tip" class="tipbox">
           <b>{{ t('recipes.tip') }}</b> {{ bi(r.recipe.tip) }}
         </div>
@@ -232,6 +266,12 @@ async function share() {
 .opt { margin-left: 6px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
 .rstep { display: flex; gap: 12px; margin-top: 12px; font-size: 15.5px; line-height: 1.45; }
 .rstep b { flex: none; width: 16px; font-family: 'Inter Tight', Inter, sans-serif; font-weight: 900; }
+/* 寶寶支線：開關打開才出現。提醒用螢光黃，「先取出寶寶的份」那張卡用黑框，比一般步驟醒目 */
+.babywarn { margin-top: 12px; padding: 8px 12px; border-radius: 10px; background: var(--hl); font-size: 14px; font-weight: 700; line-height: 1.35; }
+.babycard { margin-top: 14px; padding: 12px 14px; border: 2px solid var(--ink); border-radius: var(--r); }
+.babycard-t { font-size: 16px; font-weight: 800; }
+.babyage { margin-top: 10px; font-size: 14.5px; line-height: 1.45; }
+.babyage b { display: block; font-weight: 800; }
 .tipbox {
   margin-top: 16px;
   padding: 12px 14px;

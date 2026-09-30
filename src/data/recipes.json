@@ -122,6 +122,7 @@
     ],
     "can_delay_seasoning": false,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -241,6 +242,7 @@
     ],
     "can_delay_seasoning": false,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -365,6 +367,7 @@
     "blocks": [],
     "can_delay_seasoning": true,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -499,6 +502,7 @@
     ],
     "can_delay_seasoning": false,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -630,6 +634,7 @@
     "blocks": [],
     "can_delay_seasoning": true,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -755,6 +760,7 @@
     ],
     "can_delay_seasoning": true,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -862,6 +868,7 @@
     ],
     "can_delay_seasoning": false,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -970,6 +977,7 @@
     ],
     "can_delay_seasoning": true,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -1099,6 +1107,7 @@
     ],
     "can_delay_seasoning": false,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -1232,6 +1241,7 @@
     ],
     "can_delay_seasoning": false,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -1334,6 +1344,7 @@
     ],
     "can_delay_seasoning": false,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -1457,6 +1468,7 @@
     ],
     "can_delay_seasoning": false,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -1579,6 +1591,7 @@
     ],
     "can_delay_seasoning": true,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -1707,6 +1720,7 @@
     ],
     "can_delay_seasoning": false,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -1819,6 +1833,7 @@
     ],
     "can_delay_seasoning": true,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -1932,6 +1947,7 @@
     ],
     "can_delay_seasoning": false,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -2051,6 +2067,7 @@
     ],
     "can_delay_seasoning": false,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -2162,6 +2179,7 @@
     ],
     "can_delay_seasoning": true,
     "baby_branch": null,
+    "baby_split_step": null,
     "batch": null,
     "image_source": "pexels"
   },
@@ -2267,6 +2285,317 @@
     ],
     "can_delay_seasoning": false,
     "baby_branch": null,
+    "baby_split_step": null,
+    "batch": null,
+    "image_source": "pexels"
+  },
+  {
+    "id": "clear-beef-soup-baby-friendly",
+    "title": {
+      "en": "Clear Beef Soup with Daikon & Carrot",
+      "zh": "清燉牛肉湯"
+    },
+    "serves": 6,
+    "minutes": 120,
+    "kcal": 430,
+    "difficulty": "easy",
+    "cuisine": "chinese",
+    "cuisineName": {
+      "en": "Chinese",
+      "zh": "中式"
+    },
+    "image": "recipes/clear-beef-soup-baby-friendly.jpg",
+    "credit": {
+      "photographer": "Muhammad Rasyad Indra Putra",
+      "url": "https://www.pexels.com/photo/hearty-vegetable-and-beef-stew-in-blue-bowl-37065023/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Stewing beef 1.2 kg (chuck, casserole steak or brisket), cut into 4 cm chunks",
+          "zh": "燉煮用牛肉 1.2 kg（肩胛、燉肉塊或牛腩），切 4 cm 塊"
+        },
+        "families": [
+          "beef_steak_casserole",
+          "beef_chuck_diced_grass_fed",
+          "beef_brisket_sliced"
+        ]
+      },
+      {
+        "name": {
+          "en": "Daikon radish 600 g (or parsnips), peeled, cut into 3 cm chunks",
+          "zh": "白蘿蔔 600 g（買不到可用歐防風），去皮切 3 cm 塊"
+        },
+        "families": [
+          "daikon_radish",
+          "parsnip"
+        ]
+      },
+      {
+        "name": {
+          "en": "Carrots 2 (about 300 g), peeled, cut into 3 cm chunks",
+          "zh": "紅蘿蔔 2 根（約 300 g），去皮切 3 cm 塊"
+        },
+        "families": [
+          "carrot",
+          "carrot_baby",
+          "carrot_batons"
+        ]
+      },
+      {
+        "name": {
+          "en": "Brown onion 1, quartered",
+          "zh": "洋蔥 1 顆，切四瓣"
+        },
+        "families": [
+          "onion_brown",
+          "onion_sliced"
+        ]
+      },
+      {
+        "name": {
+          "en": "Fresh ginger 5 slices (about 30 g)",
+          "zh": "老薑 5 片（約 30 g）"
+        },
+        "families": []
+      },
+      {
+        "name": {
+          "en": "Rice cooking wine 2 tbsp (or Shaoxing wine)",
+          "zh": "米酒 2 大匙（或紹興酒）"
+        },
+        "families": [
+          "cooking_wine",
+          "cooking_wine_shaoxing"
+        ]
+      },
+      {
+        "name": {
+          "en": "Spring onion 2, sliced",
+          "zh": "蔥 2 支，切蔥花"
+        },
+        "families": [
+          "spring_onion"
+        ],
+        "optional": true
+      }
+    ],
+    "staples": {
+      "en": "Salt",
+      "zh": "鹽"
+    },
+    "steps": {
+      "en": [
+        "Put the beef in a pot, cover with cold water and bring to the boil over high heat. Boil 3 minutes, until grey scum rises and the outside of the meat is no longer red. Drain, rinse the beef under warm water and wash the pot.",
+        "Return the beef to the pot with 2.5 litres of fresh water, the ginger and the onion. Bring to the boil and skim until the surface is clear, then turn to low, set the lid ajar and simmer 1 hour — the surface should just shiver with small bubbles, never boil hard.",
+        "Add the daikon and carrot and simmer another 40 minutes, until a chopstick slides easily into the beef and the daikon turns translucent (if using parsnips, add them after 20 minutes so they don't fall apart). Lift out the ginger.",
+        "Season at the end: stir in the rice wine and 2 tsp salt and simmer 3 minutes to cook off the alcohol. Taste, and add salt a pinch at a time until the broth tastes rich but not salty.",
+        "Ladle into bowls with 3–4 pieces of beef and some radish each, scatter spring onion while hot, and serve with rice."
+      ],
+      "zh": [
+        "牛肉塊放進湯鍋，加冷水蓋過，大火煮滾後再滾 3 分鐘，水面浮起一層灰色浮沫、肉的表面不再是紅色就好。倒掉水，牛肉用溫水沖乾淨，鍋子也洗乾淨。",
+        "牛肉放回鍋裡，加 2.5 公升清水、薑片和洋蔥，大火煮滾後撈掉浮沫到湯面清澈，轉小火、鍋蓋留一條縫燉 1 小時，湯面只微微冒小泡、不要大滾。",
+        "放入白蘿蔔和紅蘿蔔再燉 40 分鐘，筷子能輕鬆戳穿牛肉、白蘿蔔變半透明就好（用歐防風的話等 20 分鐘後再放，太早放會煮散）。夾掉薑片。",
+        "最後才調味：倒入米酒和 2 小匙鹽，再煮 3 分鐘讓酒氣散掉。喝一口湯，淡的話一次加一小撮鹽，喝起來鮮、不死鹹就好。",
+        "盛碗，每碗放 3–4 塊牛肉和幾塊蘿蔔，趁熱撒上蔥花，配白飯吃。"
+      ]
+    },
+    "tip": {
+      "en": "Blanching first and keeping it at a bare simmer is what keeps the broth clear rather than cloudy.",
+      "zh": "先汆燙把血水和浮沫去掉、燉的時候保持小滾，湯才會清澈不混濁。"
+    },
+    "pot_count": 1,
+    "appliances": [
+      "stovetop"
+    ],
+    "blocks": [
+      "one-pot",
+      "batch"
+    ],
+    "can_delay_seasoning": true,
+    "baby_branch": {
+      "6": {
+        "en": "Lift out 60 g beef (1–2 pieces, fat and sinew trimmed off), 2 pieces each of carrot and daikon, and 4 tbsp of the unseasoned broth. Blend with a blender or stick blender until completely smooth, like thick yoghurt with no lumps; add a little more broth if it's too thick. Cool to lukewarm before feeding. Freeze any extra in an ice-cube tray and use within a month.",
+        "zh": "撈出牛肉 60 g（約 1–2 塊，挑掉肥肉和筋）、紅蘿蔔和白蘿蔔各 2 塊，加 4 大匙還沒調味的原湯，用果汁機或手持攪拌棒打成完全滑順的泥，稠度像濃優格、看不到顆粒；太稠就再加一點原湯。放涼到微溫再餵。一次吃不完的倒進製冰盒分格冷凍，一個月內吃完。"
+      },
+      "9": {
+        "en": "Lift out 30 g beef (about half a piece, fat and sinew trimmed off) and 1 piece each of carrot and daikon. Finely chop the beef into bits about 0.5 cm and mash the vegetables with a fork into a lumpy mash, then stir in 1–2 tbsp of the unseasoned broth so it's moist and soft enough to squash with gums. Cool to lukewarm before feeding.",
+        "zh": "撈出牛肉 30 g（約半塊，挑掉肥肉和筋）、紅蘿蔔和白蘿蔔各 1 塊。牛肉剁成約 0.5 cm 的碎丁，蘿蔔用叉子壓成帶小顆粒的粗泥，拌入 1–2 大匙還沒調味的原湯，濕潤、軟到用牙齦就壓得碎。放涼到微溫再餵。"
+      },
+      "12": {
+        "en": "Lift out 50 g beef (about 1 piece), 2 pieces each of carrot and daikon, and a small bowl of the unseasoned broth. Cut the beef across the grain into about 1 cm pieces (short fibres are easier to chew and less of a choking risk) and the vegetables into 1 cm cubes, for baby to pick up by hand or eat with a spoon, with the broth to sip. Cool to lukewarm before serving.",
+        "zh": "撈出牛肉 50 g（約 1 塊）、紅蘿蔔和白蘿蔔各 2 塊，舀小半碗還沒調味的原湯。牛肉逆著紋路切成約 1 cm 小塊（纖維切短比較好嚼、不容易噎到），蘿蔔也切 1 cm 塊，讓寶寶用手抓或用湯匙自己吃，湯配著喝。放涼到微溫再給。"
+      }
+    },
+    "baby_split_step": 3,
+    "batch": {
+      "days": 3,
+      "variations": [
+        {
+          "en": "Day 1: as it is — a big bowl of beef, radish, carrot and broth, with rice.",
+          "zh": "第 1 天：原味清燉，大碗盛牛肉、蘿蔔和湯，配白飯。"
+        },
+        {
+          "en": "Day 2: beef noodle soup — pour the boiling soup over cooked noodles and add a handful of blanched greens.",
+          "zh": "第 2 天：清燉牛肉麵，麵條煮好放碗裡，淋上煮滾的湯，加一把燙青菜。"
+        },
+        {
+          "en": "Day 3: tomato beef soup — add 2 chopped tomatoes and 1 diced potato and simmer 20 minutes until the potato is soft.",
+          "zh": "第 3 天：番茄牛肉湯，加 2 顆番茄切塊、1 顆馬鈴薯切丁，再煮 20 分鐘到馬鈴薯軟爛。"
+        }
+      ],
+      "storage": {
+        "en": "Cool, then refrigerate covered within 2 hours. Keep day 2's share in the fridge; freeze day 3's share straight away (keeps a month) and move it to the fridge the night before. Always bring to a rolling boil before eating.",
+        "zh": "放涼後 2 小時內加蓋冷藏。第 2 天的份放冷藏；第 3 天的份當天就分裝冷凍（可放一個月），前一晚移到冷藏退冰。每次吃之前都要煮到大滾。"
+      }
+    },
+    "image_source": "pexels"
+  },
+  {
+    "id": "pavlova-with-baby-cream-and-fruit",
+    "title": {
+      "en": "Kiwifruit & Berry Pavlova",
+      "zh": "奇異果莓果 Pavlova"
+    },
+    "serves": 8,
+    "minutes": 160,
+    "kcal": 280,
+    "difficulty": "medium",
+    "cuisine": "dessert",
+    "cuisineName": {
+      "en": "Dessert",
+      "zh": "甜點"
+    },
+    "image": "recipes/pavlova-with-baby-cream-and-fruit.jpg",
+    "credit": {
+      "photographer": "Adrian Frentescu",
+      "url": "https://www.pexels.com/photo/photograph-of-a-white-cake-with-fruits-on-top-9124488/",
+      "source": "Pexels"
+    },
+    "ingredients": [
+      {
+        "name": {
+          "en": "Eggs 4 (whites only)",
+          "zh": "雞蛋 4 顆（只用蛋白）"
+        },
+        "families": [
+          "egg_free_range",
+          "egg_barn",
+          "egg_cage"
+        ]
+      },
+      {
+        "name": {
+          "en": "Caster sugar 220 g + 1 tbsp",
+          "zh": "細砂糖 220 g＋1 大匙"
+        },
+        "families": [
+          "sugar_caster",
+          "sugar_white"
+        ]
+      },
+      {
+        "name": {
+          "en": "Cream 300 ml",
+          "zh": "鮮奶油 300 ml"
+        },
+        "families": [
+          "cream_fresh",
+          "cream_whipping_uht"
+        ]
+      },
+      {
+        "name": {
+          "en": "Kiwifruit 3",
+          "zh": "奇異果 3 顆"
+        },
+        "families": [
+          "kiwifruit_green",
+          "kiwifruit_gold"
+        ]
+      },
+      {
+        "name": {
+          "en": "Strawberries or blueberries 250 g",
+          "zh": "草莓或藍莓 250 g"
+        },
+        "families": [
+          "strawberry",
+          "blueberry"
+        ]
+      },
+      {
+        "name": {
+          "en": "Vanilla extract 1 tsp",
+          "zh": "香草精 1 小匙"
+        },
+        "families": [
+          "vanilla_extract",
+          "vanilla_paste",
+          "vanilla_extract_no_alcohol"
+        ],
+        "optional": true
+      },
+      {
+        "name": {
+          "en": "Plain unsweetened yoghurt 3 tbsp (for baby, instead of cream)",
+          "zh": "原味無糖優格 3 大匙（寶寶份不用鮮奶油時）"
+        },
+        "families": [
+          "yoghurt_plain_unsweetened",
+          "yoghurt_greek_natural_unsweetened",
+          "yoghurt_natural_unsweetened"
+        ],
+        "optional": true
+      }
+    ],
+    "staples": {
+      "en": "Cornflour, White vinegar",
+      "zh": "玉米粉、白醋"
+    },
+    "steps": {
+      "en": [
+        "Heat the oven to 150°C (fan off). Draw a 20 cm circle on baking paper, turn it over and lay it on an oven tray.",
+        "Separate the eggs, putting the whites in a large, clean, dry bowl with no trace of yolk. Beat on medium for about 2 minutes, until soft peaks form — the tips curl over when you lift the beaters.",
+        "Turn to high and add the 220 g caster sugar a spoonful at a time over about 5 minutes. Keep beating until the meringue is thick and glossy, stands in stiff peaks, and feels smooth rather than gritty when rubbed between your fingers.",
+        "Sprinkle over 2 tsp cornflour, 1 tsp vinegar and the vanilla and beat 10 seconds, just until mixed. Pile onto the circle and spread to the edge, leaving the sides a little higher than the middle.",
+        "Put it in the oven and immediately turn down to 120°C. Bake 1 hour 15 minutes, until the outside is dry and crisp and the whole pavlova slides on the paper. Turn the oven off and leave it inside with the door ajar until completely cool, at least 1 hour.",
+        "Whip the cream on medium until soft peaks form — it holds a soft curl on the whisk but still looks silky.",
+        "Add the 1 tbsp caster sugar and beat 10 seconds more, just until combined; over-beaten cream turns grainy and weeps.",
+        "Peel and slice the kiwifruit and halve any strawberries (blueberries go on whole). Just before serving, spread the cream over the pavlova and pile on the fruit. Eat within an hour, before the base softens."
+      ],
+      "zh": [
+        "烤箱預熱到 150°C（不開旋風）。在烘焙紙上畫一個直徑 20 cm 的圓，翻面鋪在烤盤上。",
+        "蛋白和蛋黃分開，蛋白放進乾淨、沒有水也沒有油的大碗，不能混到蛋黃。電動打蛋器中速打約 2 分鐘，提起來尖端會彎下來（濕性發泡）就好。",
+        "轉高速，220 g 細砂糖一次一匙、分約 5 分鐘加完。繼續打到蛋白霜濃稠發亮、提起來尖端挺立不垂，用手指搓一點不再有沙沙的顆粒感。",
+        "撒入 2 小匙玉米粉、1 小匙白醋和香草精，打 10 秒剛好混勻就停。倒在畫好的圓裡抹到邊緣，四周稍微堆高、中間微微凹。",
+        "放進烤箱後立刻調到 120°C，烤 1 小時 15 分鐘，表面乾爽酥脆、能整個在紙上推動就好。關掉烤箱、門開一條縫，讓它在裡面放到完全涼，至少 1 小時。",
+        "鮮奶油用中速打到濕性發泡：提起打蛋器會掛著軟軟的彎勾，表面還是光滑的。",
+        "加入 1 大匙細砂糖再打 10 秒拌勻就停，打過頭會變粗糙出水。",
+        "奇異果去皮切片，草莓對切（藍莓整顆放）。上桌前才把鮮奶油抹在蛋白霜上、鋪滿水果，1 小時內吃完，放久底部會變軟。"
+      ]
+    },
+    "tip": {
+      "en": "Even a trace of yolk or grease stops whites whipping — wipe the bowl and beaters with a little vinegar on a paper towel first.",
+      "zh": "蛋白碰到一點蛋黃或油就打不發，打之前先用廚房紙沾一點白醋把碗和攪拌頭擦過。"
+    },
+    "pot_count": 1,
+    "appliances": [
+      "oven"
+    ],
+    "blocks": [
+      "weekend-baking",
+      "holiday"
+    ],
+    "can_delay_seasoning": true,
+    "baby_branch": {
+      "12": {
+        "en": "As soon as the cream reaches soft peaks, before anything else goes in, spoon 3 tbsp into baby's bowl (or use 3 tbsp plain yoghurt whose label lists only milk and cultures). Peel the kiwifruit and cut it into 1 cm dice, quarter each blueberry and dice the strawberries, then spoon them over the cream for baby to eat with a spoon. If it's baby's first kiwifruit, start with a small taste and watch for redness around the mouth. The meringue is for the grown-ups only.",
+        "zh": "鮮奶油打到濕性發泡、還沒調味之前，先舀 3 大匙到寶寶碗（或改用 3 大匙原味優格，選成分只有牛奶和菌種的）。奇異果去皮切 1 cm 小丁，藍莓每顆切成四等分，草莓切小丁，放在鮮奶油上給寶寶用湯匙吃。第一次吃奇異果先給一小口，看嘴邊有沒有發紅。蛋白霜只給大人，不給寶寶。"
+      }
+    },
+    "baby_split_step": 6,
     "batch": null,
     "image_source": "pexels"
   }

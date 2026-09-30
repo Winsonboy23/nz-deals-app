@@ -49,8 +49,10 @@ export interface Recipe {
   blocks: Block[]
   /** 能不能最後才調味：一開始就要醃、滷的是 false（決定能不能開寶寶支線） */
   can_delay_seasoning: boolean
-  /** 寶寶支線：6／9／12 個月的做法，還沒寫的是 null */
-  baby_branch: Record<'6' | '9' | '12', Bi> | null
+  /** 寶寶支線：6／9／12 個月的做法，一級一段；沒有那一級就不放那個 key（例如只有 12 個月），還沒寫的是 null */
+  baby_branch: Partial<Record<'6' | '9' | '12', Bi>> | null
+  /** 寶寶支線：第幾步做完就先取出寶寶的份（從 1 算，放在調味那步之前）；沒有寶寶支線的是 null */
+  baby_split_step: number | null
   /** 煮一鍋吃三天專用：可以放幾天、每天怎麼變化吃、怎麼保存；其他食譜是 null */
   batch: { days: number; variations: Bi[]; storage: Bi } | null
   /** 照片來源：'pexels'；'ai' = AI 生的圖，卡片和詳情頁標「示意圖」 */
