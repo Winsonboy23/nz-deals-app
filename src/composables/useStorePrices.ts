@@ -5,6 +5,7 @@
 import { ref, shallowRef } from 'vue'
 import { supabase } from '../lib/supabase'
 import { useSiteSettings } from './useSiteSettings'
+import { useAuth } from './useAuth'
 import type { StorePrice } from '../lib/types'
 import { nzMonday } from '../lib/week'
 
@@ -123,6 +124,7 @@ const chainGroup = (storeId: string) => (storeId.startsWith('woolworths:') ? ['w
 /** 點「一站」時：這些（店, key）沒價格 → 送單去問。有編號的送編號；沒編號、也還沒用名字配過的，送 key 讓後端用名字配（規則）。 */
 async function request(pairs: Array<{ storeId: string; key: string }>): Promise<void> {
   if (!useSiteSettings().livePrices.value) return   // 後台把即時查價關掉了
+  if (!useAuth().isIn.value) return   // 沒登入不送單（2026-09-30）：不轉圈，沒價格的維持「不確定」；清單頁結論框會叫人登入
   const now = Date.now()
   const todo = pairs.filter(({ storeId, key }) => {
     const id = `${storeId}|${key}`

@@ -26,6 +26,11 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'auth.merged': { en: 'Signed in. Your guest stores and list were merged into this account.', zh: '登入了。訪客時選的店和清單已合併到帳號。' },
   'auth.signOut': { en: 'Sign out', zh: '登出' },
   'auth.signedInAs': { en: 'Signed in with Google', zh: '已用 Google 登入' },
+  'auth.inApp': {
+    en: "This is Facebook's in-app browser, so Google sign-in will fail. Please open this page in your browser: on iPhone tap ⋯ at the bottom right → Open in Safari; on Android tap ⋮ at the top right → Open in Chrome",
+    zh: '這是 Facebook 內建瀏覽器，Google 登入會失敗。請用瀏覽器打開：iPhone 點右下角 ⋯ → 用 Safari 開啟；Android 點右上角 ⋮ → 在 Chrome 開啟',
+  },
+  'auth.openChrome': { en: 'Open in Chrome', zh: '用 Chrome 開啟' },
   'me.watching': { en: 'Following', zh: '關注中' },
   'me.recipes': { en: 'Recipe history', zh: '食譜紀錄' },
   'me.notify': { en: 'Push notifications', zh: '推播通知' },
@@ -374,6 +379,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
 
   'ai.paused': { en: 'AI recipes are paused', zh: 'AI 食譜暫停中' },
   'list.pricesPaused': { en: 'Live price checks are paused', zh: '即時查價暫停中' },
+  'list.pricesSignIn': { en: 'Sign in to check live prices; unknown ones count as unsure for now', zh: '登入後可即時查價，沒查到的先算不確定' },
 
   'top10.title': { en: 'Best deals this week', zh: '這週最划算' },
   'top10.sub': {

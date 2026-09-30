@@ -5,6 +5,7 @@ import type { RouteLocationNormalizedLoaded } from 'vue-router'
 import TabBar from './components/TabBar.vue'
 import ProductSheet from './components/ProductSheet.vue'
 import LoadingBar from './components/LoadingBar.vue'
+import InAppBrowserBanner from './components/InAppBrowserBanner.vue'
 import { useStores } from './composables/useStores'
 import { useSpecials } from './composables/useSpecials'
 import { useCategories } from './composables/useCategories'
@@ -58,6 +59,7 @@ function closeSheet() {
 
 <template>
   <LoadingBar />
+  <InAppBrowserBanner />
   <RouterView v-slot="{ Component }" :route="bg">
     <Transition name="page" mode="out-in">
       <component :is="Component" />

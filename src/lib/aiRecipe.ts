@@ -49,7 +49,7 @@ export interface AiRecipe {
   ingredients: AiIngredient[]
   steps: string[]
   tip: string
-  /** Pexels 照片（後端搜的）；沒有就 null */
+  /** Pexels 照片：只有舊紀錄有（2026-09-30 起後端不再配圖）；沒有就 null */
   image?: { url: string; photographer: string; link: string } | null
 }
 

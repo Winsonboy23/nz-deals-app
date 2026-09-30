@@ -261,6 +261,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
       <div v-if="osStores.length" class="pad" style="margin-top: 8px">
         <div class="box os-sum">
           <div v-if="!livePrices" class="s" style="margin-bottom: 4px">{{ t('list.pricesPaused') }}</div>
+          <RouterLink v-else-if="!isIn && oneStopMissing.length" class="s" to="/signin" style="display: block; margin-bottom: 4px; color: var(--ink-2); text-decoration: underline">{{ t('list.pricesSignIn') }}</RouterLink>
           <div v-else-if="anyPending || pricesLoading" class="s pulse" style="margin-bottom: 4px">{{ t('list.checkingTop') }}{{ priceQueueAhead ? t('list.queueAhead', { n: priceQueueAhead }) : '' }}</div>
           <div v-if="winner && winner.have.length" class="os-go">{{ t('list.go', { s: winner.card.store.name, m: items.length, n: winner.have.length, v: osTotal(winner) }) }}</div>
           <div v-else class="os-go">{{ t('list.goNone') }}</div>
