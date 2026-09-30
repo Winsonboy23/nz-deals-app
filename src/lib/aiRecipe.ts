@@ -13,7 +13,36 @@ export interface Prefs {
   difficulty: 'easy' | 'medium' | 'hard'
   /** 喜好／不吃什麼，自由填 */
   notes: string
+  /** 飲食需求（多選，DIETS 的 key）；後端一律遵守 */
+  diet: string[]
+  /** 想吃的料理類型（多選、可不選，CUISINES 的 key） */
+  cuisines: string[]
+  /** 心情（單選、可不選，MOODS 的 key） */
+  mood: string | null
+  /** 每週伙食預算 NZ$，沒填是 null */
+  budget: number | null
+  /** 家裡有的廚具（KITCHEN 的 key）；模型只准用這些 */
+  appliances: string[]
 }
+/** 偏好第 1 頁的選項（KiteWise 3-7）：值是送給 Edge Function 的 key，名字在 i18n 的 ai.diet.* / ai.cuisine.* / ai.mood.*。 */
+export const DIETS = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free', 'halal', 'low-carb']
+export const CUISINES = ['kiwi', 'asian', 'italian', 'mexican', 'indian', 'middle-eastern']
+export const MOODS = ['comfort', 'light', 'quick', 'hosting']
+/**
+ * 偏好第 2 頁「你家有哪些廚具」的 9 格（KiteWise 3-7），照畫面順序。名字用 i18n 的 recipes.appliance.<key>，emoji 先頂著。
+ * 之後 Chris 的廚房插圖來了，改成點插圖熱區時只要改這裡（例如每格加座標）。
+ */
+export const KITCHEN: Array<{ key: string; emoji: string }> = [
+  { key: 'stovetop', emoji: '🍳' },
+  { key: 'oven', emoji: '🔥' },
+  { key: 'microwave', emoji: '♨️' },
+  { key: 'air-fryer', emoji: '🌀' },
+  { key: 'rice-cooker', emoji: '🍚' },
+  { key: 'slow-cooker', emoji: '🍲' },
+  { key: 'toaster', emoji: '🍞' },
+  { key: 'blender', emoji: '🥤' },
+  { key: 'bbq', emoji: '🍖' },
+]
 /** 你已經有的東西：清單裡勾的，或手打的。id 是 product_key，手打的用 free:<名字>。 */
 export interface Anchor {
   id: string
@@ -51,11 +80,17 @@ export interface AiRecipe {
   tip: string
   /** Pexels 照片：只有舊紀錄有（2026-09-30 起後端不再配圖）；沒有就 null */
   image?: { url: string; photographer: string; link: string } | null
+  /** 用到的廚具（KITCHEN 的 key）和幾個鍋：只有剛生成的有，紀錄表不存 */
+  appliances?: string[]
+  pot_count?: number
 }
 
-export const DEFAULT_PREFS: Prefs = { serves: 4, maxMinutes: 40, spice: 'mild', difficulty: 'easy', notes: '' }
+export const DEFAULT_PREFS: Prefs = {
+  serves: 4, maxMinutes: 40, spice: 'mild', difficulty: 'easy', notes: '',
+  diet: [], cuisines: [], mood: null, budget: null, appliances: KITCHEN.map((a) => a.key),
+}
 
-/** 上次用的偏好，記在裝置上。 */
+/** 上次用的偏好，記在裝置上。舊版存的沒有 diet / cuisines / mood / budget / appliances，用 DEFAULT_PREFS 補（廚具預設 9 樣全有）。 */
 export function loadPrefs(): Prefs {
   const saved = readCache<Partial<Prefs> & { avoid?: string }>('ai:prefs') ?? {}
   return { ...DEFAULT_PREFS, ...saved, notes: saved.notes ?? saved.avoid ?? '' }

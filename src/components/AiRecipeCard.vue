@@ -8,7 +8,7 @@ import { useSpecials } from '../composables/useSpecials'
 import { useList } from '../composables/useList'
 import { chainName, displayName, money } from '../lib/format'
 import { rankPrice } from '../lib/compare'
-import { t } from '../composables/useI18n'
+import { lang, t } from '../composables/useI18n'
 import type { Group, Offer, Store } from '../lib/types'
 
 const props = defineProps<{ recipe: AiRecipe; open: boolean; static?: boolean }>()
@@ -98,6 +98,14 @@ const buys = computed(() => lines.value.filter((l) => l.kind === 'buy' || l.kind
 const staples = computed(() => lines.value.filter((l) => l.kind === 'staple'))
 const cost = computed(() => buys.value.reduce((s, l) => s + (l.price ?? 0), 0))
 const stores = computed(() => [...new Set(buys.value.map((l) => l.store).filter((s): s is string => !!s))])
+/** 「用 2 個鍋 · 廚具：爐台、烤箱」（跟食譜詳情頁同一套字）；後端有回才有，紀錄表不存所以舊紀錄不顯示 */
+const kit = computed(() => {
+  const { pot_count, appliances } = props.recipe
+  const parts: string[] = []
+  if (pot_count) parts.push(t('recipes.pots', { n: pot_count }))
+  if (appliances?.length) parts.push(t('recipes.appliances', { s: appliances.map((a) => t('recipes.appliance.' + a)).join(lang.value === 'zh' ? '、' : ', ') }))
+  return parts.join(' · ')
+})
 
 function addBuys() {
   for (const l of buys.value) {
@@ -118,6 +126,7 @@ function addBuys() {
             <span class="tag low">{{ recipe.cuisine }}</span>
             <span class="s muted" style="font-size: 12px">{{ t('recipes.meta', { serves: recipe.serves, min: recipe.minutes }) }} · {{ t('recipes.' + recipe.difficulty) }}</span>
           </div>
+          <div v-if="kit" class="s muted" style="margin-top: 4px; font-size: 12px">{{ kit }}</div>
           <div class="h3" style="margin-top: 6px">{{ recipe.title }}</div>
           <div class="s" style="margin-top: 5px">
             <template v-if="recipe.kcal">{{ t('recipes.kcal', { n: recipe.kcal }) }} · </template>
