@@ -29,6 +29,7 @@ export default defineConfig({
       workbox: {
         importScripts: ['push-sw.js'],   // 推播的 push / notificationclick 在 public/push-sw.js
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globIgnores: ['**/zxing-*.js'],   // 掃會員卡截圖用的 ZXing 約 480 kB，只有掃的時候才下載，不預存（2026-09-30）
         navigateFallback: 'index.html',
         runtimeCaching: [
           {
@@ -44,5 +45,7 @@ export default defineConfig({
       },
     }),
   ],
+  // ZXing（掃條碼）獨立成一個 chunk，好讓上面的 globIgnores 認得出來、不進離線預存
+  build: { rollupOptions: { output: { manualChunks: (id) => (id.includes('/@zxing/') ? 'zxing' : undefined) } } },
   server: { host: '127.0.0.1' },
 })
