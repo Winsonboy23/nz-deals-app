@@ -14,7 +14,7 @@ import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
 import { useList } from '../composables/useList'
 import PriceLine from '../components/PriceLine.vue'
-import { bi, useRecipes } from '../composables/useRecipes'
+import { bi, recipeImg, useRecipes } from '../composables/useRecipes'
 import { chainName } from '../lib/format'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import { readCache, writeCache } from '../lib/cache'
@@ -36,7 +36,6 @@ const top6 = computed(() => topDeduped.value.slice(0, 6))
 /** 這週煮什麼：食譜頁排好的前 3 道（食材特價最多、每份最便宜） */
 const { ranked } = useRecipes()
 const top3 = computed(() => ranked.value.filter((r) => r.onSpecial > 0).slice(0, 3))
-const base = import.meta.env.BASE_URL
 /** 後台公告（settings.announce）：關掉之後同一句不再出現，換新的一句又會出現 */
 const { announce } = useSiteSettings()
 const seenAnnounce = ref(readCache<string>('announceSeen') ?? '')
@@ -141,7 +140,7 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
         <div class="pad" style="margin-top: 8px">
           <div class="box">
             <RouterLink v-for="r in top3" :key="r.recipe.id" class="lrow tap" :to="`/recipes/${r.recipe.id}`" style="padding: 10px 12px; gap: 10px; color: inherit; text-decoration: none">
-              <img :src="base + r.recipe.image" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" style="width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex: none; background: var(--paper-2)" />
+              <img :src="recipeImg(r.recipe.image)" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" style="width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex: none; background: var(--paper-2)" />
               <div class="grow" style="min-width: 0">
                 <div class="t ell">{{ bi(r.recipe.title) }}</div>
                 <div class="s ell"><template v-if="r.recipe.cuisineName">{{ bi(r.recipe.cuisineName) }} · </template>{{ r.recipe.minutes }} min · {{ t('recipes.onSpecial', { n: r.onSpecial, m: r.total }) }}</div>

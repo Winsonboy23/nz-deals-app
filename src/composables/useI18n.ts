@@ -439,6 +439,9 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'recipes.method': { en: 'Method', zh: '做法' },
   'recipes.tip': { en: 'Tip', zh: '小撇步' },
   'recipes.photo': { en: 'Photo: {p} · Pexels', zh: '照片：{p} · Pexels' },
+  'recipes.weekly': { en: "This week's picks", zh: '本週精選' },
+  'recipes.library': { en: 'Everyday recipes', zh: '常備食譜' },
+  'recipes.illustration': { en: 'Illustration', zh: '示意圖' },
 
   'ai.paused': { en: 'AI recipes are paused', zh: 'AI 食譜暫停中' },
   'list.pricesPaused': { en: 'Live price checks are paused', zh: '即時查價暫停中' },

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { bi, useRecipes, type RankedRecipe } from '../composables/useRecipes'
+import { bi, recipeImg, useRecipes, type RankedRecipe } from '../composables/useRecipes'
 import { useStores } from '../composables/useStores'
 import { useSpecials } from '../composables/useSpecials'
 import Loading from '../components/Loading.vue'
 import { t } from '../composables/useI18n'
 import { chainClass, money } from '../lib/format'
+import { nzMonday } from '../lib/week'
 
 const { ranked } = useRecipes()
 const { selectedStores } = useStores()
@@ -28,12 +29,22 @@ const list = computed(() =>
   }),
 )
 /** 瀑布流：卡片左右交替放兩欄；照片 4:5 和 1:1 在同一欄裡交替、兩欄相反（左欄從 1:1 開始），右欄再往下推 28px，兩欄就不會對齊 */
-const cols = computed(() => {
+function colsOf(rs: RankedRecipe[]) {
   const out: { r: RankedRecipe; tall: boolean }[][] = [[], []]
-  list.value.forEach((r, i) => out[i % 2].push({ r, tall: i % 4 === 1 || i % 4 === 2 }))
+  rs.forEach((r, i) => out[i % 2].push({ r, tall: i % 4 === 1 || i % 4 === 2 }))
   return out
+}
+/** 本週精選（weekStart = 這週一）排在常備食譜前面，兩段各照原本的排法；有本週精選才分段加小標，沒有就跟以前一樣一整片 */
+const monday = nzMonday()
+const sections = computed(() => {
+  const weekly = list.value.filter((r) => r.recipe.weekStart === monday)
+  if (!weekly.length) return [{ label: '', cols: colsOf(list.value) }]
+  const rest = list.value.filter((r) => r.recipe.weekStart !== monday)
+  return [
+    { label: 'recipes.weekly', cols: colsOf(weekly) },
+    ...(rest.length ? [{ label: 'recipes.library', cols: colsOf(rest) }] : []),
+  ]
 })
-const base = import.meta.env.BASE_URL
 </script>
 
 <template>
@@ -57,22 +68,28 @@ const base = import.meta.env.BASE_URL
 
     <Loading v-if="selectedStores.length && loading && !totalSpecials" />
     <div v-else-if="!list.length" class="pad sub" style="margin-top: 14px">{{ t('recipes.emptyGroup') }}</div>
-    <div v-else class="pad rc-cols">
-      <div v-for="(col, c) in cols" :key="c" class="rc-col">
-        <RouterLink v-for="{ r, tall } in col" :key="r.recipe.id" class="rc" :to="`/recipes/${r.recipe.id}`">
-          <div class="rc-img" :class="{ tall }">
-            <img :src="base + r.recipe.image" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" />
-            <span v-if="r.chains.length" class="dots rc-dots"><span v-for="ch in r.chains" :key="ch" class="dot" :class="chainClass(ch + ':x')" /></span>
+    <template v-else>
+      <template v-for="sec in sections" :key="sec.label">
+        <div v-if="sec.label" class="pad sec rc-sec">{{ t(sec.label) }}</div>
+        <div class="pad rc-cols">
+          <div v-for="(col, c) in sec.cols" :key="c" class="rc-col">
+            <RouterLink v-for="{ r, tall } in col" :key="r.recipe.id" class="rc" :to="`/recipes/${r.recipe.id}`">
+              <div class="rc-img" :class="{ tall }">
+                <img :src="recipeImg(r.recipe.image)" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" />
+                <span v-if="r.recipe.image_source === 'ai'" class="rc-ill">{{ t('recipes.illustration') }}</span>
+                <span v-if="r.chains.length" class="dots rc-dots"><span v-for="ch in r.chains" :key="ch" class="dot" :class="chainClass(ch + ':x')" /></span>
+              </div>
+              <div class="rc-body">
+                <div class="rc-t">{{ bi(r.recipe.title) }}</div>
+                <div class="rc-s">
+                  ⏱ {{ t('recipes.minutes', { n: r.recipe.minutes }) }}<template v-if="Number.isFinite(r.perServe)"> · {{ t('recipes.perServe', { v: money(r.perServe) }) }}</template>
+                </div>
+              </div>
+            </RouterLink>
           </div>
-          <div class="rc-body">
-            <div class="rc-t">{{ bi(r.recipe.title) }}</div>
-            <div class="rc-s">
-              ⏱ {{ t('recipes.minutes', { n: r.recipe.minutes }) }}<template v-if="Number.isFinite(r.perServe)"> · {{ t('recipes.perServe', { v: money(r.perServe) }) }}</template>
-            </div>
-          </div>
-        </RouterLink>
-      </div>
-    </div>
+        </div>
+      </template>
+    </template>
   </div>
 </template>
 
@@ -95,6 +112,9 @@ const base = import.meta.env.BASE_URL
 .rc-img.tall { aspect-ratio: 4 / 5; }
 .rc-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .rc-dots { position: absolute; left: 7px; bottom: 7px; padding: 4px 5px; border-radius: 8px; background: var(--paper); }
+.rc-sec { margin-top: 20px; }
+/* AI 生的圖：右上角小字「示意圖」 */
+.rc-ill { position: absolute; right: 7px; top: 7px; padding: 3px 6px; border-radius: 6px; background: var(--paper); color: var(--ink-2); font-size: 10.5px; font-weight: 700; line-height: 1.2; }
 .rc-body { padding: 9px 10px 10px; }
 .rc-t {
   font-family: 'Inter Tight', Inter, sans-serif;
