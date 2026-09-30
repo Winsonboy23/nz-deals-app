@@ -1,4 +1,4 @@
-// 登入：只用 Google（CLAUDE.md §2，2026-09-07）。訪客能用全部比價功能，登入只是為了存東西和通知。
+// 登入：Google（CLAUDE.md §2，2026-09-07）；Facebook 鈕藏在後台開關 facebook_login 後面（2026-09-30）。訪客能用全部比價功能，登入只是為了存東西和通知。
 import { computed, ref } from 'vue'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
@@ -20,9 +20,9 @@ async function start(): Promise<void> {
   if (location.search.includes('code=')) history.replaceState(null, '', location.pathname + location.hash)
 }
 
-function signIn() {
+function signIn(provider: 'google' | 'facebook' = 'google') {
   return supabase.auth.signInWithOAuth({
-    provider: 'google',
+    provider,
     options: { redirectTo: location.origin + location.pathname },
   })
 }

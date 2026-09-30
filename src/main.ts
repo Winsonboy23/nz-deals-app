@@ -8,7 +8,7 @@ import { OLD_HOST, encodePayload, exportGuestData } from './lib/migrate'
 
 // Nothing to compare until stores are picked, so the picker is the front door.
 router.beforeEach((to) => {
-  if (to.path === '/stores' || to.path === '/admin' || to.path === '/migrate') return true   // 後台不用選店；搬家頁要先把舊網址的店搬進來
+  if (['/stores', '/admin', '/migrate', '/privacy', '/delete-data'].includes(to.path)) return true   // 後台不用選店；搬家頁要先把舊網址的店搬進來；隱私權政策、刪除資料說明是給 Meta 審核的公開網址
   const picked = readCache<string[]>('selected')
   return picked && picked.length ? true : '/stores'
 })

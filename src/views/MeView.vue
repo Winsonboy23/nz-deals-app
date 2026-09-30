@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useStores } from '../composables/useStores'
 import { useSettings } from '../composables/useSettings'
 import { useAuth } from '../composables/useAuth'
@@ -8,10 +8,13 @@ import { usePush } from '../composables/usePush'
 import { useAdmin } from '../composables/useAdmin'
 import { lang, setLang, t } from '../composables/useI18n'
 import { chainName } from '../lib/format'
+import { AccountError, deleteAccount } from '../lib/account'
 
 const { selectedStores } = useStores()
 const { foodOnly } = useSettings()
-const { isIn, name, avatar, signOut } = useAuth()
+const { user, isIn, name, avatar, signOut } = useAuth()
+/** 用哪個帳號登入的（Supabase 的 app_metadata.provider：google / facebook） */
+const providerName = computed(() => (user.value?.app_metadata?.provider === 'facebook' ? 'Facebook' : 'Google'))
 const { watched, merged } = useSync()
 const { isAdmin } = useAdmin()
 const push = usePush()
@@ -30,6 +33,22 @@ const town = computed(() => {
 
 function toggleFood() {
   foodOnly.value = !foodOnly.value
+}
+
+// 刪除帳號：點「刪除帳號」展開確認，再按「我確定要刪除」才真的刪。成功會整頁重載，不會回到這裡。
+const confirming = ref(false)
+const deleting = ref(false)
+const deleteError = ref('')
+async function doDelete() {
+  if (deleting.value) return
+  deleting.value = true
+  deleteError.value = ''
+  try {
+    await deleteAccount()
+  } catch (e) {
+    deleteError.value = e instanceof AccountError && e.code === 'signIn' ? t('me.deleteSignIn') : t('me.deleteFailed', { e: e instanceof Error ? e.message : String(e) })
+    deleting.value = false
+  }
 }
 </script>
 
@@ -53,7 +72,7 @@ function toggleFood() {
         <div v-else style="width: 52px; height: 52px; border-radius: 50%; background: #333; flex: none" />
         <div style="flex: 1; min-width: 0">
           <div class="h2 ell" style="color: #fff; font-size: 20px">{{ name }}</div>
-          <div style="margin-top: 3px; font-size: 13px; color: #b9b9b9">{{ t('auth.signedInAs') }}</div>
+          <div style="margin-top: 3px; font-size: 13px; color: #b9b9b9">{{ t('auth.signedInAs', { p: providerName }) }}</div>
         </div>
         <button class="link" style="color: #fff; flex: none" @click="signOut()">{{ t('auth.signOut') }}</button>
       </div>
@@ -118,6 +137,22 @@ function toggleFood() {
           <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.about') }}</div></div>
           <div class="link">›</div>
         </RouterLink>
+        <RouterLink class="lrow tap" to="/privacy" style="padding: 14px 12px">
+          <div class="grow"><div class="t" style="font-size: 16px">{{ t('legal.privacy') }}</div></div>
+          <div class="link">›</div>
+        </RouterLink>
+        <!-- 刪除帳號（登入才有） -->
+        <button v-if="isIn" class="lrow tap" style="padding: 14px 12px" :disabled="deleting" @click="confirming = !confirming">
+          <div class="grow"><div class="t" style="font-size: 16px; color: #b00020">{{ t('me.deleteAccount') }}</div></div>
+        </button>
+        <div v-if="isIn && confirming" style="border-top: 1px solid var(--line); padding: 14px 12px">
+          <div style="font-size: 14px; line-height: 1.5">{{ t('me.deleteBody') }}</div>
+          <button class="btn" style="margin-top: 12px; height: 48px; font-size: 16px" :style="{ background: deleting ? 'var(--ink-3)' : '#b00020' }" :disabled="deleting" @click="doDelete">
+            {{ deleting ? t('me.deleting') : t('me.deleteConfirm') }}
+          </button>
+          <div v-if="deleteError" style="margin-top: 8px; font-size: 13px; line-height: 1.4; color: #b00020">{{ deleteError }}</div>
+          <button v-if="!deleting" class="link" style="display: block; margin: 12px auto 0" @click="confirming = false">{{ t('common.cancel') }}</button>
+        </div>
       </div>
     </div>
 
