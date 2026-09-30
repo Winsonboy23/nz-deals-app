@@ -54,7 +54,7 @@ onMounted(async () => { if (isIn.value) histCount.value = await historyCount() }
 const full = computed(() => sel.value.size + extras.value.length >= MAX_ANCHORS)
 /** 結果段：網址有 ?r=1 而且真的問過。重整後 asked 是 false → 回表單。 */
 const showResult = computed(() => route.query.r === '1' && asked.value)
-watch(showResult, (v) => { if (v) window.scrollTo({ top: 0 }) })
+watch(showResult, (v) => { if (v) window.scrollTo({ top: 0 }); else page.value = 1 })   // 從結果回來一律回第 1 頁
 
 function toggleSel(id: string) {
   const next = new Set(sel.value)
