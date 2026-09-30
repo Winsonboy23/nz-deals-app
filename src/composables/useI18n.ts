@@ -438,6 +438,10 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'recipes.staples': { en: '{s} are pantry staples — not added to your list.', zh: '{s}是常備品，不加進清單。' },
   'recipes.method': { en: 'Method', zh: '做法' },
   'recipes.tip': { en: 'Tip', zh: '小撇步' },
+  'recipes.baby': { en: 'Baby portion 🍼', zh: '寶寶支線 🍼' },
+  'recipes.babyAge': { en: '{n} months', zh: '{n} 個月' },
+  'recipes.babyWarn': { en: 'Babies under 1: no salt, sugar or honey', zh: '1 歲以下不加鹽、糖、蜂蜜' },
+  'recipes.babyStep': { en: "Take out baby's portion first", zh: '先取出寶寶的份' },
   'recipes.photo': { en: 'Photo: {p} · Pexels', zh: '照片：{p} · Pexels' },
 
   'ai.paused': { en: 'AI recipes are paused', zh: 'AI 食譜暫停中' },
