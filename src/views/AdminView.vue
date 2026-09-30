@@ -7,6 +7,7 @@ import AdminReview from '../components/admin/AdminReview.vue'
 import AdminRuns from '../components/admin/AdminRuns.vue'
 import AdminLive from '../components/admin/AdminLive.vue'
 import AdminTaxonomy from '../components/admin/AdminTaxonomy.vue'
+import AdminRecipes from '../components/admin/AdminRecipes.vue'
 import AdminUsers from '../components/admin/AdminUsers.vue'
 import AdminSettings from '../components/admin/AdminSettings.vue'
 import Loading from '../components/Loading.vue'
@@ -14,7 +15,7 @@ import { useAdmin } from '../composables/useAdmin'
 
 const router = useRouter()
 const { isAdmin } = useAdmin()
-const tab = ref<'review' | 'runs' | 'live' | 'taxonomy' | 'users' | 'settings'>('review')
+const tab = ref<'review' | 'runs' | 'live' | 'taxonomy' | 'recipes' | 'users' | 'settings'>('review')
 
 watch(
   isAdmin,
@@ -42,6 +43,7 @@ onUnmounted(() => document.body.classList.remove('admin'))
           <button class="chip" :class="{ on: tab === 'runs' }" @click="tab = 'runs'">每週報告</button>
           <button class="chip" :class="{ on: tab === 'live' }" @click="tab = 'live'">即時查價</button>
           <button class="chip" :class="{ on: tab === 'taxonomy' }" @click="tab = 'taxonomy'">分類</button>
+          <button class="chip" :class="{ on: tab === 'recipes' }" @click="tab = 'recipes'">食譜</button>
           <button class="chip" :class="{ on: tab === 'users' }" @click="tab = 'users'">使用者</button>
           <button class="chip" :class="{ on: tab === 'settings' }" @click="tab = 'settings'">開關</button>
         </div>
@@ -49,6 +51,7 @@ onUnmounted(() => document.body.classList.remove('admin'))
         <AdminRuns v-else-if="tab === 'runs'" />
         <AdminLive v-else-if="tab === 'live'" />
         <AdminTaxonomy v-else-if="tab === 'taxonomy'" />
+        <AdminRecipes v-else-if="tab === 'recipes'" />
         <AdminUsers v-else-if="tab === 'users'" />
         <AdminSettings v-else />
       </div>

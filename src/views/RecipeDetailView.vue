@@ -5,18 +5,17 @@ import TagChip from '../components/TagChip.vue'
 import PriceLine from '../components/PriceLine.vue'
 import Loading from '../components/Loading.vue'
 import { useSpecials } from '../composables/useSpecials'
-import { bi, useRecipes, type IngredientMatch } from '../composables/useRecipes'
+import { bi, recipeImg, useRecipes, type IngredientMatch } from '../composables/useRecipes'
 import { useList } from '../composables/useList'
 import { lang, t } from '../composables/useI18n'
 import { primaryTag, rankPrice } from '../lib/compare'
 import { chainClass, chainName, displayName, money, unitLabel } from '../lib/format'
 
 const route = useRoute()
-const { byId } = useRecipes()
+const { byId, loaded: recipesLoaded } = useRecipes()
 const { loading } = useSpecials()
 const { add, addFreeText } = useList()
 const r = computed(() => byId(String(route.params.id)))
-const base = import.meta.env.BASE_URL
 const added = ref(false)
 watch(() => route.params.id, () => (added.value = false))
 
@@ -77,11 +76,13 @@ async function share() {
   <div class="screen">
     <template v-if="r">
       <div class="hero">
-        <img :src="base + r.recipe.image" :alt="bi(r.recipe.title)" decoding="async" />
+        <img :src="recipeImg(r.recipe.image)" :alt="bi(r.recipe.title)" decoding="async" />
+        <span v-if="r.recipe.image_source === 'ai'" class="hero-ill">{{ t('recipes.illustration') }}</span>
         <RouterLink class="hero-back" to="/recipes">‹ {{ t('recipes.back') }}</RouterLink>
         <span class="hero-badge">{{ t('recipes.badge', { n: r.onSpecial, m: r.total, k: r.rank }) }}</span>
       </div>
-      <div class="pad credit">
+      <!-- AI 生的圖沒有攝影師（credit 可能是空的），不寫「照片：」 -->
+      <div v-if="r.recipe.credit?.photographer" class="pad credit">
         <a :href="r.recipe.credit.url" target="_blank" rel="noopener">{{ t('recipes.photo', { p: r.recipe.credit.photographer }) }}</a>
       </div>
 
@@ -158,6 +159,7 @@ async function share() {
       </div>
     </template>
 
+    <Loading v-else-if="!recipesLoaded" />
     <div v-else class="pad" style="margin-top: 20px">
       <RouterLink class="back" to="/recipes">‹ {{ t('recipes.back') }}</RouterLink>
       <div class="empty sub" style="margin-top: 12px">{{ t('browse.empty') }}</div>
@@ -204,6 +206,20 @@ async function share() {
   padding: 7px 9px;
   border-radius: 6px;
   line-height: 1.2;
+}
+/* AI 生的圖：右上角小字「示意圖」 */
+.hero-ill {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: 0 1px 3px #0002;
 }
 .credit { margin-top: 6px; font-size: 11px; color: var(--ink-3); }
 .credit a { color: inherit; text-decoration: none; }
