@@ -384,6 +384,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'ai.prev': { en: '‹ Back', zh: '‹ 上一步' },
   'ai.kitTitle': { en: "What's in your kitchen?", zh: '你家有哪些廚具？' },
   'ai.kitSub': { en: 'Tap to switch on or off. The AI only uses what you have.', zh: '點一下亮起，再點一次取消。AI 只會用你有的。' },
+  'ai.kitHint': { en: 'Tap the appliances in the picture. Keep the ones you have lit up.', zh: '點圖上的廚具，家裡有的留著亮' },
   'ai.kitNone': { en: 'Nothing picked, so no-cook dishes only.', zh: '一樣都沒選，只會給免開火的菜。' },
   'ai.generate': { en: 'AI recipe', zh: 'AI 食譜' },
   'ai.regenerate': { en: 'Another 2', zh: '再想 2 道' },

@@ -29,8 +29,8 @@ export const DIETS = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-f
 export const CUISINES = ['kiwi', 'asian', 'italian', 'mexican', 'indian', 'middle-eastern']
 export const MOODS = ['comfort', 'light', 'quick', 'hosting']
 /**
- * 偏好第 2 頁「你家有哪些廚具」的 9 格（KiteWise 3-7），照畫面順序。名字用 i18n 的 recipes.appliance.<key>，emoji 先頂著。
- * 之後 Chris 的廚房插圖來了，改成點插圖熱區時只要改這裡（例如每格加座標）。
+ * 偏好第 2 頁「你家有哪些廚具」的 9 樣（KiteWise 3-7），也是圖下面那排已選 chips 的順序。名字用 i18n 的 recipes.appliance.<key>。
+ * 畫面是 components/KitchenPicker.vue 的廚房插圖（每樣畫在哪、點擊範圍都在那裡）；emoji 現在沒用到，留著當退路。
  */
 export const KITCHEN: Array<{ key: string; emoji: string }> = [
   { key: 'stovetop', emoji: '🍳' },

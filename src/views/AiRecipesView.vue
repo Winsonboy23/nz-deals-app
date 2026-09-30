@@ -2,13 +2,14 @@
 // 清單最下面「AI 食譜」進來。兩段：
 // ① 表單分兩頁（KiteWise 3-7，網址不變，用「下一步／上一步」切，每次進來都從第 1 頁開始）：
 //    第 1 頁：清單裡的東西一列列可勾（食物預設全勾、飲料零食灰掉）、手打補食材、問卷（人份／時間／辣度／難度／飲食需求／料理類型／心情／預算／喜好）
-//    第 2 頁：家裡有哪些廚具（9 格，預設全選），最下面「AI 食譜」按了才生成
+//    第 2 頁：家裡有哪些廚具（廚房插圖 KitchenPicker，9 樣直接在圖上點，預設全選），最下面「AI 食譜」按了才生成
 // ② 結果：只顯示食譜（最多 2 道）、「再想 2 道」；返回回到表單。用網址 ?r=1 記段落，手機返回鍵也會回表單。
 // 每道後端都存進「我的 → 食譜紀錄」。
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { AiError, CUISINES, DIETS, HISTORY_MAX, KITCHEN, MOODS, buildPool, fetchRecipes, historyCount, isCookingCategory, loadPrefs, savePrefs, type AiRecipe, type Anchor, type Prefs } from '../lib/aiRecipe'
 import AiRecipeCard from '../components/AiRecipeCard.vue'
+import KitchenPicker from '../components/KitchenPicker.vue'
 import GradientButton from '../components/GradientButton.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { useList } from '../composables/useList'
@@ -286,12 +287,8 @@ function backToForm() {
         <div class="sub" style="margin-top: 8px">{{ t('ai.kitSub') }}</div>
       </div>
       <div class="pad" style="margin-top: 14px">
-        <div class="kit">
-          <button v-for="a in KITCHEN" :key="a.key" class="kcell" :class="{ on: prefs.appliances.includes(a.key) }" @click="toggleIn('appliances', a.key)">
-            <span class="em">{{ a.emoji }}</span>
-            <span>{{ t('recipes.appliance.' + a.key) }}</span>
-          </button>
-        </div>
+        <KitchenPicker :model-value="prefs.appliances" @update:model-value="setPref('appliances', $event)" />
+        <div class="s muted" style="margin-top: 8px; text-align: center; font-size: 12.5px">{{ t('ai.kitHint') }}</div>
         <div v-if="kitOn.length" class="chips" style="margin-top: 12px">
           <button v-for="a in kitOn" :key="a.key" class="chip on" @click="toggleIn('appliances', a.key)">{{ t('recipes.appliance.' + a.key) }} ×</button>
         </div>
@@ -328,12 +325,4 @@ function backToForm() {
 .qbudget { width: 132px; height: 38px; padding: 0 10px; font-size: 14px; flex: none; }
 .qbudget input { flex: 1; font-weight: 800; -moz-appearance: textfield; }
 .qbudget input::-webkit-outer-spin-button, .qbudget input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-/* 廚具 9 格：沒選是灰的，點了亮起（emoji 上色、黑框、右上角 ✓） */
-.kit { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.kcell { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; height: 96px; padding: 0 4px; border: 1.5px solid var(--line); border-radius: var(--r); background: var(--paper-2); color: var(--ink-3); font-size: 13.5px; font-weight: 700; text-align: center; line-height: 1.2; transition: transform 0.28s var(--ease), background-color 0.28s var(--ease), color 0.28s var(--ease), border-color 0.28s var(--ease); }
-.kcell:active { transform: scale(0.97); }
-.kcell .em { font-size: 32px; line-height: 1; filter: grayscale(1); opacity: 0.45; transition: filter 0.28s var(--ease), opacity 0.28s var(--ease); }
-.kcell.on { background: var(--paper); border-color: var(--ink); color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
-.kcell.on .em { filter: none; opacity: 1; }
-.kcell.on::after { content: '✓'; position: absolute; top: 6px; right: 6px; width: 18px; height: 18px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
 </style>
