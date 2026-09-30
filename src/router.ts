@@ -18,6 +18,7 @@ export const router = createRouter({
     { path: '/watching', name: 'watching', component: () => import('./views/WatchingView.vue'), meta: { tab: 'me' } },
     { path: '/me/recipes', name: 'ai-history', component: () => import('./views/AiHistoryView.vue'), meta: { tab: 'me' } },
     { path: '/me/recipes/:id', name: 'ai-history-item', component: () => import('./views/AiHistoryDetailView.vue'), meta: { tab: 'me' } },
+    { path: '/me/cards', name: 'cards', component: () => import('./views/CardsView.vue'), meta: { tab: 'me' } },
     { path: '/signin', name: 'signin', component: () => import('./views/SignInView.vue'), meta: { tab: 'me' } },
     { path: '/about', name: 'about', component: () => import('./views/AboutView.vue'), meta: { tab: 'me' } },
     { path: '/privacy', name: 'privacy', component: () => import('./views/PrivacyView.vue'), meta: { tab: 'me' } },

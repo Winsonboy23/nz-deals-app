@@ -99,6 +99,10 @@ async function doDelete() {
           <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.recipes') }}</div></div>
           <div class="link">›</div>
         </RouterLink>
+        <RouterLink v-if="isIn" class="lrow tap" to="/me/cards" style="padding: 14px 12px">
+          <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.cards') }}</div></div>
+          <div class="link">›</div>
+        </RouterLink>
         <!-- 後台：只有 admins 表裡的 email 看得到（docs/admin-spec.md §1） -->
         <RouterLink v-if="isAdmin" class="lrow tap" to="/admin" style="padding: 14px 12px">
           <div class="grow"><div class="t" style="font-size: 16px">後台</div></div>
