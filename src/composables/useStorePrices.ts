@@ -124,15 +124,18 @@ const chainGroup = (storeId: string) => (storeId.startsWith('woolworths:') ? ['w
 /** 點「一站」時：這些（店, key）沒價格 → 送單去問。有編號的送編號；沒編號、也還沒用名字配過的，送 key 讓後端用名字配（規則）。 */
 async function request(pairs: Array<{ storeId: string; key: string }>): Promise<void> {
   if (!useSiteSettings().livePrices.value) return   // 後台把即時查價關掉了
-  if (!useAuth().isIn.value) return   // 沒登入不送單（2026-09-30）：不轉圈，沒價格的維持「不確定」；清單頁結論框會叫人登入
   const now = Date.now()
   const todo = pairs.filter(({ storeId, key }) => {
     const id = `${storeId}|${key}`
     return !pending.value.has(id) && !nameStateAt(storeId, key) && (tried.get(id) ?? 0) < now - RETRY_MS
   })
   if (!todo.length) return
-  for (const { storeId, key } of todo) tried.set(`${storeId}|${key}`, now)
   const keys = [...new Set(todo.map((p) => p.key))]
+  if (!useAuth().isIn.value) {   // 沒登入不送單（2026-09-30）：只讀公開的名字配對結果讓「找不到」照樣顯示；不記 tried，登入後馬上能送。清單頁結論框會叫人登入
+    await loadNameState(keys)
+    return
+  }
+  for (const { storeId, key } of todo) tried.set(`${storeId}|${key}`, now)
   await Promise.all([resolveIds(keys), loadNameState(keys)])
   const byStore = new Map<string, { ids: Set<string>; keys: Set<string>; pairs: string[] }>()
   for (const { storeId, key } of todo) {
