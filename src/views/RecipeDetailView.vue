@@ -5,7 +5,7 @@ import TagChip from '../components/TagChip.vue'
 import PriceLine from '../components/PriceLine.vue'
 import Loading from '../components/Loading.vue'
 import { useSpecials } from '../composables/useSpecials'
-import { bi, recipeImg, useRecipes, type IngredientMatch } from '../composables/useRecipes'
+import { bi, recipeImg, useRecipes, type IngredientMatch, isIllustration } from '../composables/useRecipes'
 import { useList } from '../composables/useList'
 import { lang, t } from '../composables/useI18n'
 import { primaryTag, rankPrice } from '../lib/compare'
@@ -91,7 +91,7 @@ async function share() {
     <template v-if="r">
       <div class="hero">
         <img :src="recipeImg(r.recipe.image)" :alt="bi(r.recipe.title)" decoding="async" />
-        <span v-if="r.recipe.image_source === 'ai'" class="hero-ill">{{ t('recipes.illustration') }}</span>
+        <span v-if="isIllustration(r.recipe)" class="hero-ill">{{ t('recipes.illustration') }}</span>
         <RouterLink class="hero-back" to="/recipes">‹ {{ t('recipes.back') }}</RouterLink>
         <span class="hero-badge">{{ t('recipes.badge', { n: r.onSpecial, m: r.total, k: r.rank }) }}</span>
       </div>

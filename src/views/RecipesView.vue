@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { bi, recipeImg, useRecipes, type RankedRecipe } from '../composables/useRecipes'
+import { bi, recipeImg, useRecipes, type RankedRecipe, isIllustration } from '../composables/useRecipes'
 import { useStores } from '../composables/useStores'
 import { useSpecials } from '../composables/useSpecials'
 import Loading from '../components/Loading.vue'
@@ -76,7 +76,7 @@ const sections = computed(() => {
             <RouterLink v-for="{ r, tall } in col" :key="r.recipe.id" class="rc" :to="`/recipes/${r.recipe.id}`">
               <div class="rc-img" :class="{ tall }">
                 <img :src="recipeImg(r.recipe.image)" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" />
-                <span v-if="r.recipe.image_source === 'ai'" class="rc-ill">{{ t('recipes.illustration') }}</span>
+                <span v-if="isIllustration(r.recipe)" class="rc-ill">{{ t('recipes.illustration') }}</span>
                 <span v-if="r.chains.length" class="dots rc-dots"><span v-for="ch in r.chains" :key="ch" class="dot" :class="chainClass(ch + ':x')" /></span>
               </div>
               <div class="rc-body">

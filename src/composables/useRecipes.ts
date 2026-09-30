@@ -128,6 +128,10 @@ const BASE = import.meta.env.BASE_URL
 export const bi = (x: Bi): string => x[lang.value]
 
 /** 食譜照片網址：http 開頭的（每週自動產的，放 Supabase Storage）直接用；其他是 public/ 底下的相對路徑，前面接 BASE_URL */
+/** 要標「示意圖」的：AI 生的，或沿用了一張 AI 生的舊圖（credit.source 是 'AI'）。 */
+export function isIllustration(r: Pick<Recipe, 'image_source' | 'credit'>): boolean {
+  return r.image_source === 'ai' || (r.image_source === 'reuse' && (r.credit as { source?: string } | undefined)?.source === 'AI')
+}
 export function recipeImg(image: string): string {
   const src = image ?? ''   // 表裡的資料萬一沒有圖，不要讓整頁掛掉
   return src.startsWith('http') ? src : BASE + src
