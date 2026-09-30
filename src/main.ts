@@ -6,7 +6,7 @@ import { readCache } from './lib/cache'
 
 // Nothing to compare until stores are picked, so the picker is the front door.
 router.beforeEach((to) => {
-  if (to.path === '/stores' || to.path === '/admin') return true   // 後台不用選店
+  if (['/stores', '/admin', '/privacy', '/delete-data'].includes(to.path)) return true   // 後台不用選店；隱私權政策、刪除資料說明是給 Meta 審核的公開網址，沒選店也要打得開
   const picked = readCache<string[]>('selected')
   return picked && picked.length ? true : '/stores'
 })
