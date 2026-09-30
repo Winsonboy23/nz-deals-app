@@ -68,6 +68,14 @@ export function decodePayload(str: string): Record<string, unknown> | null {
   }
 }
 
+/**
+ * 搬完要去的頁（#/migrate?to=…）：舊網址原本開著的 hash 路徑，例如分享清單 /s/<token>、食譜 /recipes/<id>。
+ * 網址誰都拼得出來：只收 / 開頭、不含 //、不是 /migrate（大小寫、後面接 / ? # 都算）的字串，其他一律回首頁 '/'。
+ */
+export function safeReturnPath(to: unknown): string {
+  return typeof to === 'string' && to.startsWith('/') && !to.includes('//') && !/^\/migrate(?:[/?#]|$)/i.test(to) ? to : '/'
+}
+
 /** 寫進這個網址的 localStorage：已經有的 key 不覆蓋；清單按 id 合併、已有的不重複。回搬了幾個 key。 */
 export function importGuestData(storage: KV, data: Record<string, unknown>): number {
   let n = 0

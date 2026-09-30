@@ -1,7 +1,7 @@
-// 換網域搬家：只搬白名單、新網址已有的不覆蓋、清單按 id 合併、中文來回一樣、壞字串回 null（node --test）
+// 換網域搬家：只搬白名單、新網址已有的不覆蓋、清單按 id 合併、中文來回一樣、壞字串回 null、搬完回原本那頁只收站內路徑（node --test）
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { decodePayload, encodePayload, exportGuestData, importGuestData } from '../src/lib/migrate.ts'
+import { decodePayload, encodePayload, exportGuestData, importGuestData, safeReturnPath } from '../src/lib/migrate.ts'
 
 const j = JSON.stringify
 /** 假的 localStorage（只有 getItem / setItem），值跟 writeCache 一樣是 JSON 字串 */
@@ -102,4 +102,20 @@ test('整趟：舊網址 export → 網址 → 新網址 import，存進去的�
   const fresh = mem()
   assert.equal(importGuestData(fresh, decodePayload(encodePayload(exportGuestData(old)))!), 3)
   assert.deepEqual(fresh.all(), { 'nzd:selected': j(['woolworths:9433']), 'nzd:list': j(LIST), 'nzd:lang': j('zh') })
+})
+
+test('safeReturnPath：站內路徑原樣回（分享清單、食譜、帶查詢字串的）', () => {
+  for (const ok of ['/s/abc123', '/recipes/2026-09-28-kiwi-mince-pie', '/search?q=%E7%89%9B%E5%A5%B6']) assert.equal(safeReturnPath(ok), ok)
+})
+
+test('safeReturnPath：外部網址、// 開頭、中間有 //、不是 / 開頭的都回首頁', () => {
+  for (const bad of ['//evil', '//evil.com/s/abc', 'https://evil.com', '/s//evil.com', 'evil.com', '']) assert.equal(safeReturnPath(bad), '/', bad)
+})
+
+test('safeReturnPath：/migrate 不回（不然搬完又回搬家頁）', () => {
+  for (const bad of ['/migrate', '/migrate?d=abc', '/Migrate/']) assert.equal(safeReturnPath(bad), '/', bad)
+})
+
+test('safeReturnPath：不是字串（沒帶、帶兩次變陣列）回首頁', () => {
+  for (const bad of [undefined, null, 123, ['/s/abc123'], { to: '/s/abc123' }]) assert.equal(safeReturnPath(bad), '/')
 })

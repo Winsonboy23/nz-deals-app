@@ -4,7 +4,7 @@ import { router } from './router'
 import './styles/app.css'
 import { readCache } from './lib/cache'
 import { useSiteSettings } from './composables/useSiteSettings'
-import { OLD_HOST, encodePayload, exportGuestData } from './lib/migrate'
+import { OLD_HOST, encodePayload, exportGuestData, safeReturnPath } from './lib/migrate'
 
 // Nothing to compare until stores are picked, so the picker is the front door.
 router.beforeEach((to) => {
@@ -23,7 +23,7 @@ router.onError((err) => {
   if (/dynamically imported module|Importing a module script failed/.test(String(err))) location.reload()
 })
 
-// 換網域：後台 settings.migrate_host 填了新網址、而且現在開的是舊網址 → 帶著訪客資料跳過去（lib/migrate.ts、views/MigrateView.vue）。
+// 換網域：後台 settings.migrate_host 填了新網址、而且現在開的是舊網址 → 帶著訪客資料和原本那頁（to）跳過去（lib/migrate.ts、views/MigrateView.vue）。
 // 新網址（host 就是 migrate_host）和本機開發（host 不是舊網址）都不會觸發。
 const { migrateHost, loadSiteSettings } = useSiteSettings()
 void loadSiteSettings().then(() => {
@@ -35,7 +35,9 @@ void loadSiteSettings().then(() => {
     } catch {
       /* 瀏覽器不給讀 localStorage 就只跳、不帶資料 */
     }
-    location.replace('https://' + newHost + '/#/migrate?d=' + d)
+    // 原本那頁（例如分享清單 /s/<token>、食譜 /recipes/<id>），搬完回那裡；沒有、首頁、/migrate 就不帶
+    const to = safeReturnPath(location.hash.replace(/^#/, ''))
+    location.replace('https://' + newHost + '/#/migrate?d=' + d + (to === '/' ? '' : '&to=' + encodeURIComponent(to)))
   }
 })
 
