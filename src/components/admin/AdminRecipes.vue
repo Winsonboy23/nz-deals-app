@@ -53,7 +53,7 @@ const monday = nzMonday()
 const rows = ref<Row[]>([])
 const loading = ref(true)
 const err = ref('')
-/** 各列操作的結果，顯示在那一列下面（失敗紅字） */
+/** 各列操作的結果，顯示在那一列下面（失敗紅字）；整組按鈕的結果 key 是組的標題，顯示在那組標題下面 */
 const note = ref<Record<string, { text: string; bad: boolean }>>({})
 const say = (id: string, text: string, bad = true) => {
   note.value = { ...note.value, [id]: { text, bad } }
@@ -73,13 +73,20 @@ async function load() {
   rows.value = (data ?? []) as Row[]
 }
 
-const groups = computed(() => {
+interface Group {
+  title: string
+  sub: string
+  rows: Row[]
+  /** 標題列右邊的整組按鈕：待上架「全部上架」、本週「全部下架」（換週用）；其他組沒有 */
+  bulk?: 'publish' | 'unpublish'
+}
+const groups = computed<Group[]>(() => {
   const other = rows.value.filter((r) => r.published && !!r.week_start && r.week_start !== monday)
   return [
-    { title: '待上架', sub: '還沒上架的，多半是每週 AI 產的：看過沒問題就打開「上架」。', rows: rows.value.filter((r) => !r.published) },
-    { title: `本週（${monday}）`, sub: '', rows: rows.value.filter((r) => r.published && r.week_start === monday) },
+    { title: '待上架', sub: '還沒上架的，多半是每週 AI 產的：看過沒問題就打開「上架」。', rows: rows.value.filter((r) => !r.published), bulk: 'publish' },
+    { title: `本週（${monday}）`, sub: '', rows: rows.value.filter((r) => r.published && r.week_start === monday), bulk: 'unpublish' },
     { title: '常備庫', sub: '', rows: rows.value.filter((r) => r.published && !r.week_start) },
-    ...(other.length ? [{ title: '其他週（已上架）', sub: '別週的精選還上架著，App 會把它們排在「常備食譜」那段。', rows: other }] : []),
+    ...(other.length ? [{ title: '其他週（已上架）', sub: '別週的精選還上架著，但 App 只顯示本週和常備庫的，這些不會出現。', rows: other }] : []),
   ]
 })
 const blocksText = (d: Data) => (d.blocks ?? []).map((b) => BLOCK_ZH[b] ?? b).join('、') || '沒有區塊'
@@ -99,6 +106,36 @@ async function flip(r: Row, key: 'published' | 'reviewed') {
   r[key] = v
   say(r.id, '', false)
   if (key === 'published') void loadRecipes()
+}
+
+/* ---------- 整組上架／下架 ---------- */
+/** 按了第一下、等第二下確認的是哪一組（組的標題）；空字串 = 沒有 */
+const confirming = ref('')
+const busy = ref(false)
+const bulkLabel = (g: Group) => {
+  const verb = g.bulk === 'publish' ? '上架' : '下架'
+  return confirming.value === g.title ? `確定${verb} ${g.rows.length} 道？` : `全部${verb}`
+}
+
+/** 第一下只把按鈕變成「確定…？」，第二下才一次改整組（.in('id', ids)）；成功重讀列表、叫 App 重讀食譜，失敗在那組標題下面寫一行紅字 */
+async function bulk(g: Group) {
+  if (confirming.value !== g.title) {
+    confirming.value = g.title
+    return
+  }
+  confirming.value = ''
+  busy.value = true
+  const res = await supabase
+    .from('recipes')
+    .update({ published: g.bulk === 'publish', updated_at: new Date().toISOString() })
+    .in('id', g.rows.map((r) => r.id))
+    .select('id')
+  busy.value = false
+  // 跟 failed() 一樣：RLS 擋住時不回 error、只是一列都沒動到
+  if (res.error || !res.data?.length) return say(g.title, res.error?.message ?? '沒改到：可能沒有權限（登入過期？）')
+  say(g.title, '', false)
+  await load()
+  void loadRecipes()
 }
 
 /* ---------- 編輯 ---------- */
@@ -218,8 +255,15 @@ onMounted(() => void load())
     <template v-else>
       <div class="s muted" style="margin-bottom: 14px">App 只讀「上架」的。食材這裡先不能改。</div>
       <template v-for="g in groups" :key="g.title">
-        <div class="sec" style="margin-bottom: 8px">{{ g.title }}（{{ g.rows.length }}）</div>
+        <div class="hrow" style="margin-bottom: 8px">
+          <div class="sec">{{ g.title }}（{{ g.rows.length }}）</div>
+          <div v-if="g.bulk && g.rows.length" class="chips" style="flex: none">
+            <button v-if="confirming === g.title" class="chip" :disabled="busy" @click="confirming = ''">取消</button>
+            <button class="chip" :class="{ on: confirming === g.title }" :disabled="busy" @click="bulk(g)">{{ bulkLabel(g) }}</button>
+          </div>
+        </div>
         <div v-if="g.sub" class="s muted" style="margin-bottom: 8px">{{ g.sub }}</div>
+        <div v-if="note[g.title]?.text" class="s" style="margin-bottom: 8px; color: #b00020">{{ note[g.title].text }}</div>
         <div v-if="!g.rows.length" class="sub muted" style="margin-bottom: 22px">沒有。</div>
         <div v-else class="box" style="margin-bottom: 22px">
           <div v-for="r in g.rows" :key="r.id" class="rrow">

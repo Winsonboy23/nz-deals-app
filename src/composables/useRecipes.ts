@@ -5,6 +5,7 @@ import { lang } from './useI18n'
 import { rankPrice } from '../lib/compare'
 import { chainOf } from '../lib/format'
 import { readCache, writeCache } from '../lib/cache'
+import { nzMonday } from '../lib/week'
 import { supabase } from '../lib/supabase'
 import type { ChainId, Offer, Store } from '../lib/types'
 
@@ -155,7 +156,10 @@ const costOf = (ms: IngredientMatch[]) => ms.filter((m) => !m.ingredient.optiona
 
 /** Recipes ranked by how many ingredients are on special at the selected stores (design C1). */
 const ranked = computed<RankedRecipe[]>(() => {
-  const list: RankedRecipe[] = recipes.value.map((recipe) => {
+  // 只用常備庫（weekStart 是 null）和這週的精選，別週的一律不顯示。這週一在這裡用當下的時間算，
+  // 快取（nzd:recipes）照樣存全部，換週後重開 App 就自動換成新的一週
+  const monday = nzMonday()
+  const list: RankedRecipe[] = recipes.value.filter((x) => !x.weekStart || x.weekStart === monday).map((recipe) => {
     const matches = recipe.ingredients.map((ingredient) => ({ ingredient, offer: cheapest(ingredient.families) }))
     const required = matches.filter((m) => !m.ingredient.optional)
     const onSpecial = required.filter((m) => m.offer).length

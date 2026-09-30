@@ -43,6 +43,11 @@ const babyLevels = computed(() => {
 /** 開關下面那行小字：「6／9／12 個月」 */
 const babyAges = computed(() => t('recipes.babyAge', { n: babyLevels.value.map((l) => l.age).join(lang.value === 'zh' ? '／' : ' / ') }))
 
+/** 煮一鍋吃 N 天：資料裡每天的吃法常自己帶「第 1 天：」「Day 1:」開頭，前面已經有粗體的「第 N 天」，拿掉免得重複 */
+const dayText = (s: string) => s.replace(/^\s*(第\s*\d+\s*天|day\s*\d+)\s*[：:，,、—–-]?\s*/i, '')
+/** 「第 1 天：…」「保存：…」的冒號 */
+const colon = computed(() => (lang.value === 'zh' ? '：' : ': '))
+
 /** 同一家買齊（預設）／每樣各挑最便宜 */
 const mode = ref<'one' | 'cheap'>('one')
 const view = computed<IngredientMatch[]>(() => (r.value ? (mode.value === 'one' && r.value.oneStore ? r.value.oneStore.matches : r.value.matches) : []))
@@ -187,6 +192,14 @@ async function share() {
             </div>
           </div>
         </template>
+        <!-- 煮一鍋吃 N 天（batch 不是 null 才有）：一天一行、照 variations 的順序，最後一行怎麼保存 -->
+        <div v-if="r.recipe.batch" class="box batchbox">
+          <div class="batch-t">{{ t('recipes.batchTitle', { n: r.recipe.batch.days }) }}</div>
+          <div v-for="(v, i) in r.recipe.batch.variations" :key="i" class="batch-l">
+            <b>{{ t('recipes.batchDay', { d: i + 1 }) }}</b>{{ colon }}{{ dayText(bi(v)) }}
+          </div>
+          <div class="batch-l"><b>{{ t('recipes.batchStorage') }}</b>{{ colon }}{{ bi(r.recipe.batch.storage) }}</div>
+        </div>
         <div v-if="r.recipe.tip" class="tipbox">
           <b>{{ t('recipes.tip') }}</b> {{ bi(r.recipe.tip) }}
         </div>
@@ -272,6 +285,11 @@ async function share() {
 .babycard-t { font-size: 16px; font-weight: 800; }
 .babyage { margin-top: 10px; font-size: 14.5px; line-height: 1.45; }
 .babyage b { display: block; font-weight: 800; }
+/* 煮一鍋吃 N 天：外框用 .box，字級跟寶寶卡一樣 */
+.batchbox { margin-top: 16px; padding: 12px 14px; }
+.batch-t { font-size: 16px; font-weight: 800; }
+.batch-l { margin-top: 8px; font-size: 14.5px; line-height: 1.45; }
+.batch-l b { font-weight: 800; }
 .tipbox {
   margin-top: 16px;
   padding: 12px 14px;

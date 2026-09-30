@@ -3,3 +3,6 @@ dist
 .env
 screenshots/_contact.html
 .DS_Store
+# build 時由 scripts/legal-static.mjs 從 src/data/legal.json 產生
+public/privacy.html
+public/delete-data.html

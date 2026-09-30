@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/sync-zh.mjs && vite",
-    "build": "node scripts/sync-zh.mjs && vue-tsc --noEmit && vite build",
+    "build": "node scripts/legal-static.mjs && node scripts/sync-zh.mjs && vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
     "test": "node --test \"tests/**/*.test.ts\""
