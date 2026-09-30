@@ -34,10 +34,10 @@ const kit = computed(() => {
   return parts.join(' · ')
 })
 
-/** 寶寶支線：能最後才調味、有寶寶做法、知道第幾步後取出，三樣都有才給開關；有寫的月齡才列 */
+/** 寶寶支線：後台審過、能最後才調味、有寶寶做法、知道第幾步後取出，四樣都有才給開關（沒審過就是一般食譜，什麼都不顯示）；有寫的月齡才列 */
 const babyLevels = computed(() => {
   const x = r.value?.recipe
-  const b = x?.can_delay_seasoning && x.baby_split_step ? x.baby_branch : null
+  const b = x?.reviewed && x.can_delay_seasoning && x.baby_split_step ? x.baby_branch : null
   return b ? (['6', '9', '12'] as const).filter((a) => b[a]).map((a) => ({ age: a, text: b[a]! })) : []
 })
 /** 開關下面那行小字：「6／9／12 個月」 */

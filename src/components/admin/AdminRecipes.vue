@@ -2,15 +2,18 @@
 // 後台「食譜」（Phase 6 #25，migrations/008-recipes.sql）：recipes 表一列一道，整份食譜放在 data。
 //  列表：待上架（published=false，多半是每週 AI 產的）→ 本週 → 常備庫 →（有的話）其他週已上架的。
 //  每列直接切「上架／審過」；「編輯」在那一列下面展開，改文字和標籤（食材先只看不改），也可以刪。
+//  寶寶支線（6／9／12 個月）也在編輯裡改；App 只顯示「審過」的，存檔前那幾段提到鹽糖蜂蜜會先提醒、再按一次才存。
 //  RLS 只讓 is_admin() 改；被擋時 update / delete 不會回 error、只是一列都沒動到，所以都帶 .select('id') 拿回動到的列來判斷。
 //  改成功就叫 App 重讀一次表（useRecipes().loadRecipes），切到食譜頁就是新的，不用重新整理。
 import { computed, onMounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
 import { nzMonday } from '../../lib/week'
-import { recipeImg, useRecipes, type Appliance, type Block, type Recipe } from '../../composables/useRecipes'
+import { recipeImg, useRecipes, type Appliance, type Bi, type Block, type Recipe } from '../../composables/useRecipes'
+import { babyRisks } from '../../lib/baby'
 import Loading from '../Loading.vue'
 
-type Data = Omit<Recipe, 'weekStart'>
+/** data 欄（jsonb）的形狀；weekStart、reviewed 是表的欄位，不在 data 裡 */
+type Data = Omit<Recipe, 'weekStart' | 'reviewed'>
 interface Row {
   id: string
   week_start: string | null
@@ -47,6 +50,9 @@ const DIFF_ZH: Record<Data['difficulty'], string> = { easy: '簡單', medium: '�
 const BLOCKS = Object.keys(BLOCK_ZH) as Block[]
 const APPLIANCES = Object.keys(APPLIANCE_ZH) as Appliance[]
 const DIFFS = Object.keys(DIFF_ZH) as Data['difficulty'][]
+/** 寶寶支線的月齡（baby_branch 的 key） */
+const AGES = ['6', '9', '12'] as const
+type Age = (typeof AGES)[number]
 
 const { loadRecipes } = useRecipes()
 const monday = nzMonday()
@@ -90,6 +96,8 @@ const groups = computed<Group[]>(() => {
   ]
 })
 const blocksText = (d: Data) => (d.blocks ?? []).map((b) => BLOCK_ZH[b] ?? b).join('、') || '沒有區塊'
+/** 有寫任何一級寶寶支線：列表標「🍼 草稿」（還沒審過，App 不顯示）或「🍼」（審過） */
+const hasBaby = (d: Data) => AGES.some((a) => !!d.baby_branch?.[a])
 
 /** update / delete 之後：有 error，或一列都沒動到（RLS 擋住），就在那一列下面寫原因 */
 function failed(id: string, res: { error: { message: string } | null; data: unknown[] | null }): boolean {
@@ -98,14 +106,14 @@ function failed(id: string, res: { error: { message: string } | null; data: unkn
   return true
 }
 
-/** 上架／審過：直接改那一欄 */
+/** 上架／審過：直接改那一欄；兩個都會改 App 看到的（審過才顯示寶寶支線），所以都叫 App 重讀 */
 async function flip(r: Row, key: 'published' | 'reviewed') {
   const v = !r[key]
   const res = await supabase.from('recipes').update({ [key]: v, updated_at: new Date().toISOString() }).eq('id', r.id).select('id')
   if (failed(r.id, res)) return
   r[key] = v
   say(r.id, '', false)
-  if (key === 'published') void loadRecipes()
+  void loadRecipes()
 }
 
 /* ---------- 整組上架／下架 ---------- */
@@ -151,6 +159,10 @@ interface Draft {
   blocks: Block[]
   appliances: Appliance[]
   canDelay: boolean
+  /** 取出寶寶份的步驟（baby_split_step，從 1 算）；空 = 沒有 */
+  split: number | string
+  /** 寶寶支線 6／9／12 個月，中英各一段；兩段都空 = 這一級沒有 */
+  baby: Record<Age, Bi>
   tipZh: string
   tipEn: string
   /** 一行一步 */
@@ -168,6 +180,8 @@ const toDraft = (d: Partial<Data>): Draft => ({
   blocks: [...(d.blocks ?? [])],
   appliances: [...(d.appliances ?? [])],
   canDelay: !!d.can_delay_seasoning,
+  split: d.baby_split_step ?? '',
+  baby: Object.fromEntries(AGES.map((a) => [a, { zh: d.baby_branch?.[a]?.zh ?? '', en: d.baby_branch?.[a]?.en ?? '' }])) as Record<Age, Bi>,
   tipZh: d.tip?.zh ?? '',
   tipEn: d.tip?.en ?? '',
   stepsZh: (d.steps?.zh ?? []).join('\n'),
@@ -176,9 +190,12 @@ const toDraft = (d: Partial<Data>): Draft => ({
 /** 展開的是哪一列；草稿在展開時從那一列複製一份 */
 const open = ref('')
 const draft = ref<Draft>(toDraft({}))
+/** 顯示中的鹽糖蜂蜜提醒（babyWarning）：第一下「存」只顯示這句、按鈕變「仍要存」，同一句再按一次才存；改了字提醒變了，就要再確認一次 */
+const warn = ref('')
 
 function edit(r: Row) {
   say(r.id, '', false)
+  warn.value = ''
   if (open.value === r.id) {
     open.value = ''
     return
@@ -204,7 +221,29 @@ function problem(d: Draft): string {
   if (!isInt(num(d.serves), 1) || !isInt(num(d.minutes), 1)) return '人份、分鐘要是 1 以上的整數'
   if (!isInt(num(d.pots), 0)) return '鍋數要是 0 以上的整數'
   if (String(d.kcal).trim() && !(num(d.kcal) > 0)) return '熱量留空，或填大於 0 的數字'
+  const steps = Math.min(lines(d.stepsZh).length, lines(d.stepsEn).length)
+  if (String(d.split).trim() && !(isInt(num(d.split), 1) && num(d.split) <= steps)) return `取出寶寶份的步驟留空，或填 1–${steps} 的整數`
   return ''
+}
+
+/** 存檔用的 baby_branch：中英都空的那一級不放 key，三級都空就是 null */
+function babyBranch(d: Draft): Data['baby_branch'] {
+  const out: Partial<Record<Age, Bi>> = {}
+  for (const a of AGES) {
+    const zh = d.baby[a].zh.trim()
+    const en = d.baby[a].en.trim()
+    if (zh || en) out[a] = { zh, en }
+  }
+  return Object.keys(out).length ? out : null
+}
+
+/** 寶寶那幾段有沒有提到鹽糖蜂蜜（中英分開看）：「第 6 個月那段提到 鹽；第 12 個月那段提到 honey，確定？」；都沒有是空字串 */
+function babyWarning(d: Draft): string {
+  const parts = AGES.flatMap((a) => {
+    const w = [...babyRisks(d.baby[a].zh), ...babyRisks(d.baby[a].en)]
+    return w.length ? [`第 ${a} 個月那段提到 ${w.join('、')}`] : []
+  })
+  return parts.length ? `${parts.join('；')}，確定？` : ''
 }
 
 /** 存 = 整份 data 換掉（沒編輯到的欄位照原樣帶著），updated_at 換成現在 */
@@ -212,6 +251,12 @@ async function save(r: Row) {
   const d = draft.value
   const bad = problem(d)
   if (bad) return say(r.id, bad)
+  const w = babyWarning(d)
+  if (w && w !== warn.value) {
+    say(r.id, '', false)
+    warn.value = w
+    return
+  }
   const data: Data = {
     ...r.data,
     title: { zh: d.titleZh.trim(), en: d.titleEn.trim() },
@@ -223,6 +268,8 @@ async function save(r: Row) {
     appliances: [...d.appliances],
     pot_count: num(d.pots),
     can_delay_seasoning: d.canDelay,
+    baby_split_step: String(d.split).trim() ? num(d.split) : null,   // 留空 = 沒有
+    baby_branch: babyBranch(d),
     // 兩個都清空就拿掉，不然詳情頁會出現空的「小撇步」框
     tip: d.tipZh.trim() || d.tipEn.trim() ? { zh: d.tipZh.trim(), en: d.tipEn.trim() } : undefined,
     steps: { zh: lines(d.stepsZh), en: lines(d.stepsEn) },
@@ -231,6 +278,7 @@ async function save(r: Row) {
   if (failed(r.id, res)) return
   r.data = data
   open.value = ''
+  warn.value = ''
   say(r.id, '已存', false)
   void loadRecipes()
 }
@@ -271,7 +319,7 @@ onMounted(() => void load())
               <img class="rthumb" :src="recipeImg(r.data.image)" alt="" loading="lazy" decoding="async" />
               <div class="grow" style="min-width: 220px">
                 <div class="t">{{ r.data.title?.zh || r.id }}</div>
-                <div class="s">{{ r.data.minutes }} 分鐘 · {{ blocksText(r.data) }}</div>
+                <div class="s">{{ r.data.minutes }} 分鐘 · {{ blocksText(r.data) }}<span v-if="hasBaby(r.data)" class="tag" :class="r.reviewed ? 'low' : 'club'" style="margin-left: 6px">{{ r.reviewed ? '🍼' : '🍼 草稿' }}</span></div>
                 <div class="s muted">{{ r.id }}<template v-if="r.week_start"> · 週 {{ r.week_start }}</template> · {{ r.source === 'ai' ? 'AI 產' : '手動' }}</div>
               </div>
               <div class="sw"><span class="s">上架</span><button class="tg" :class="{ off: !r.published }" @click="flip(r, 'published')" /></div>
@@ -296,10 +344,6 @@ onMounted(() => void load())
                     <button v-for="k in DIFFS" :key="k" class="chip" :class="{ on: draft.difficulty === k }" @click="draft.difficulty = k">{{ DIFF_ZH[k] }}</button>
                   </div>
                 </div>
-                <div class="fl">
-                  最後才調味（can_delay_seasoning）
-                  <button class="tg" :class="{ off: !draft.canDelay }" @click="draft.canDelay = !draft.canDelay" />
-                </div>
               </div>
               <div class="fl">
                 區塊
@@ -321,6 +365,22 @@ onMounted(() => void load())
                 <label class="fl wide">小撇步（中文）<textarea v-model="draft.tipZh" rows="2" /></label>
                 <label class="fl wide">小撇步（英文）<textarea v-model="draft.tipEn" rows="2" /></label>
               </div>
+              <!-- 寶寶支線：App 要審過、能最後才調味、有取出步驟、至少一級有寫，才出現開關 -->
+              <div class="babysec">
+                <div class="babysec-t">寶寶支線 🍼</div>
+                <div class="red">1 歲以下不能加鹽、糖、蜂蜜。看過沒問題再切「審過」。</div>
+                <div class="frow">
+                  <div class="fl">
+                    能最後才調味（can_delay_seasoning）
+                    <button class="tg" :class="{ off: !draft.canDelay }" @click="draft.canDelay = !draft.canDelay" />
+                  </div>
+                  <label class="fl">取出寶寶份的步驟（baby_split_step）<input v-model="draft.split" type="number" min="1" step="1" placeholder="留空 = 沒有" /></label>
+                </div>
+                <div v-for="a in AGES" :key="a" class="frow">
+                  <label class="fl wide">{{ a }} 個月（中文）<textarea v-model="draft.baby[a].zh" rows="3" placeholder="留空 = 這一級沒有" /></label>
+                  <label class="fl wide">{{ a }} 個月（英文）<textarea v-model="draft.baby[a].en" rows="3" placeholder="留空 = 這一級沒有" /></label>
+                </div>
+              </div>
               <div class="fl">
                 食材（唯讀）
                 <div class="ings">
@@ -330,8 +390,9 @@ onMounted(() => void load())
                   </div>
                 </div>
               </div>
+              <div v-if="warn" class="red" style="margin-top: 14px">{{ warn }}</div>
               <div class="chips" style="margin-top: 14px">
-                <button class="chip on" @click="save(r)">存</button>
+                <button class="chip on" @click="save(r)">{{ warn ? '仍要存' : '存' }}</button>
                 <button class="chip" @click="edit(r)">取消</button>
                 <button class="chip danger" style="margin-left: auto" @click="remove(r)">刪除這道</button>
               </div>
@@ -370,4 +431,8 @@ onMounted(() => void load())
 .fl input[type='number'] { width: 110px; }
 .ings { font-size: 13px; font-weight: 400; color: var(--ink); line-height: 1.5; }
 .chip.danger { border-color: #b00020; color: #b00020; }
+/* 寶寶支線那一區：虛線隔開；紅字是提醒（區塊上面那行、存檔前的鹽糖蜂蜜） */
+.babysec { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.babysec-t { font-size: 14px; font-weight: 800; color: var(--ink); }
+.red { margin-top: 4px; font-size: 12.5px; font-weight: 700; color: #b00020; }
 </style>

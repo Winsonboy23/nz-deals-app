@@ -60,6 +60,8 @@ export interface Recipe {
   image_source: string
   /** recipes 表的 week_start（不在 data 裡）：那週的精選是那週的週一，常備食譜庫是 null */
   weekStart: string | null
+  /** recipes 表的 reviewed（不在 data 裡）：人審過才顯示寶寶支線（1 歲以下不加鹽糖蜂蜜）；內建 JSON 當 true，舊快取沒這欄當 false */
+  reviewed: boolean
 }
 export interface IngredientMatch {
   ingredient: Ingredient
@@ -91,13 +93,14 @@ export interface RankedRecipe {
   rank: number
 }
 
-/** 內建的常備食譜庫：表讀不到、裝置上又沒快取時的退路（不要刪） */
-const builtin: Recipe[] = (raw as unknown as Recipe[]).map((r) => ({ ...r, weekStart: null }))
+/** 內建的常備食譜庫：表讀不到、裝置上又沒快取時的退路（不要刪）；都是人寫、人看過的，reviewed 當 true */
+const builtin: Recipe[] = (raw as unknown as Recipe[]).map((r) => ({ ...r, weekStart: null, reviewed: true }))
 /**
  * 正本是 recipes 表（只讀 published 的；後台可改、可上下架）。啟動先用上次讀到的快取（沒有就先用內建的），
  * 同時背景讀表：讀到就換掉並存快取；讀失敗、或一道都沒有（例如還沒匯入）就維持原樣。
+ * 加 reviewed 之前存的快取沒有這欄，當沒審過（寶寶支線先不顯示，讀到表再說）。
  */
-const recipes = shallowRef<Recipe[]>(readCache<Recipe[]>('recipes') ?? builtin)
+const recipes = shallowRef<Recipe[]>(readCache<Recipe[]>('recipes')?.map((r) => ({ ...r, reviewed: r.reviewed === true })) ?? builtin)
 /** 讀表這一次結束了沒（成功失敗都算）：詳情頁用來分「還在讀」和「真的沒有這道」 */
 const loaded = ref(false)
 
@@ -108,12 +111,12 @@ function usable(d: Partial<Recipe> | null | undefined): boolean {
 }
 
 async function loadRecipes(): Promise<void> {
-  const { data, error } = await supabase.from('recipes').select('id,week_start,data').eq('published', true)
+  const { data, error } = await supabase.from('recipes').select('id,week_start,reviewed,data').eq('published', true)
   if (!error && data?.length) {
-    const rows = data as Array<{ id: string; week_start: string | null; data: Omit<Recipe, 'weekStart'> }>
+    const rows = data as Array<{ id: string; week_start: string | null; reviewed: boolean; data: Omit<Recipe, 'weekStart' | 'reviewed'> }>
     const bad = rows.filter((r) => !usable(r.data)).map((r) => r.id)
     if (bad.length) console.warn('[recipes] 資料缺欄位，先不顯示：', bad.join(', '))
-    const list: Recipe[] = rows.filter((r) => usable(r.data)).map((r) => ({ ...r.data, id: r.id, weekStart: r.week_start }))
+    const list: Recipe[] = rows.filter((r) => usable(r.data)).map((r) => ({ ...r.data, id: r.id, weekStart: r.week_start, reviewed: r.reviewed }))
     if (list.length) {
       recipes.value = list
       writeCache('recipes', list)
