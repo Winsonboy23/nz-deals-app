@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icon-192.png', 'icon-512.png'],
       manifest: {
-        name: 'NZ Deals',
-        short_name: 'NZ Deals',
-        description: 'Same item, which store is cheapest this week.',
+        name: 'KiteWise',
+        short_name: 'KiteWise',
+        description: 'Spot the specials. Cook smart. Live lighter.',
         theme_color: '#111111',
         background_color: '#ffffff',
         display: 'standalone',

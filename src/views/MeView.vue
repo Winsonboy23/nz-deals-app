@@ -112,6 +112,15 @@ function toggleFood() {
       </div>
     </div>
 
+    <div class="pad" style="margin-top: 16px">
+      <div class="box">
+        <RouterLink class="lrow tap" to="/about" style="padding: 14px 12px">
+          <div class="grow"><div class="t" style="font-size: 16px">{{ t('me.about') }}</div></div>
+          <div class="link">›</div>
+        </RouterLink>
+      </div>
+    </div>
+
     <div class="pad sub muted" style="margin-top: 16px; font-size: 13px">{{ t('me.footnote') }}</div>
   </div>
 </template>

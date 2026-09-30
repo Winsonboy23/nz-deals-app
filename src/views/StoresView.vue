@@ -64,7 +64,7 @@ async function done() {
   <!-- A1 · Locating -->
   <div v-if="splash" class="screen">
     <div class="pad" style="margin-top: 56px">
-      <div class="h1" style="font-size: 54px; line-height: 0.96">NZ<br />Deals</div>
+      <div class="h1" style="font-size: 54px; line-height: 0.96">KiteWise</div>
       <div class="sub" style="margin-top: 24px; font-size: 16px; line-height: 1.45">
         {{ t('stores.tagline') }}<br />New World · Woolworths · PAK'nSAVE.
       </div>

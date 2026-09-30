@@ -280,6 +280,8 @@ const DICT: Record<string, { en: string; zh: string }> = {
     en: "Prices from each store's online shop, refreshed twice a day. Only items on special are listed. Stores may run extra in-store specials — the shelf tag wins.",
     zh: '價格來自各店線上購物，每天更新兩次。只收錄有特價的商品。店內可能有額外特價，以店內標示為準。',
   },
+  'me.about': { en: 'About KiteWise', zh: '關於 KiteWise' },
+  'migrate.done': { en: 'Your data has moved. Taking you to the new home.', zh: '資料搬好了，帶你去新家' },
 
   'ai.needSignIn': {
     en: 'AI recipes need you signed in. It costs real money per recipe, so we cap it per account.',
