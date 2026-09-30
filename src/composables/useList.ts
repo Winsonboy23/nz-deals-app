@@ -18,6 +18,8 @@ export interface ListItem {
   price?: number | null
   /** 自由輸入配對到商品後，原本打的字（清單上小字顯示；只存在這台裝置） */
   typed?: string
+  /** 打勾的時間（ISO），取消打勾就清掉。首頁「你本週已省下」只算這週打勾的（lib/savings.ts） */
+  checkedAt?: string | null
 }
 
 /** 最省模式的一列：offer = 特價；shelf = 後端查到的現價（多半是原價，也可能是我們沒抓到的促銷）。兩者取一。 */
@@ -183,7 +185,9 @@ function setPrice(id: string, price: number | null): void {
 
 function toggle(id: string): void {
   const i = items.value.find((x) => x.id === id)
-  if (i) i.checked = !i.checked
+  if (!i) return
+  i.checked = !i.checked
+  i.checkedAt = i.checked ? new Date().toISOString() : null
 }
 
 function has(key: string): boolean {

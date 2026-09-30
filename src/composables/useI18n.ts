@@ -70,14 +70,16 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'shared.notFound': { en: 'This list is not available.', zh: '找不到這份清單。' },
   'common.items': { en: '{n} items', zh: '{n} 項' },
 
-  'home.headline': {
-    en: '{n} specials at your {s} stores this week. Biggest single saving {save}.',
-    zh: '你附近 {s} 家店本週 {n} 項特價，單項最多省 {save}。',
-  },
   'home.headlineNoSave': {
     en: '{n} specials at your {s} stores this week.',
     zh: '你附近 {s} 家店本週 {n} 項特價。',
   },
+  'home.saved': { en: 'This week you saved', zh: '你本週已省下' },
+  'home.savedAmount': { en: 'at least {v}', zh: '至少 {v}' },
+  'home.savedHow': { en: '{n} items ticked off in your list · only ones with a was-price count', zh: '清單裡打勾買到的 {n} 樣，有原價的才算' },
+  'home.savedSkipped': { en: ' ({u} had none)', zh: '（{u} 樣沒原價）' },
+  'home.savedNone': { en: 'No savings yet this week', zh: '本週還沒省到錢' },
+  'home.savedNoneSub': { en: 'Tick off what you buy in your list and your savings add up here.', zh: '去清單把買到的打勾，省下的錢會算在這裡。' },
   'home.ends': { en: 'Ends Sunday', zh: '特價到週日' },
   'home.daysLeft': { en: '{d} days left', zh: '剩 {d} 天' },
   'home.best': { en: 'Best deals this week', zh: '這週最划算' },

@@ -22,10 +22,10 @@ let started = false
 const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(16)}-0000-4000-8000-${Math.random().toString(16).slice(2, 14).padEnd(12, '0')}`)
 
-interface ListRow { id: string; product_key: string | null; free_text: string | null; qty: number | null; checked: boolean | null; position: number | null; price?: number | null }
-const toItem = (r: ListRow): ListItem => ({ id: r.id, key: r.product_key, name: r.free_text ?? r.product_key ?? '', qty: Number(r.qty ?? 1), checked: !!r.checked, price: r.price != null ? Number(r.price) : null })
-const toRow = (i: ListItem, idx: number) => ({ id: i.id, list_id: listId.value, product_key: i.key, free_text: i.name, qty: i.qty, checked: i.checked, source: i.key ? 'special' : 'manual', position: idx, price: i.price ?? null })
-const LIST_COLS = 'id,product_key,free_text,qty,checked,position,price'
+interface ListRow { id: string; product_key: string | null; free_text: string | null; qty: number | null; checked: boolean | null; position: number | null; price?: number | null; checked_at?: string | null }
+const toItem = (r: ListRow): ListItem => ({ id: r.id, key: r.product_key, name: r.free_text ?? r.product_key ?? '', qty: Number(r.qty ?? 1), checked: !!r.checked, price: r.price != null ? Number(r.price) : null, checkedAt: r.checked_at ?? null })
+const toRow = (i: ListItem, idx: number) => ({ id: i.id, list_id: listId.value, product_key: i.key, free_text: i.name, qty: i.qty, checked: i.checked, source: i.key ? 'special' : 'manual', position: idx, price: i.price ?? null, checked_at: i.checkedAt ?? null })
+const LIST_COLS = 'id,product_key,free_text,qty,checked,position,price,checked_at'
 
 async function pull(uid: string): Promise<void> {
   pulling = true
@@ -48,7 +48,7 @@ async function pull(uid: string): Promise<void> {
     if (!list) return
     listId.value = list.id
     shareToken.value = list.share_token ?? null
-    // price 欄是 2026-09-09 加的（schema-ai-history.sql）；沒加就退回舊欄位
+    // price 欄是 2026-09-09 加的（schema-ai-history.sql）、checked_at 是 2026-09-30（migration 006）；沒加就退回舊欄位
     let sel: { data: unknown; error: unknown } = await supabase.from('list_items').select(LIST_COLS).eq('list_id', list.id).order('position')
     if (sel.error) sel = await supabase.from('list_items').select('id,product_key,free_text,qty,checked,position').eq('list_id', list.id).order('position')
     const rows = ((sel.data as ListRow[] | null) ?? [])
@@ -85,8 +85,8 @@ async function pushList(): Promise<void> {
     let { error } = await supabase.from('list_items').upsert(rows, { onConflict: 'id' })
     // product_key 不在 products 裡（FK）→ 當自由輸入存
     if (error) ({ error } = await supabase.from('list_items').upsert(rows.map((r) => ({ ...r, product_key: null })), { onConflict: 'id' }))
-    // price 欄還沒加 → 不存價格
-    if (error) await supabase.from('list_items').upsert(rows.map(({ price: _p, ...r }) => ({ ...r, product_key: null })), { onConflict: 'id' })
+    // price / checked_at 欄還沒加 → 不存價格和打勾時間
+    if (error) await supabase.from('list_items').upsert(rows.map(({ price: _p, checked_at: _c, ...r }) => ({ ...r, product_key: null })), { onConflict: 'id' })
   }
   const keep = rows.map((r) => r.id)
   const q = supabase.from('list_items').delete().eq('list_id', listId.value)

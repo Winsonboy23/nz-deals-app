@@ -7,32 +7,30 @@ import StaleBanner from '../components/StaleBanner.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { toOffer } from '../lib/compare'
 import { chainClass, displayName, money } from '../lib/format'
-import { daysLeft } from '../lib/week'
+import { daysLeft, nzMonday } from '../lib/week'
+import { savedThisWeek } from '../lib/savings'
 import { t } from '../composables/useI18n'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
+import { useList } from '../composables/useList'
 import PriceLine from '../components/PriceLine.vue'
 import { bi, useRecipes } from '../composables/useRecipes'
 import { chainName } from '../lib/format'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import { readCache, writeCache } from '../lib/cache'
 
-const { loading, activeStores, totalSpecials, topDeduped, deepDiscounts, freshByKg, biggestSaving } = useSpecials()
+const { loading, activeStores, totalSpecials, topDeduped, deepDiscounts, freshByKg } = useSpecials()
 const { isIn, name, avatar } = useAuth()
 const { watched } = useSync()
 const { groups } = useSpecials()
 /** J1 · 你關注的有特價：關注的 product_key 這週在你的店有特價的 */
 const watchedHits = computed(() => [...watched.value].map((k) => groups.value.get(k)).filter((g): g is NonNullable<typeof g> => !!g).slice(0, 8))
 
-// The headline highlights the saving, so we split the sentence around it.
-const MARK = '@@'
-const headline = computed(() => {
-  const n = totalSpecials.value.toLocaleString('en-NZ')
-  const s = activeStores.value.length
-  if (!biggestSaving.value) return { a: t('home.headlineNoSave', { n, s }), b: '', save: '' }
-  const [a, b] = t('home.headline', { n, s, save: MARK }).split(MARK)
-  return { a, b: b ?? '', save: money(biggestSaving.value) }
-})
+/** 最上面「你本週已省下」：清單裡這週打勾、有原價的才算（lib/savings.ts）；每樣的特價用同一份 groups 的 best（你的店最便宜那家） */
+const { items } = useList()
+const saved = computed(() => savedThisWeek(items.value, (k) => groups.value.get(k)?.best, nzMonday()))
+/** 還沒省到錢時退到第二行：你附近 N 家店本週 M 項特價 */
+const specialsLine = computed(() => t('home.headlineNoSave', { n: totalSpecials.value.toLocaleString('en-NZ'), s: activeStores.value.length }))
 
 const top6 = computed(() => topDeduped.value.slice(0, 6))
 /** 這週煮什麼：食譜頁排好的前 3 道（食材特價最多、每份最便宜） */
@@ -86,9 +84,20 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
 
     <template v-else>
       <div class="pad" style="margin-top: 16px">
-        <div class="h-display">
-          {{ headline.a }}<mark v-if="headline.save">{{ headline.save }}</mark>{{ headline.b }}
-        </div>
+        <!-- 你本週已省下（清單這週打勾、有原價的才算）；還沒省到就提醒去打勾，附近幾家店幾項特價退到第二行 -->
+        <template v-if="saved.amount > 0">
+          <div class="h-display">
+            {{ t('home.saved') }} <mark style="white-space: nowrap">{{ t('home.savedAmount', { v: money(saved.amount) }) }}</mark>
+          </div>
+          <div class="sub" style="margin-top: 6px">
+            {{ t('home.savedHow', { n: saved.counted + saved.uncounted }) }}<template v-if="saved.uncounted">{{ t('home.savedSkipped', { u: saved.uncounted }) }}</template>
+          </div>
+        </template>
+        <template v-else>
+          <div class="h-display">{{ t('home.savedNone') }}</div>
+          <div class="sub" style="margin-top: 6px">{{ t('home.savedNoneSub') }}</div>
+          <div class="sub">{{ specialsLine }}</div>
+        </template>
         <div class="sub" style="margin-top: 6px">
           {{ t('home.ends') }} · <b>{{ t('home.daysLeft', { d: daysLeft() }) }}</b>
         </div>

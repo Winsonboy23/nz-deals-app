@@ -372,17 +372,6 @@ const freshByKg = computed(() =>
     .sort((a, b) => (a.special.unit_price as number) - (b.special.unit_price as number)),
 )
 
-const biggestSaving = computed(() => {
-  let best = 0
-  for (const { special } of rows.value) {
-    if (special.store_id.startsWith('paknsave:')) continue
-    if (special.was_price && special.was_price > special.price) {
-      best = Math.max(best, special.was_price - special.price)
-    }
-  }
-  return best
-})
-
 /** Level-2 categories present in the data, by row count. */
 const level2 = computed<Array<{ id: string; n: number }>>(() => {
   const counts = new Map<string, number>()
@@ -419,7 +408,6 @@ export function useSpecials() {
     variantsOf,
     deepDiscounts,
     freshByKg,
-    biggestSaving,
     level2,
     whereToGo,
     history,
