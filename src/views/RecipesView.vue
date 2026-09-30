@@ -1,17 +1,38 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { bi, useRecipes } from '../composables/useRecipes'
+import { bi, useRecipes, type RankedRecipe } from '../composables/useRecipes'
 import { useStores } from '../composables/useStores'
 import { useSpecials } from '../composables/useSpecials'
 import Loading from '../components/Loading.vue'
 import { t } from '../composables/useI18n'
-import { chainClass, chainName, chainShort, money } from '../lib/format'
+import { chainClass, money } from '../lib/format'
 
 const { ranked } = useRecipes()
 const { selectedStores } = useStores()
 const { loading, totalSpecials } = useSpecials()
-const filter = ref<'all' | 'quick'>('all')
-const list = computed(() => ranked.value.filter((r) => filter.value === 'all' || r.recipe.minutes <= 30))
+/** 上方篩選：快速看分鐘數，其他三個看食譜的 blocks */
+const FILTERS = [
+  ['all', 'recipes.all'],
+  ['one-pot', 'recipes.onePot'],
+  ['batch', 'recipes.batch'],
+  ['no-cook', 'recipes.noCook'],
+  ['quick', 'recipes.quick'],
+] as const
+const filter = ref<(typeof FILTERS)[number][0]>('all')
+const list = computed(() =>
+  ranked.value.filter((r) => {
+    const f = filter.value
+    if (f === 'all') return true
+    if (f === 'quick') return r.recipe.minutes <= 30
+    return r.recipe.blocks.includes(f)
+  }),
+)
+/** 瀑布流：卡片左右交替放兩欄；照片 4:5 和 1:1 在同一欄裡交替、兩欄相反（左欄從 1:1 開始），右欄再往下推 28px，兩欄就不會對齊 */
+const cols = computed(() => {
+  const out: { r: RankedRecipe; tall: boolean }[][] = [[], []]
+  list.value.forEach((r, i) => out[i % 2].push({ r, tall: i % 4 === 1 || i % 4 === 2 }))
+  return out
+})
 const base = import.meta.env.BASE_URL
 </script>
 
@@ -27,8 +48,7 @@ const base = import.meta.env.BASE_URL
     <div class="pad sub" style="margin-top: 8px">{{ t('recipes.sub') }}</div>
 
     <div class="chips nowrap" style="margin: 12px 0 0 var(--gutter)">
-      <button class="chip" :class="{ on: filter === 'all' }" @click="filter = 'all'">{{ t('recipes.recommended') }}</button>
-      <button class="chip" :class="{ on: filter === 'quick' }" @click="filter = 'quick'">{{ t('recipes.under30') }}</button>
+      <button v-for="[id, label] in FILTERS" :key="id" class="chip" :class="{ on: filter === id }" @click="filter = id">{{ t(label) }}</button>
     </div>
 
     <div v-if="!selectedStores.length" class="pad" style="margin-top: 14px">
@@ -36,65 +56,56 @@ const base = import.meta.env.BASE_URL
     </div>
 
     <Loading v-if="selectedStores.length && loading && !totalSpecials" />
-    <div v-else class="pad" style="margin-top: 6px">
-      <RouterLink v-for="(r, i) in list" :key="r.recipe.id" class="rc" :to="`/recipes/${r.recipe.id}`">
-        <div class="rc-img">
-          <img :src="base + r.recipe.image" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" />
-          <span class="rc-rank">{{ i + 1 }}</span>
-        </div>
-        <div class="rc-body">
-          <div class="h3 ell">{{ bi(r.recipe.title) }}</div>
-          <div class="s" style="margin-top: 3px">
-            <template v-if="r.recipe.cuisineName"><b>{{ bi(r.recipe.cuisineName) }}</b> · </template>{{ t('recipes.meta', { serves: r.recipe.serves, min: r.recipe.minutes }) }} · {{ t('recipes.' + r.recipe.difficulty) }}<template v-if="Number.isFinite(r.perServe)"> · {{ t('recipes.perServe', { v: money(r.perServe) }) }}</template>
+    <div v-else-if="!list.length" class="pad sub" style="margin-top: 14px">{{ t('recipes.emptyGroup') }}</div>
+    <div v-else class="pad rc-cols">
+      <div v-for="(col, c) in cols" :key="c" class="rc-col">
+        <RouterLink v-for="{ r, tall } in col" :key="r.recipe.id" class="rc" :to="`/recipes/${r.recipe.id}`">
+          <div class="rc-img" :class="{ tall }">
+            <img :src="base + r.recipe.image" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" />
+            <span v-if="r.chains.length" class="dots rc-dots"><span v-for="ch in r.chains" :key="ch" class="dot" :class="chainClass(ch + ':x')" /></span>
           </div>
-          <div class="rc-bar">
-            <div class="pbar"><i :style="{ width: (r.total ? (r.onSpecial / r.total) * 100 : 0) + '%' }" /></div>
-            <div class="rc-onsp">{{ t('recipes.onSpecial', { n: r.onSpecial, m: r.total }) }}</div>
+          <div class="rc-body">
+            <div class="rc-t">{{ bi(r.recipe.title) }}</div>
+            <div class="rc-s">
+              ⏱ {{ t('recipes.minutes', { n: r.recipe.minutes }) }}<template v-if="Number.isFinite(r.perServe)"> · {{ t('recipes.perServe', { v: money(r.perServe) }) }}</template>
+            </div>
           </div>
-          <div v-if="r.oneStore" class="s" style="margin-top: 3px; font-weight: 700">{{ t('recipes.oneStore', { s: chainName(r.oneStore.store.id), n: r.oneStore.onSpecial, m: r.total }) }}</div>
-          <div v-else-if="r.chains.length" class="s rc-stores">
-            <span class="dots"><span v-for="c in r.chains" :key="c" class="dot" :class="chainClass(c + ':x')" /></span>
-            <span class="ell">{{ r.chains.map((c) => (r.chains.length > 2 ? chainShort(c + ':x') : chainName(c + ':x'))).join(' · ') }}</span>
-          </div>
-        </div>
-      </RouterLink>
+        </RouterLink>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* 瀑布流兩欄：右欄整欄往下推 28px，兩欄故意不對齊 */
+.rc-cols { display: flex; align-items: flex-start; gap: var(--gutter); margin-top: 12px; }
+.rc-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--gutter); }
+.rc-col + .rc-col { margin-top: 28px; }
 .rc {
-  display: flex;
+  display: block;
   border: 1px solid var(--line);
   border-radius: var(--r);
   overflow: hidden;
-  margin-top: 10px;
   background: var(--paper);
   color: inherit;
   text-decoration: none;
 }
 .rc:active { transform: scale(0.985); }
-.rc-img { width: 112px; flex: none; position: relative; background: var(--paper-2); }
+.rc-img { position: relative; aspect-ratio: 1 / 1; background: var(--paper-2); }
+.rc-img.tall { aspect-ratio: 4 / 5; }
 .rc-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.rc-rank {
-  position: absolute;
-  left: 8px;
-  top: 8px;
-  width: 28px;
-  height: 28px;
-  border-radius: 9px;
-  background: var(--ink);
-  color: #fff;
+.rc-dots { position: absolute; left: 7px; bottom: 7px; padding: 4px 5px; border-radius: 8px; background: var(--paper); }
+.rc-body { padding: 9px 10px 10px; }
+.rc-t {
   font-family: 'Inter Tight', Inter, sans-serif;
-  font-weight: 900;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.2;
+  letter-spacing: -0.2px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
-.rc-body { flex: 1; min-width: 0; padding: 11px 12px 10px; }
-.rc-body .s { font-size: 12.5px; color: var(--ink-2); line-height: 1.3; }
-.rc-bar { display: flex; align-items: center; gap: 10px; margin-top: 9px; }
-.rc-onsp { font-size: 13px; font-weight: 800; flex: none; }
-.rc-stores { display: flex; align-items: center; gap: 7px; margin-top: 6px; min-width: 0; }
+.rc-s { margin-top: 4px; font-size: 12.5px; color: var(--ink-2); line-height: 1.3; }
 </style>

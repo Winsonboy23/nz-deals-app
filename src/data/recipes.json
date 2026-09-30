@@ -111,7 +111,19 @@
     "tip": {
       "en": "Undercook the egg slightly; residual heat finishes it at the table.",
       "zh": "蛋不要煮全熟，端上桌的餘溫會把它燜到剛好。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "stovetop",
+      "microwave"
+    ],
+    "blocks": [
+      "one-pot"
+    ],
+    "can_delay_seasoning": false,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "bacon-egg-fried-rice",
@@ -218,7 +230,19 @@
     "tip": {
       "en": "Starting bacon in a cold pan renders the fat evenly without toughening it.",
       "zh": "冷鍋下培根，油才逼得乾淨，肉不會硬。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "stovetop",
+      "microwave"
+    ],
+    "blocks": [
+      "one-pot"
+    ],
+    "can_delay_seasoning": false,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "crispy-fish-bites-rice-bowl-with-tartare",
@@ -332,7 +356,17 @@
     "tip": {
       "en": "Never stack the fish bites; stacked pieces steam instead of crisping.",
       "zh": "魚塊不要疊放，疊了就不脆。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "oven",
+      "microwave"
+    ],
+    "blocks": [],
+    "can_delay_seasoning": true,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "korean-army-stew-budae-jjigae",
@@ -455,7 +489,18 @@
     "tip": {
       "en": "Sauerkraut plus gochujang stands in for kimchi: you get both the sour and the heat.",
       "zh": "沒有泡菜就用酸菜加辣醬，酸和辣都到位。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "stovetop"
+    ],
+    "blocks": [
+      "one-pot"
+    ],
+    "can_delay_seasoning": false,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "korean-chicken-bibimbap",
@@ -576,7 +621,17 @@
     "tip": {
       "en": "Make the sauce first so every bowl seasons evenly when mixed.",
       "zh": "醬先拌好才不會拌飯時鹹的鹹淡的淡。"
-    }
+    },
+    "pot_count": 2,
+    "appliances": [
+      "stovetop",
+      "microwave"
+    ],
+    "blocks": [],
+    "can_delay_seasoning": true,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "pork-prawn-dumpling-soup",
@@ -690,7 +745,18 @@
     "tip": {
       "en": "A splash of vinegar keeps the broth clean and cuts the richness of the dumplings.",
       "zh": "一點白醋讓湯清爽，餃子油膩感全消。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "stovetop"
+    ],
+    "blocks": [
+      "one-pot"
+    ],
+    "can_delay_seasoning": true,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "garlic-broccoli-with-crispy-bacon",
@@ -786,7 +852,18 @@
     "tip": {
       "en": "Keep the broccoli crisp-tender; soft broccoli loses all its charm.",
       "zh": "花椰菜不要煮軟，帶脆才好吃。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "stovetop"
+    ],
+    "blocks": [
+      "one-pot"
+    ],
+    "can_delay_seasoning": false,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "tomato-egg-stir-fry-on-rice",
@@ -882,7 +959,19 @@
     "tip": {
       "en": "Take the eggs out early; they finish cooking when they go back in.",
       "zh": "蛋要提早盛起，回鍋才不會老。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "stovetop",
+      "microwave"
+    ],
+    "blocks": [
+      "one-pot"
+    ],
+    "can_delay_seasoning": true,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "thai-coconut-chicken-curry",
@@ -998,7 +1087,20 @@
     "tip": {
       "en": "Splitting the coconut milk before adding the paste makes the curry far more fragrant.",
       "zh": "椰奶先煮出油再下咖哩醬，香氣差很多。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "stovetop",
+      "microwave"
+    ],
+    "blocks": [
+      "one-pot",
+      "batch"
+    ],
+    "can_delay_seasoning": false,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "satay-peanut-chicken-rice",
@@ -1119,7 +1221,19 @@
     "tip": {
       "en": "Too thick? Add water. Too thin? Simmer another minute.",
       "zh": "醬太稠就加水，太稀多煮一分鐘。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "stovetop",
+      "microwave"
+    ],
+    "blocks": [
+      "one-pot"
+    ],
+    "can_delay_seasoning": false,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "spaghetti-carbonara-with-streaky-bacon",
@@ -1210,7 +1324,18 @@
     "tip": {
       "en": "Always mix the egg off the heat; a hot pan gives you scrambled egg.",
       "zh": "鍋一定要離火再拌蛋，太燙會變炒蛋。"
-    }
+    },
+    "pot_count": 2,
+    "appliances": [
+      "stovetop"
+    ],
+    "blocks": [
+      "date-night"
+    ],
+    "can_delay_seasoning": false,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "ham-cheese-baked-penne",
@@ -1321,7 +1446,19 @@
     "tip": {
       "en": "Undercook the pasta by 2 minutes so it stays firm after baking.",
       "zh": "麵少煮 2 分鐘，進烤箱才不會糊。"
-    }
+    },
+    "pot_count": 2,
+    "appliances": [
+      "stovetop",
+      "oven"
+    ],
+    "blocks": [
+      "batch"
+    ],
+    "can_delay_seasoning": false,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "english-muffin-ham-egg-brunch",
@@ -1430,7 +1567,20 @@
     "tip": {
       "en": "Put the cheese on the hot ham and it melts on its own.",
       "zh": "起司放在熱火腿上，餘溫就會融。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "toaster",
+      "stovetop"
+    ],
+    "blocks": [
+      "breakfast",
+      "assembly"
+    ],
+    "can_delay_seasoning": true,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "chorizo-tomato-baked-eggs-shakshuka-style",
@@ -1546,7 +1696,19 @@
     "tip": {
       "en": "Want firmer yolks? Give it one more minute under the lid.",
       "zh": "蛋黃想更熟就多蓋 1 分鐘。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "stovetop"
+    ],
+    "blocks": [
+      "one-pot",
+      "breakfast"
+    ],
+    "can_delay_seasoning": false,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "air-fryer-crispy-fish-sandwich",
@@ -1646,7 +1808,19 @@
     "tip": {
       "en": "Cheese under the hot fillet melts without any extra step.",
       "zh": "起司壓在熱魚排下面就會融化。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "air-fryer"
+    ],
+    "blocks": [
+      "air-fryer-micro",
+      "assembly"
+    ],
+    "can_delay_seasoning": true,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "microwave-butter-chicken-with-naan",
@@ -1748,7 +1922,18 @@
     "tip": {
       "en": "Add the yoghurt at the end so it keeps its tang.",
       "zh": "優格最後放，酸味才留得住。"
-    }
+    },
+    "pot_count": 2,
+    "appliances": [
+      "microwave"
+    ],
+    "blocks": [
+      "air-fryer-micro"
+    ],
+    "can_delay_seasoning": false,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "air-fryer-wedges-nuggets-platter",
@@ -1855,7 +2040,19 @@
     "tip": {
       "en": "Start the wedges first so both finish at the same time.",
       "zh": "薯角先炸再放雞塊，兩樣才會同時剛好。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "air-fryer"
+    ],
+    "blocks": [
+      "air-fryer-micro",
+      "assembly"
+    ],
+    "can_delay_seasoning": false,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "honey-cinnamon-yoghurt-cups",
@@ -1955,7 +2152,18 @@
     "tip": {
       "en": "Add the granola right before eating so it stays crunchy.",
       "zh": "麥片吃之前才放才會脆。"
-    }
+    },
+    "pot_count": 0,
+    "appliances": [],
+    "blocks": [
+      "no-cook",
+      "assembly",
+      "breakfast"
+    ],
+    "can_delay_seasoning": true,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   },
   {
     "id": "no-bake-peanut-butter-cookie-ice-cream-cups",
@@ -2048,6 +2256,18 @@
     "tip": {
       "en": "A quick zap makes the peanut butter pourable.",
       "zh": "花生醬微波一下才淋得開。"
-    }
+    },
+    "pot_count": 1,
+    "appliances": [
+      "microwave"
+    ],
+    "blocks": [
+      "no-cook",
+      "assembly"
+    ],
+    "can_delay_seasoning": false,
+    "baby_branch": null,
+    "batch": null,
+    "image_source": "pexels"
   }
 ]

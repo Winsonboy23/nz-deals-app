@@ -20,6 +20,16 @@ const base = import.meta.env.BASE_URL
 const added = ref(false)
 watch(() => route.params.id, () => (added.value = false))
 
+/** 「用 2 個鍋 · 廚具：爐台、烤箱」；0 個鍋那段不寫，兩段都沒有就整行不顯示 */
+const kit = computed(() => {
+  if (!r.value) return ''
+  const { pot_count, appliances } = r.value.recipe
+  const parts: string[] = []
+  if (pot_count) parts.push(t('recipes.pots', { n: pot_count }))
+  if (appliances.length) parts.push(t('recipes.appliances', { s: appliances.map((a) => t('recipes.appliance.' + a)).join(lang.value === 'zh' ? '、' : ', ') }))
+  return parts.join(' · ')
+})
+
 /** 同一家買齊（預設）／每樣各挑最便宜 */
 const mode = ref<'one' | 'cheap'>('one')
 const view = computed<IngredientMatch[]>(() => (r.value ? (mode.value === 'one' && r.value.oneStore ? r.value.oneStore.matches : r.value.matches) : []))
@@ -82,6 +92,7 @@ async function share() {
           · {{ t('recipes.' + r.recipe.difficulty) }}
           <template v-if="r.recipe.kcal"> · {{ t('recipes.kcal', { n: r.recipe.kcal }) }}</template>
         </div>
+        <div v-if="kit" class="muted" style="margin-top: 4px; font-size: 12.5px">{{ kit }}</div>
         <div v-if="r.oneStore" class="seg" style="margin-top: 12px">
           <div :class="{ on: mode === 'one' }" @click="mode = 'one'">{{ t('recipes.oneStore', { s: chainName(r.oneStore.store.id), n: r.oneStore.onSpecial, m: r.total }) }}</div>
           <div :class="{ on: mode === 'cheap' }" @click="mode = 'cheap'">{{ t('recipes.cheapestSplit', { k: r.chains.length }) }}</div>

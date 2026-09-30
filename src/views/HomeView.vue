@@ -107,6 +107,22 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
         <div class="note sub">{{ t('home.noCompare') }}</div>
       </div>
 
+      <template v-if="fresh.length">
+        <div class="pad row" style="margin-top: 16px; margin-bottom: 10px">
+          <div class="h2">{{ t('home.fresh') }}</div>
+          <RouterLink class="link" to="/fresh">
+            {{ t('home.more', { n: freshByKg.length }) }}
+          </RouterLink>
+        </div>
+        <div class="hscroll snap">
+          <MiniCard
+            v-for="r in fresh"
+            :key="r.store.id + r.special.product_id"
+            :offer="toOffer(r.store, r.special)"
+          />
+        </div>
+      </template>
+
       <!-- §10 這週去哪家：一句話結論，按第一層分類 -->
       <template v-if="top3.length">
         <div class="pad hrow" style="margin-top: 22px">
@@ -129,6 +145,22 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
       </template>
 
 
+      <template v-if="half.length">
+        <div class="pad row" style="margin-top: 16px; margin-bottom: 10px">
+          <div class="h2">{{ t('home.half') }}</div>
+          <RouterLink class="link" to="/half-price">
+            {{ t('home.more', { n: deepDiscounts.length }) }}
+          </RouterLink>
+        </div>
+        <div class="hscroll">
+          <MiniCard
+            v-for="r in half"
+            :key="r.store.id + r.special.product_id"
+            :offer="toOffer(r.store, r.special)"
+          />
+        </div>
+      </template>
+
       <template v-if="isIn && watchedHits.length">
         <div class="pad hrow" style="margin-top: 22px">
           <div class="h2">{{ t('home.watched') }}</div>
@@ -148,41 +180,15 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
         </div>
       </template>
 
-      <template v-if="half.length">
-        <div class="pad row" style="margin-top: 16px; margin-bottom: 10px">
-          <div class="h2">{{ t('home.half') }}</div>
-          <RouterLink class="link" to="/half-price">
-            {{ t('home.more', { n: deepDiscounts.length }) }}
-          </RouterLink>
-        </div>
-        <div class="hscroll">
-          <MiniCard
-            v-for="r in half"
-            :key="r.store.id + r.special.product_id"
-            :offer="toOffer(r.store, r.special)"
-          />
-        </div>
-      </template>
-
-      <template v-if="fresh.length">
-        <div class="pad row" style="margin-top: 16px; margin-bottom: 10px">
-          <div class="h2">{{ t('home.fresh') }}</div>
-          <RouterLink class="link" to="/fresh">
-            {{ t('home.more', { n: freshByKg.length }) }}
-          </RouterLink>
-        </div>
-        <div class="hscroll">
-          <MiniCard
-            v-for="r in fresh"
-            :key="r.store.id + r.special.product_id"
-            :offer="toOffer(r.store, r.special)"
-          />
-        </div>
-      </template>
-
       <div class="pad sub muted" style="margin-top: 18px; font-size: 12.5px">
         {{ t('me.footnote') }}
       </div>
     </template>
   </div>
 </template>
+
+<style scoped>
+/* 生鮮橫滑：一次停一張，停下來卡片對齊左邊的 gutter（橫向捲動本身沿用 .hscroll） */
+.hscroll.snap { scroll-snap-type: x mandatory; scroll-padding-left: var(--gutter); }
+.hscroll.snap > :deep(.mini) { scroll-snap-align: start; }
+</style>

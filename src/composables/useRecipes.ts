@@ -18,6 +18,10 @@ export interface Ingredient {
   /** Nice to have. Not counted in "N of M on special", only added to the list when it is on special. */
   optional?: boolean
 }
+/** 廚具頁的 9 個選項（KiteWise 3-7）；爐台上的平底鍋、湯鍋都算 stovetop */
+export type Appliance = 'air-fryer' | 'rice-cooker' | 'slow-cooker' | 'toaster' | 'stovetop' | 'blender' | 'oven' | 'microwave' | 'bbq'
+/** 食譜區塊（KiteWise 3-3），一道可以屬於好幾個 */
+export type Block = 'best-value' | 'one-pot' | 'batch' | 'assembly' | 'air-fryer-micro' | 'breakfast' | 'date-night' | 'weekend-baking' | 'no-cook' | 'holiday'
 export interface Recipe {
   id: string
   title: Bi
@@ -35,6 +39,20 @@ export interface Recipe {
   staples?: Bi
   steps: { en: string[]; zh: string[] }
   tip?: Bi
+  /** 用幾個鍋／容器（炒鍋、湯鍋、烤盤、氣炸鍋籃都算一個）；什麼都不用加熱的是 0 */
+  pot_count: number
+  /** 要用到的廚具 */
+  appliances: Appliance[]
+  /** 屬於哪些區塊（人工決定）；食譜頁上方的篩選看這個 */
+  blocks: Block[]
+  /** 能不能最後才調味：一開始就要醃、滷的是 false（決定能不能開寶寶支線） */
+  can_delay_seasoning: boolean
+  /** 寶寶支線：6／9／12 個月的做法，還沒寫的是 null */
+  baby_branch: Record<'6' | '9' | '12', Bi> | null
+  /** 煮一鍋吃三天專用：可以放幾天、每天怎麼變化吃、怎麼保存；其他食譜是 null */
+  batch: { days: number; variations: Bi[]; storage: Bi } | null
+  /** 照片來源，目前都是 'pexels' */
+  image_source: string
 }
 export interface IngredientMatch {
   ingredient: Ingredient
