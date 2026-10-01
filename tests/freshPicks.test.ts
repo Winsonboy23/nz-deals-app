@@ -39,7 +39,7 @@ test('分類：只看第二層；熟食冷肉、有機蔬果不算', () => {
   assert.equal(freshKind(null), null)
 })
 
-test('每類 2 個，順序肉、海鮮、蔬菜、水果；每類挑折數最大的', () => {
+test('每類 2 個，順序肉、海鮮、蔬菜、水果；每類挑省最多錢的', () => {
   const rows = [
     row('fruit-a', CAT.fruit, { price: 3, was_price: 4 }), // 25%
     row('fruit-b', CAT.fruit, { price: 2, was_price: 4 }), // 50%
@@ -116,4 +116,23 @@ test('沒有 product_key 的不會被當成同一樣', () => {
     row('b', CAT.fruit, { product_key: null, price: 3 }),
   ]
   assert.deepEqual(ids(freshPicks(rows)), ['a', 'b'])
+})
+
+test('省最多是看金額不是折數', () => {
+  const rows = [
+    row('cheap-half', CAT.beef, { price: 2, was_price: 4 }), // 50%、省 $2
+    row('big-save', CAT.beef, { price: 20, was_price: 26 }), // 23%、省 $6
+  ]
+  assert.deepEqual(ids(freshPicks(rows)), ['big-save', 'cheap-half'])
+})
+
+test('肉和海鮮的加工品不算（裹粉、漢堡排、醃好的）；蔬菜不受影響', () => {
+  const rows = [
+    row('patties', CAT.chicken, { name: 'Tegel Free Range Crunchy Chicken Burger Patties 4 Pack - 400g', price: 4.5, was_price: 9 }),
+    row('steaks', CAT.chicken, { name: 'Tegel Free Range Chicken Steaks Chargrilled 4 Pack - 400g', price: 4.5, was_price: 9 }),
+    row('fish', CAT.fish, { name: 'Crumbed Hoki Fillets 500g', price: 5, was_price: 9 }),
+    row('thigh', CAT.chicken, { name: 'Chicken Thigh Fillets kg', price: 12, was_price: 14 }),
+    row('chips', CAT.veg, { name: 'Crispy Lettuce', price: 2, was_price: 3 }),
+  ]
+  assert.deepEqual(ids(freshPicks(rows)), ['thigh', 'chips'])
 })

@@ -22,16 +22,18 @@ const KIND: Record<string, FreshKind> = {
 
 /** 分類在蔬果底下、但其實是罐裝／醬／乾貨的不算生鮮（例：Sushi Ginger 120g Jar 歸在 fresh-salad-and-herbs） */
 const JARRED = /\b(jar|paste|pickled|minced|crushed|dried|tube|squeeze|sauce|canned)\b/i
+/** 肉和海鮮裡的加工品不算生鮮：裹粉、漢堡排、醃好的、煮熟的（2026-10-01 使用者決定，例：Tegel Crunchy Chicken Burger Patties） */
+const PROCESSED = /\b(crumbed|coated|battered|crunchy|crispy|burgers?|patty|patties|nuggets?|schnitzels?|chargrilled|marinated|seasoned|glazed|kebabs?|cooked|precooked|tempura|fingers|bites|popcorn)\b/i
 
 export function freshKind(categoryId: string | null): FreshKind | null {
   if (!categoryId) return null
   return KIND[categoryId.split('/').slice(0, 2).join('/')] ?? null
 }
 
-/** 折數（省了原價的幾成）；黃超不寫原價（畫面上也從不顯示），一律當沒原價 */
-function depth(s: FreshSpecial): number {
+/** 省多少錢（原價 − 特價，Chris 規格「省最多」）；黃超不寫原價（畫面上也從不顯示），一律當沒原價 */
+function saving(s: FreshSpecial): number {
   const was = s.store_id.startsWith('paknsave:') ? null : s.was_price
-  return was && was > s.price ? (was - s.price) / was : 0
+  return was && was > s.price ? was - s.price : 0
 }
 /** 每公斤單價；不是按公斤算的回 null */
 function perKg(s: FreshSpecial): number | null {
@@ -39,10 +41,10 @@ function perKg(s: FreshSpecial): number | null {
   if ((s.price_unit ?? '').toLowerCase() === 'kg') return s.price
   return null
 }
-/** 「省最多」的排前面：有原價的按折數大到小；沒原價的（黃超）排後面，按每公斤單價小到大；沒有每公斤價的再後面，按價格 */
+/** 「省最多」的排前面：有原價的按省多少錢大到小；沒原價的（黃超）排後面，按每公斤單價小到大；沒有每公斤價的再後面，按價格 */
 function bySaving(a: FreshSpecial, b: FreshSpecial): number {
-  const da = depth(a)
-  const db = depth(b)
+  const da = saving(a)
+  const db = saving(b)
   if (da !== db) return db - da
   const ka = perKg(a)
   const kb = perKg(b)
@@ -65,7 +67,9 @@ function pair<R>(a: R[], b: R[]): R[] {
 export function freshPicks<R extends { special: FreshSpecial }>(rows: R[]): R[] {
   const cheapest = new Map<string, R>()
   for (const r of rows) {
-    if (!freshKind(r.special.category_id) || JARRED.test(r.special.name ?? '')) continue
+    const kind = freshKind(r.special.category_id)
+    const name = r.special.name ?? ''
+    if (!kind || JARRED.test(name) || ((kind === 'meat' || kind === 'seafood') && PROCESSED.test(name))) continue
     const k = r.special.product_key ?? `${r.special.store_id}|${r.special.product_id}`
     const cur = cheapest.get(k)
     if (!cur || r.special.price < cur.special.price) cheapest.set(k, r)
