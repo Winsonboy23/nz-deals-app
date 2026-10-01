@@ -415,12 +415,12 @@ async function added(): Promise<void> {
 /* 上一張／第幾張／下一張 */
 .nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .nav-btn { flex: none; height: 36px; padding: 0 14px; border-radius: 18px; border: 1.5px solid var(--brand); background: var(--card); color: var(--brand-deep); font-size: 14px; font-weight: 700; }
-.nav-pos { font-family: 'Inter Tight', Inter, sans-serif; font-weight: 800; font-size: 15px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.nav-pos { font-family: var(--font); font-weight: 800; font-size: 15px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 /* 讀螢幕的人才聽得到（換卡時唸「Club+ 2 / 3」） */
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .lc-num, .zoom-num {
   text-align: center;
-  font-family: 'Inter Tight', Inter, sans-serif;
+  font-family: var(--font);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.5px;

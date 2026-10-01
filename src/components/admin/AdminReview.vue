@@ -369,7 +369,7 @@ onMounted(() => {
   text-align: center;
 }
 .pct {
-  font-family: 'Inter Tight', Inter, sans-serif;
+  font-family: var(--font);
   font-weight: 900;
   font-size: 24px;
 }

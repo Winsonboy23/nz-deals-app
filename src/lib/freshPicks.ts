@@ -3,7 +3,7 @@
 import type { Special } from './types'
 
 /** 用到的欄位（useSpecials 的 rows 一列的 special） */
-export type FreshSpecial = Pick<Special, 'store_id' | 'product_id' | 'product_key' | 'price' | 'price_unit' | 'was_price' | 'unit_price' | 'unit_price_unit' | 'category_id'>
+export type FreshSpecial = Pick<Special, 'store_id' | 'product_id' | 'product_key' | 'price' | 'price_unit' | 'was_price' | 'unit_price' | 'unit_price_unit' | 'category_id'> & { name?: string | null }
 export type FreshKind = 'meat' | 'seafood' | 'veg' | 'fruit'
 
 /** Foodstuffs 第二層分類 → 哪一類。熟食冷肉、內臟骨頭、植物肉、有機蔬果不算。 */
@@ -19,6 +19,9 @@ const KIND: Record<string, FreshKind> = {
   'fruit-and-vegetables/fresh-salad-and-herbs': 'veg',
   'fruit-and-vegetables/fruit': 'fruit',
 }
+
+/** 分類在蔬果底下、但其實是罐裝／醬／乾貨的不算生鮮（例：Sushi Ginger 120g Jar 歸在 fresh-salad-and-herbs） */
+const JARRED = /\b(jar|paste|pickled|minced|crushed|dried|tube|squeeze|sauce|canned)\b/i
 
 export function freshKind(categoryId: string | null): FreshKind | null {
   if (!categoryId) return null
@@ -62,7 +65,7 @@ function pair<R>(a: R[], b: R[]): R[] {
 export function freshPicks<R extends { special: FreshSpecial }>(rows: R[]): R[] {
   const cheapest = new Map<string, R>()
   for (const r of rows) {
-    if (!freshKind(r.special.category_id)) continue
+    if (!freshKind(r.special.category_id) || JARRED.test(r.special.name ?? '')) continue
     const k = r.special.product_key ?? `${r.special.store_id}|${r.special.product_id}`
     const cur = cheapest.get(k)
     if (!cur || r.special.price < cur.special.price) cheapest.set(k, r)

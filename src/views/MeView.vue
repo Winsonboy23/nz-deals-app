@@ -257,7 +257,7 @@ async function doDelete() {
 .pc-dots .pns { background: var(--pns); }
 .pc-panel { position: relative; z-index: 1; margin-top: auto; background: #fff; color: var(--ink); border-radius: 12px; padding: 12px 6px 8px; }
 .pc-bar { height: 62px; }
-.pc-num { margin-top: 6px; text-align: center; font-family: 'Inter Tight', Inter, sans-serif; font-weight: 800; font-size: 14px; letter-spacing: 0.5px; font-variant-numeric: tabular-nums; }
+.pc-num { margin-top: 6px; text-align: center; font-family: var(--font); font-weight: 800; font-size: 14px; letter-spacing: 0.5px; font-variant-numeric: tabular-nums; }
 .pc-foot { position: relative; z-index: 1; margin-top: 10px; font-size: 12px; font-weight: 700; opacity: 0.85; }
 
 /* 沒卡：一張虛線框 */
