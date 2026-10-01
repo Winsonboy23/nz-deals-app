@@ -1,0 +1,1 @@
+import{S as s}from"./index-DwKpKacv.js";function u(n,r){const o=new Map;for(const t of n){const e=r(t),a=o.get(e);a?a.push(t):o.set(e,[t])}return[...o.entries()].map(([t,e])=>({key:t,head:e[0],items:e}))}function f(n){const r=(n.brand??"").trim().toLowerCase();return r?`${r}|${s(n.category_id,2)??""}`:null}export{f as r,u as s};

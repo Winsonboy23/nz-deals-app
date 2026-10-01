@@ -4,7 +4,7 @@ self.addEventListener('push', (e) => {
   let d = {}
   try { d = e.data ? e.data.json() : {} } catch { d = { body: e.data ? e.data.text() : '' } }
   const icon = new URL('icon-192.png', self.registration.scope).href
-  e.waitUntil(self.registration.showNotification(d.title || 'NZ Deals', { body: d.body || '', icon, badge: icon, tag: d.tag || 'nz-deals', data: { url: d.url || './' } }))
+  e.waitUntil(self.registration.showNotification(d.title || 'KiteWise', { body: d.body || '', icon, badge: icon, tag: d.tag || 'nz-deals', data: { url: d.url || './' } }))
 })
 self.addEventListener('notificationclick', (e) => {
   e.notification.close()
