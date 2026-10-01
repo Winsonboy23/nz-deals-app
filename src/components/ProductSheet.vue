@@ -295,8 +295,6 @@ function detailLine(storeId: string, unit: string | null): string {
       <div v-if="group.offers.some((o) => o.special.product_url)" class="sub muted" style="margin-top: 6px; font-size: 12px">
         {{ t('p.openNote') }}
       </div>
-      <div class="sec" style="margin-top: 16px">{{ t('recipes.title') }}</div>
-      <div class="sub muted" style="margin-top: 6px; font-size: 12.5px">{{ t('recipes.soon') }}</div>
     </template>
     <Loading v-else-if="loading" />
     <template v-else>

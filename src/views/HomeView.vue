@@ -6,7 +6,7 @@ import MiniCard from '../components/MiniCard.vue'
 import StaleBanner from '../components/StaleBanner.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { toOffer } from '../lib/compare'
-import { chainClass, displayName, money } from '../lib/format'
+import { chainClass, displayName, money, catLevel } from '../lib/format'
 import { daysLeft, nzMonday } from '../lib/week'
 import { savedThisWeek } from '../lib/savings'
 import { t } from '../composables/useI18n'
@@ -52,7 +52,21 @@ function closeAnnounce() {
   writeCache('announceSeen', announce.value)
 }
 /** 瘋狂半價專區：首頁兩欄放 4 格，其他在「更多」 */
-const half = computed(() => deepDiscounts.value.slice(0, 4))
+/** 瘋狂半價 4 格：同品牌同第二層分類只放一格（不然常常 3 格是同一款的不同口味） */
+const half = computed(() => {
+  const seen = new Set<string>()
+  const out: typeof deepDiscounts.value = []
+  for (const r of deepDiscounts.value) {
+    const b = (r.special.brand ?? '').trim().toLowerCase()
+    const c = catLevel(r.special.category_id, 2)
+    const k = b && c ? `${b}|${c}` : r.store.id + r.special.product_id
+    if (seen.has(k)) continue
+    seen.add(k)
+    out.push(r)
+    if (out.length === 4) break
+  }
+  return out
+})
 const fresh = computed(() => freshByKg.value.slice(0, 12))
 </script>
 

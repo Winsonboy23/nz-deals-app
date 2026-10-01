@@ -39,7 +39,11 @@ const strike = computed(() => (!s.value.club_only && was.value ? money(was.value
 const strikeInDetail = computed(() => (props.wasFirst ? '' : strike.value))
 /** 打折中：有原價而且比現價高（黃超沒有原價，wasPriceOf 已經是 null） */
 const onSale = computed(() => !!was.value && was.value > s.value.price)
-const unitText = computed(() => (props.unit ? unitLabel(s.value) : null))
+const unitText = computed(() => {
+  if (!props.unit) return null
+  const u = unitLabel(s.value)
+  return u === money(s.value.price) + '/kg' ? null : u   // 按公斤賣的，大字已經是每公斤價，不重複寫
+})
 const hasDetail = computed(() => !!props.detail && (terms.value.length > 0 || !!strikeInDetail.value || !!unitText.value))
 </script>
 
