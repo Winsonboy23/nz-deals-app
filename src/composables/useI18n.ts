@@ -133,6 +133,22 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'home.half': { en: 'Half price & more', zh: '瘋狂半價專區' },
   'home.fresh': { en: 'Fresh deals', zh: '生鮮特價' },
   'home.more': { en: '{n} ›', zh: '{n} 項 ›' },
+  'home.moreLink': { en: 'More ›', zh: '更多 ›' },
+  // 首頁最上面的本週摘要卡片列（Chris 首頁改版規格 §1）
+  'home.sumCookSub': { en: '{n} recipes use specials near you', zh: '{n} 道用到你附近的特價' },
+  'home.sumCookNone': { en: "Recipes ranked by this week's specials", zh: '照本週特價排好的食譜' },
+  'home.sumCookGo': { en: 'See recipes ›', zh: '看食譜 ›' },
+  'home.sumList': { en: 'Shopping list', zh: '購物清單' },
+  'home.sumListTicked': { en: ' · {m} ticked', zh: ' · 已買 {m} 項' },
+  'home.sumListGo': { en: 'Open list ›', zh: '看清單 ›' },
+  'home.sumCardsN': { en: '{n} cards', zh: '{n} 張' },
+  'home.sumCardsSignIn': { en: 'Sign in to save them', zh: '登入後可存' },
+  'home.sumCardsGo': { en: 'Open wallet ›', zh: '打開錢包 ›' },
+  // 首頁食譜卡照片左上角的分類小標（其他的用 recipes.batch / recipes.noCook / recipes.appliance.*）
+  'home.rtOnePot': { en: 'One pot', zh: '一鍋到底' },
+  'home.rtBreakfast': { en: 'Breakfast', zh: '早餐' },
+  'home.rtPan': { en: 'Pan', zh: '平底鍋' },
+  'home.usesSpecial': { en: 'On special: {n}', zh: '用到特價：{n}' },
   'home.pickStores': { en: 'Pick your stores to start', zh: '先選店才能比價' },
   'home.pickStoresBody': {
     en: 'We compare the same item across the stores you pick.',

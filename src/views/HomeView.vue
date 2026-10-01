@@ -1,48 +1,68 @@
 <script setup lang="ts">
+// 首頁（2026-10-01 照 Chris 定案的《首頁改版規格》docs/kitewise-home-v2-spec.md）：由上到下
+// 頂部 → 本週摘要卡片列 → 這週最划算（一排橫滑）→ 本週食譜推薦（一排橫滑）→ 生鮮特價（肉、海鮮、蔬菜、水果各 2）→ 瘋狂半價（兩欄）
+// → 你關注的有特價（登入才有）→ 頁尾。
 import { computed, ref } from 'vue'
 import AppHeader from '../components/AppHeader.vue'
+import SummaryCarousel from '../components/SummaryCarousel.vue'
 import ProductCard from '../components/ProductCard.vue'
 import MiniCard from '../components/MiniCard.vue'
 import StaleBanner from '../components/StaleBanner.vue'
+import PriceLine from '../components/PriceLine.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { toOffer } from '../lib/compare'
 import { chainClass, displayName, money, catLevel } from '../lib/format'
-import { daysLeft, nzMonday } from '../lib/week'
-import { savedThisWeek } from '../lib/savings'
+import { freshPicks } from '../lib/freshPicks'
 import { t } from '../composables/useI18n'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
-import { useList } from '../composables/useList'
-import PriceLine from '../components/PriceLine.vue'
-import { bi, isIllustration, recipeImg, useRecipes } from '../composables/useRecipes'
-import { chainName } from '../lib/format'
+import { bi, isIllustration, recipeImg, useRecipes, type RankedRecipe, type Recipe } from '../composables/useRecipes'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import { readCache, writeCache } from '../lib/cache'
 
-const { loading, activeStores, totalSpecials, topDeduped, deepDiscounts, freshByKg } = useSpecials()
-const { isIn, name } = useAuth()
+const { loading, totalSpecials, topDeduped, deepDiscounts, rows, groups } = useSpecials()
+const { isIn } = useAuth()
 const { watched } = useSync()
-const { groups } = useSpecials()
 /** J1 · 你關注的有特價：關注的 product_key 這週在你的店有特價的 */
 const watchedHits = computed(() => [...watched.value].map((k) => groups.value.get(k)).filter((g): g is NonNullable<typeof g> => !!g).slice(0, 8))
 
-/** 最上面「你本週已省下」：清單裡這週打勾、有原價的才算（lib/savings.ts）；每樣的特價用同一份 groups 的 best（你的店最便宜那家） */
-const { items } = useList()
-const saved = computed(() => savedThisWeek(items.value, (k) => groups.value.get(k)?.best, nzMonday()))
-/** 還沒省到錢時退到第二行：你附近 N 家店本週 M 項特價 */
-const specialsLine = computed(() => t('home.headlineNoSave', { n: totalSpecials.value.toLocaleString('en-NZ'), s: activeStores.value.length }))
-/** 「Chris，你本週已省下」：名字的第一個詞（沒名字只有 email 就用 @ 前面） */
-const firstName = computed(() => name.value.split('@')[0].trim().split(/\s+/)[0] ?? '')
-/** 「至少 $12.40」：金額大字，「至少」小字（翻譯字串裡金額前後的字拆出來） */
-const amountWords = computed(() => {
-  const [pre = '', post = ''] = t('home.savedAmount', { v: '\u0000' }).split('\u0000')
-  return { pre, post }
-})
+/** 這週最划算：一排橫滑，跟 Top 10 頁同一份（同品牌同類只放一格，附「N 款」） */
+const top10 = computed(() => topDeduped.value.slice(0, 10))
 
-const top6 = computed(() => topDeduped.value.slice(0, 6))
-/** 本週食譜推薦：食譜頁排好的前 3 道（食材特價最多、每份最便宜）；第一道做成大圖卡 */
+/** 本週食譜推薦：食譜頁排好的前 6 道（食材特價最多、每份最便宜） */
 const { ranked } = useRecipes()
-const top3 = computed(() => ranked.value.filter((r) => r.onSpecial > 0).slice(0, 3))
+const recipes6 = computed(() => ranked.value.slice(0, 6))
+/**
+ * 照片左上角的分類小標：挑一個最有代表性的——區塊優先（煮一鍋吃三天、一鍋到底、免開火、早餐、氣炸鍋／微波爐那區），
+ * 再看主要廚具；爐台（平底鍋）排在微波爐前面，因為微波常常只是熱飯。
+ */
+function recipeTag(r: Recipe): string {
+  const b = r.blocks ?? []
+  const a = r.appliances ?? []
+  if (b.includes('batch')) return t('recipes.batch')
+  if (b.includes('one-pot')) return t('home.rtOnePot')
+  if (b.includes('no-cook') || (!a.length && r.pot_count === 0)) return t('recipes.noCook')
+  if (b.includes('breakfast')) return t('home.rtBreakfast')
+  if (b.includes('air-fryer-micro')) {
+    if (a.includes('air-fryer')) return t('recipes.appliance.air-fryer')
+    if (a.includes('microwave')) return t('recipes.appliance.microwave')
+  }
+  for (const k of ['oven', 'slow-cooker', 'rice-cooker', 'bbq', 'air-fryer'] as const) if (a.includes(k)) return t(`recipes.appliance.${k}`)
+  if (a.includes('stovetop')) return t('home.rtPan')
+  for (const k of ['microwave', 'toaster', 'blender'] as const) if (a.includes(k)) return t(`recipes.appliance.${k}`)
+  return ''
+}
+/** 食材名去掉份量和切法：「五花培根 200 g，切 1 cm 段」→「五花培根」、「Broccoli ½ head」→「Broccoli」 */
+const foodName = (s: string) => s.split(/[，,（(]|\s+(?=[\d½¼¾⅓⅔半])/)[0].trim() || s
+/** 「用到特價：xxx」：這道的食材裡這週有特價的第一樣（必要的先，沒有再看選配的） */
+function usesSpecial(r: RankedRecipe): string {
+  const m = r.matches.find((x) => x.offer && !x.ingredient.optional) ?? r.matches.find((x) => x.offer)
+  return m ? foodName(bi(m.ingredient.name)) : ''
+}
+
+/** 生鮮特價：肉 2、海鮮 2、蔬菜 2、水果 2，各挑省最多的，不夠的互補（lib/freshPicks.ts）；價格是你選的店的 */
+const fresh = computed(() => freshPicks(rows.value))
+
 /** 後台公告（settings.announce）：關掉之後同一句不再出現，換新的一句又會出現 */
 const { announce } = useSiteSettings()
 const seenAnnounce = ref(readCache<string>('announceSeen') ?? '')
@@ -51,7 +71,6 @@ function closeAnnounce() {
   seenAnnounce.value = announce.value
   writeCache('announceSeen', announce.value)
 }
-/** 瘋狂半價專區：首頁兩欄放 4 格，其他在「更多」 */
 /** 瘋狂半價 4 格：同品牌同第二層分類只放一格（不然常常 3 格是同一款的不同口味） */
 const half = computed(() => {
   const seen = new Set<string>()
@@ -67,7 +86,6 @@ const half = computed(() => {
   }
   return out
 })
-const fresh = computed(() => freshByKg.value.slice(0, 12))
 </script>
 
 <template>
@@ -82,57 +100,61 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
     </div>
 
     <div v-if="loading && !totalSpecials" class="pad" style="margin-top: 14px">
-      <div class="skel" style="height: 118px; border-radius: var(--r)" />
-      <div style="display: flex; gap: 8px; margin-top: 18px">
-        <div class="skel" style="flex: 1; height: 150px" />
-        <div class="skel" style="flex: 1; height: 150px" />
-        <div class="skel" style="flex: 1; height: 150px" />
+      <div class="skel" style="height: 148px; border-radius: var(--r)" />
+      <div style="display: flex; gap: 10px; margin-top: 46px; overflow: hidden">
+        <div class="skel" style="flex: none; width: 152px; height: 236px" />
+        <div class="skel" style="flex: none; width: 152px; height: 236px" />
+        <div class="skel" style="flex: none; width: 152px; height: 236px" />
       </div>
     </div>
 
     <template v-else>
-      <!-- 你本週已省下（清單這週打勾、有原價的才算）；還沒省到就提醒去打勾，附近幾家店幾項特價退到第二行。綠底白字卡（設計稿） -->
-      <div class="pad" style="margin-top: 14px">
-        <div class="saved">
-          <template v-if="saved.amount > 0">
-            <div class="sv-hi">{{ isIn && firstName ? t('home.savedName', { n: firstName }) : t('home.saved') }}</div>
-            <div class="sv-amt">
-              <span v-if="amountWords.pre" class="sv-word">{{ amountWords.pre }}</span>{{ money(saved.amount) }}<span v-if="amountWords.post" class="sv-word">{{ amountWords.post }}</span>
-              <svg class="sv-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l6 6 4-4 8 8" /><path d="M14 17h7v-7" /></svg>
-            </div>
-            <div class="sv-sub">
-              {{ t('home.savedHow', { n: saved.counted + saved.uncounted }) }}<template v-if="saved.uncounted">{{ t('home.savedSkipped', { u: saved.uncounted }) }}</template>
-            </div>
-          </template>
-          <template v-else>
-            <div class="sv-none">{{ t('home.savedNone') }}</div>
-            <div class="sv-sub">{{ t('home.savedNoneSub') }}</div>
-            <div class="sv-sub">{{ specialsLine }}</div>
-          </template>
-          <div class="sv-ends">{{ t('home.ends') }} · <b>{{ t('home.daysLeft', { d: daysLeft() }) }}</b></div>
-        </div>
-      </div>
+      <!-- 1 本週摘要：已省下、這週煮什麼、購物清單、會員卡，左右滑 -->
+      <SummaryCarousel />
 
       <StaleBanner />
 
+      <!-- 2 這週最划算：一排橫滑 -->
       <div class="pad row sec-head">
         <div class="h2">{{ t('home.best') }}</div>
         <RouterLink class="link" to="/top10">{{ t('home.top10') }}</RouterLink>
       </div>
-      <div v-if="top6.length" class="grid3">
-        <ProductCard v-for="x in top6" :key="x.g.key" :offer="x.g.best" :group="x.g" :variants="x.variants" />
+      <div v-if="top10.length" class="hscroll snap rail best-rail">
+        <ProductCard v-for="x in top10" :key="x.g.key" :offer="x.g.best" :group="x.g" :variants="x.variants" />
       </div>
       <div v-else class="pad">
         <div class="note sub">{{ t('home.noCompare') }}</div>
       </div>
 
-      <!-- 生鮮特價：橫滑卡，圖在上、左上角折扣標 -->
+      <!-- 3 本週食譜推薦：一排橫滑；照片左上角分類小標，下面菜名、時間、每份價、用到哪樣特價（不放星星） -->
+      <template v-if="recipes6.length">
+        <div class="pad hrow sec-head">
+          <div class="h2">{{ t('home.recipes') }}</div>
+          <RouterLink class="link" to="/recipes">{{ t('home.allRecipes', { n: ranked.length }) }}</RouterLink>
+        </div>
+        <div class="hscroll snap rail">
+          <RouterLink v-for="r in recipes6" :key="r.recipe.id" class="hr" :to="`/recipes/${r.recipe.id}`">
+            <div class="hr-img">
+              <img :src="recipeImg(r.recipe.image)" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" />
+              <span v-if="recipeTag(r.recipe)" class="hr-tag">{{ recipeTag(r.recipe) }}</span>
+              <span v-if="isIllustration(r.recipe)" class="hr-ill">{{ t('recipes.illustration') }}</span>
+            </div>
+            <div class="hr-body">
+              <div class="hr-t">{{ bi(r.recipe.title) }}</div>
+              <div class="hr-m">
+                ⏱ {{ t('recipes.minutes', { n: r.recipe.minutes }) }}<template v-if="Number.isFinite(r.perServe)"> · {{ t('recipes.perServe', { v: money(r.perServe) }) }}</template>
+              </div>
+              <div v-if="usesSpecial(r)" class="hr-sp ell">{{ t('home.usesSpecial', { n: usesSpecial(r) }) }}</div>
+            </div>
+          </RouterLink>
+        </div>
+      </template>
+
+      <!-- 4 生鮮特價：肉 2、海鮮 2、蔬菜 2、水果 2；「更多」去分類頁 -->
       <template v-if="fresh.length">
         <div class="pad row sec-head">
           <div class="h2">{{ t('home.fresh') }}</div>
-          <RouterLink class="link" to="/fresh">
-            {{ t('home.more', { n: freshByKg.length }) }}
-          </RouterLink>
+          <RouterLink class="link" to="/browse">{{ t('home.moreLink') }}</RouterLink>
         </div>
         <div class="hscroll snap rail">
           <MiniCard
@@ -144,38 +166,7 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
         </div>
       </template>
 
-      <!-- 本週食譜推薦：第一道大圖卡（照片鋪滿、底部漸層壓白字），第 2、3 道小列 -->
-      <template v-if="top3.length">
-        <div class="pad hrow sec-head">
-          <div class="h2">{{ t('home.recipes') }}</div>
-          <RouterLink class="link" to="/recipes">{{ t('home.allRecipes', { n: ranked.length }) }}</RouterLink>
-        </div>
-        <div class="pad">
-          <RouterLink class="hero" :to="`/recipes/${top3[0].recipe.id}`">
-            <img :src="recipeImg(top3[0].recipe.image)" :alt="bi(top3[0].recipe.title)" decoding="async" />
-            <span v-if="isIllustration(top3[0].recipe)" class="hero-ill">{{ t('recipes.illustration') }}</span>
-            <div class="hero-txt">
-              <div class="hero-t">{{ bi(top3[0].recipe.title) }}</div>
-              <div class="hero-m">
-                ⏱ {{ t('recipes.minutes', { n: top3[0].recipe.minutes }) }}<template v-if="Number.isFinite(top3[0].perServe)"> · {{ t('recipes.perServe', { v: money(top3[0].perServe) }) }}</template>
-              </div>
-            </div>
-          </RouterLink>
-          <div v-if="top3.length > 1" class="box" style="margin-top: 10px">
-            <RouterLink v-for="r in top3.slice(1)" :key="r.recipe.id" class="lrow tap" :to="`/recipes/${r.recipe.id}`" style="padding: 10px 12px; gap: 10px; color: inherit; text-decoration: none">
-              <img :src="recipeImg(r.recipe.image)" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" style="width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex: none; background: var(--paper-2)" />
-              <div class="grow" style="min-width: 0">
-                <div class="t ell">{{ bi(r.recipe.title) }}</div>
-                <div class="s ell"><template v-if="r.recipe.cuisineName">{{ bi(r.recipe.cuisineName) }} · </template>{{ r.recipe.minutes }} min · {{ t('recipes.onSpecial', { n: r.onSpecial, m: r.total }) }}</div>
-                <div v-if="r.oneStore" class="s ell" style="font-weight: 700">{{ t('recipes.oneStore', { s: chainName(r.oneStore.store.id), n: r.oneStore.onSpecial, m: r.total }) }}</div>
-              </div>
-              <div class="link" style="flex: none">›</div>
-            </RouterLink>
-          </div>
-        </div>
-      </template>
-
-      <!-- 瘋狂半價專區：兩欄 4 格，右上角實際折數 -->
+      <!-- 5 瘋狂半價專區：兩欄 4 格，右上角實際折數 -->
       <template v-if="half.length">
         <div class="pad row sec-head">
           <div class="h2 half-t"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 3h9L6 10z" /></svg>{{ t('home.half') }}</div>
@@ -221,61 +212,54 @@ const fresh = computed(() => freshByKg.value.slice(0, 12))
 
 <style scoped>
 .sec-head { margin-top: 22px; margin-bottom: 10px; }
-/* 已省下：中間綠底白字卡 */
-.saved {
-  background: var(--brand);
-  color: #fff;
-  border-radius: var(--r);
-  padding: 16px 18px 12px;
-  box-shadow: var(--shadow);
-}
-.sv-hi { font-family: var(--font-head); font-weight: 600; font-size: 19px; line-height: 1.3; }
-.sv-amt { display: flex; align-items: baseline; gap: 6px; margin-top: 2px; font-family: var(--font-head); font-weight: 700; font-size: 38px; line-height: 1.1; letter-spacing: -0.5px; }
-.sv-word { font-size: 18px; font-weight: 600; letter-spacing: 0; }
-.sv-arrow { width: 30px; height: 30px; align-self: center; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.sv-none { font-family: var(--font-head); font-weight: 700; font-size: 24px; line-height: 1.2; }
-.sv-sub { margin-top: 6px; font-size: 13.5px; line-height: 1.45; color: rgba(255, 255, 255, 0.9); }
-.sv-none + .sv-sub { margin-top: 8px; }
-.sv-sub + .sv-sub { margin-top: 0; }
-.sv-ends { margin-top: 10px; text-align: right; font-size: 12.5px; color: rgba(255, 255, 255, 0.88); }
-.sv-ends b { color: #fff; }
 
-/* 生鮮橫滑：一次停一張，停下來卡片對齊左邊的 gutter；上下留一點讓卡片陰影不被切掉 */
+/* 橫滑：停下來卡片對齊左邊的留白；上下留一點讓卡片陰影不被切掉 */
 .rail { padding-top: 2px; padding-bottom: 12px; margin-bottom: -6px; }
 .hscroll.snap { scroll-snap-type: x mandatory; scroll-padding-left: var(--gutter); }
-.hscroll.snap > :deep(.mini) { scroll-snap-align: start; }
+.hscroll.snap > * { scroll-snap-align: start; }
 
-/* 本週食譜推薦的大圖卡 */
-.hero {
-  position: relative;
-  display: block;
-  aspect-ratio: 16 / 9;
+/* 這週最划算：卡寬 152px，圖片正方形；同一排一樣高，「其他店」對齊卡片底部 */
+.best-rail > .card { flex: 0 0 152px; display: flex; flex-direction: column; }
+.best-rail :deep(.thumb) { height: auto; aspect-ratio: 1 / 1; }
+.best-rail :deep(.others) { margin-top: auto; padding-top: 4px; }
+
+/* 本週食譜推薦：卡寬 236px，照片 16:10 */
+.hr {
+  flex: none;
+  width: 236px;
+  display: flex;
+  flex-direction: column;
   border-radius: var(--r);
   overflow: hidden;
-  background: var(--paper-2);
+  background: var(--card);
   box-shadow: var(--shadow);
-  color: #fff;
+  color: inherit;
   text-decoration: none;
+  transition: transform 0.28s var(--ease);
 }
-.hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 38%, rgba(0, 0, 0, 0.72) 100%); }
-.hero-ill { position: absolute; right: 9px; top: 9px; z-index: 2; padding: 3px 7px; border-radius: 7px; background: var(--card); color: var(--ink-2); font-size: 11px; font-weight: 700; line-height: 1.2; }
-.hero-txt { position: absolute; left: 14px; right: 14px; bottom: 11px; z-index: 1; }
-.hero-t {
-  font-family: var(--font-head);
+.hr:active { transform: scale(0.985); }
+.hr-img { position: relative; aspect-ratio: 16 / 10; background: var(--paper-2); }
+.hr-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* 照片上的小標：分類（淺綠底深綠字，左上）、AI 生的圖寫「示意圖」（白底，右上） */
+.hr-tag { position: absolute; left: 8px; top: 8px; padding: 3px 8px; border-radius: 8px; background: var(--brand-tint); color: var(--brand); font-size: 11.5px; font-weight: 700; line-height: 1.3; }
+.hr-ill { position: absolute; right: 8px; top: 8px; padding: 3px 7px; border-radius: 7px; background: var(--card); color: var(--ink-2); font-size: 11px; font-weight: 700; line-height: 1.2; }
+.hr-body { flex: 1; display: flex; flex-direction: column; padding: 10px 12px 12px; }
+/* 菜名固定兩行高，同一排的時間、小標才對得齊 */
+.hr-t {
   font-weight: 700;
-  font-size: 21px;
+  font-size: 15px;
   line-height: 1.25;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  min-height: 2.5em;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
-.hero-m { margin-top: 3px; text-align: right; font-size: 12.5px; font-weight: 700; white-space: nowrap; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
+.hr-m { margin-top: 4px; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
+.hr-sp { align-self: flex-start; max-width: 100%; margin-top: 8px; padding: 2px 8px; border-radius: 7px; background: var(--brand-tint); color: var(--brand); font-size: 11.5px; font-weight: 700; line-height: 1.45; }
 
-/* 瘋狂半價專區：標題前的小三角（風箏橘）、兩欄格子 */
+/* 瘋狂半價專區：標題前的小三角（省錢橘）、兩欄格子 */
 .half-t { display: flex; align-items: center; gap: 7px; }
-.half-t svg { width: 13px; height: 13px; flex: none; fill: var(--kite); }
+.half-t svg { width: 13px; height: 13px; flex: none; fill: var(--deal); }
 .half-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 </style>
