@@ -1,25 +1,28 @@
-/* KiteWise 共用樣式。原本是黑白靜態設計稿（K-Rules）；2026-10-01 換成 Chris 設計稿的綠色品牌風格（docs/brand/改版設計-*.jpg）。 */
-@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
-/* Poppins（LOGO 的字型）在 index.html 載入，只給標題和按鈕用 */
+/* KiteWise 共用樣式。原本是黑白靜態設計稿（K-Rules）；2026-10-01 換成 Chris 設計稿的綠色品牌風格（docs/brand/改版設計-*.jpg），
+   同天再照 Chris 定案的《首頁改版規格》（docs/kitewise-home-v2-spec.md）收成「每個顏色只做一件事」。
+   字型（英文和數字 Archivo、中文 Noto Sans TC）在 index.html 載入。 */
 
 :root{
-  /* 文字與底：字帶一點綠、頁面底是偏綠的米白（設計稿取色）、卡片白底 */
-  --ink:#1A211C; --ink-2:#4A534D; --ink-3:#7E8780; --line:#E2E6DE; --paper:#F4F5F0; --paper-2:#EAEEE5;
+  /* 文字與底：主要文字（一般價格、商品名）、次要文字（單位價、說明）、更淡的灰（劃掉的原價、提示字）；頁面米白、卡片白 */
+  --ink:#1C211D; --ink-2:#5C615A; --ink-3:#7D827B; --line:#E4E4DD; --paper:#F4F4EF; --paper-2:#EBEBE4;
   --card:#FFFFFF;
-  --shadow:0 1px 2px rgba(28,69,38,.05),0 4px 14px -4px rgba(28,69,38,.14);
-  /* 品牌（LOGO A）：深綠是字和主要按鈕；中間綠是頂欄和「已省下」卡（設計稿取色）；亮綠是 LOGO 底，上面不放白字 */
-  --brand:#507857; --brand-deep:#1C4526; --brand-tint:#E6EEE2;
-  --lime:#A6CE4E; --leaf:#6DB33F;
-  /* 風箏橘：#F39A2E 白字對比只有 2.2，所以只當裝飾；橘色的字和橘底白字的標籤用深一點的 kite-deep（對白 4.1） */
-  --kite:#F39A2E; --kite-deep:#C95F0C;
-  --ww:#1E9E4A; --nw:#E4002B; --pns:#FFD200;               /* 店色：只用在圓點、左側色條、分組標題、✓徽章 */
-  --ww-tint:#E6F3EA; --nw-tint:#FBE6EA; --pns-tint:#FFF6D0; /* 商品圖佔位色塊 */
-  --deal:var(--kite-deep); --hl:#FFE14D;                    /* 折扣（橘）、螢光黃（寶寶支線提醒） */
+  --shadow:0 1px 2px rgba(28,33,29,.05),0 4px 14px -4px rgba(28,33,29,.13);
+  /* 品牌深綠：頂部、底部選單、連結、按鈕（--brand-deep 是舊名字，現在跟 --brand 同一個色）；
+     淺綠：大卡片底、圖示底、小標籤、清單數字、頭像（上面的字用深綠，不用白字） */
+  --brand:#3F6B48; --brand-deep:var(--brand); --brand-tint:#E3EDE0;
+  /* 底部選單：選中那格的底色、沒選中的字和圖示 */
+  --tab-on:#5A8562; --tab-off:#DCE8D8;
+  /* 省錢橘：只用在省多少、半價、會員價的「卡」、會員價和半價的價格數字（白字對比 4.9） */
+  --deal:#B8520B;
+  --ww:#1FA04A; --nw:#D7001A; --pns:#F2C200;               /* 店色：商品圖左上角的小圓點（加白邊）、左側色條、以店為主角的標題列 */
+  --ww-tint:#E8F4EC; --nw-tint:#FBE8EA; --pns-tint:#FDF6D8; /* 小商品圖的底色 */
+  --hl:#FFE14D;                                             /* 螢光黃（寶寶支線提醒） */
   --r:16px;
-  --font-head:Poppins,"Noto Sans TC",Inter,-apple-system,sans-serif;
+  --font:Archivo,"Noto Sans TC",-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --font-head:var(--font);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:#DDDDDD;font-family:Inter,-apple-system,"Helvetica Neue",Arial,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+html,body{background:#DDDDDD;font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased}
 .stage{padding:40px;display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start}
 
 /* ===== 手機畫板 393×852 ===== */
@@ -30,10 +33,11 @@ html,body{background:#DDDDDD;font-family:Inter,-apple-system,"Helvetica Neue",Ar
 .status-right svg{display:block}
 .screen{position:absolute;top:54px;left:0;right:0;bottom:0;overflow:hidden}
 .pad{padding:0 20px}
-.tabbar{position:absolute;left:0;right:0;bottom:0;height:83px;border-top:1px solid var(--line);background:var(--card);display:flex;justify-content:space-around;padding:10px 8px 0}
-.tab{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--ink-3);width:64px}
-.tab svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.tab.active{color:var(--brand-deep)}
+/* 底部選單：整條品牌深綠；選中那格淺一點的綠底、白字白圖示，沒選中的淡綠字 */
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:83px;background:var(--brand);display:flex;justify-content:space-around;padding:8px 6px 0}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:64px;height:54px;border-radius:14px;font-size:11px;font-weight:600;color:var(--tab-off)}
+.tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab.active{background:var(--tab-on);color:#fff}
 .home-indicator{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#000}
 
 /* ===== 文字 ===== */
@@ -60,21 +64,19 @@ mark{background:var(--hl);color:inherit;padding:0 4px;border-radius:3px}
 
 /* ===== 標籤語彙 ===== */
 .tag{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:.2px;white-space:nowrap;line-height:1}
+/* 省多少、半價：橘底白字；黃超的低價標籤：灰底；其他小標籤：淺綠底深綠字（店名不再做成標籤，商品圖左上角只放店色圓點） */
 .tag.half,.tag.pct,.tag.save{background:var(--deal);color:#fff}
 .tag.club{border:1.5px solid var(--nw);color:var(--nw);background:transparent}
-.tag.low{background:#E8ECE4;color:#59625B}
+.tag.low{background:var(--paper-2);color:var(--ink-2)}
 .tag.multi,.tag.low8{background:var(--brand-deep);color:#fff}
-.tag.best{color:#fff}
-.tag.best.ww{background:var(--ww)}.tag.best.nw{background:var(--nw)}.tag.best.pns{background:var(--pns);color:var(--ink)}
-.tag.same{background:var(--brand-deep);color:#fff}.tag.similar{background:#E8ECE4;color:#59625B;border:1px dashed #B3BCB2}.tag.only{border:1px solid #B3BCB2;color:var(--ink-2)}
+.tag.same{background:var(--brand-tint);color:var(--brand)}.tag.similar{background:#E8ECE4;color:#59625B;border:1px dashed #B3BCB2}.tag.only{border:1px solid #B3BCB2;color:var(--ink-2)}
 
 /* ===== 商品卡（格狀）：白底圓角卡片，卡片之間留縫 ===== */
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 var(--gutter,20px)}
 .card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:6px 8px 9px;position:relative;overflow:hidden}
 .thumb{height:56px;border-radius:10px;background:var(--card);position:relative}
 .thumb .deal{position:absolute;left:5px;bottom:5px;top:auto;height:17px;font-size:10px;padding:0 6px}
-.thumb .tag.best{position:absolute;left:-4px;top:-6px;z-index:2}
-.price{font-family:"Inter Tight",Inter,sans-serif;font-weight:900;font-size:21px;letter-spacing:-.4px;line-height:1;margin-top:9px}
+.price{font-family:var(--font);font-weight:800;font-size:21px;letter-spacing:-.4px;line-height:1;margin-top:9px}
 .price .unit{font-size:12px;font-weight:600;color:var(--ink-2);letter-spacing:0;margin-left:1px}
 .meta{font-size:11px;color:var(--ink-2);margin-top:4px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .meta s{color:var(--ink-3)}
@@ -98,22 +100,24 @@ mark{background:var(--hl);color:inherit;padding:0 4px;border-radius:3px}
 .back{font-size:15px;font-weight:700;color:var(--brand-deep)}
 
 /* 盒子與清單列：白卡、淡陰影 */
-.box{background:var(--card);border:1px solid rgba(28,69,38,.06);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.box{background:var(--card);border:1px solid rgba(28,33,29,.06);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
 .lrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--line)}
 .lrow:first-child{border-top:0}
 .lrow .t{font-size:15px;font-weight:700;line-height:1.22}
 .lrow .s{font-size:12px;color:var(--ink-2);margin-top:2px;line-height:1.25}
-.lrow .p{font-family:"Inter Tight",Inter,sans-serif;font-weight:900;font-size:19px;letter-spacing:-.3px;text-align:right;flex:none;line-height:1.05}
+.lrow .p{font-family:var(--font);font-weight:800;font-size:19px;letter-spacing:-.3px;text-align:right;flex:none;line-height:1.05}
 .lrow .p .unit{font-size:11px;font-weight:600;color:var(--ink-2);letter-spacing:0}
-.gap{color:var(--brand);font-weight:800;font-size:12px;margin-top:3px}   /* 價差、近 8 週最低：綠色（橘色留給打折的現價和折扣標） */
-.rank{font-family:"Inter Tight",Inter,sans-serif;font-weight:900;font-size:19px;color:var(--brand);width:20px;flex:none;text-align:center}
+.gap{color:var(--brand);font-weight:800;font-size:12px;margin-top:3px}   /* 價差、近 8 週最低：綠色（橘色只留給省多少、半價、會員價） */
+.rank{font-family:var(--font);font-weight:800;font-size:19px;color:var(--brand);width:20px;flex:none;text-align:center}
 
 /* 小縮圖 */
 .tn{width:52px;height:52px;border-radius:10px;background:var(--paper-2);flex:none;position:relative}
-.tn.ww{background:repeating-linear-gradient(135deg,var(--ww-tint) 0 8px,#F2F8F4 8px 16px)}
+.tn.ww{background:repeating-linear-gradient(135deg,var(--ww-tint) 0 8px,#F3F9F5 8px 16px)}
 .tn.nw{background:var(--nw-tint)}.tn.pns{background:var(--pns-tint)}
 .tn.sq{width:44px;height:44px}
-.thumb .dot{position:absolute;right:6px;top:6px;z-index:2}
+/* 商品圖上的超市標示：只有店色小圓點，加一圈白邊，放圖片左上角（不寫店名，規格三） */
+.thumb .dot,.tn .dot{position:absolute;left:6px;top:6px;z-index:2;box-shadow:0 0 0 2px #fff}
+.tn .dot{left:4px;top:4px;width:8px;height:8px}
 
 /* 篩選 chips：選中＝綠框淺綠底 */
 .chips{display:flex;gap:8px;flex-wrap:wrap}
@@ -126,7 +130,7 @@ mark{background:var(--hl);color:inherit;padding:0 4px;border-radius:3px}
 /* 分段控制 */
 .seg{display:flex;background:var(--paper-2);border-radius:12px;padding:4px}
 .seg>div{flex:1;text-align:center;padding:9px 4px;font-size:14px;font-weight:700;color:var(--ink-2);border-radius:9px;white-space:nowrap}
-.seg>div.on{background:var(--card);color:var(--brand-deep);box-shadow:0 1px 3px rgba(28,69,38,.16)}
+.seg>div.on{background:var(--card);color:var(--brand-deep);box-shadow:0 1px 3px rgba(28,33,29,.14)}
 
 /* 開關 / 勾選 */
 .tg{width:48px;height:28px;border-radius:14px;background:var(--brand);position:relative;flex:none}
@@ -177,6 +181,3 @@ mark{background:var(--hl);color:inherit;padding:0 4px;border-radius:3px}
 .dtable td b{color:var(--ink);font-weight:700}
 .dcol{padding:34px 40px}
 
-/* 中文版字體：拉丁字走 Inter，中文字落到 Noto Sans TC；標題的拉丁字是 Poppins，價格是 Inter Tight */
-.zh{font-family:Inter,"Noto Sans TC",-apple-system,sans-serif}
-.zh .price{font-family:"Inter Tight","Noto Sans TC",Inter,sans-serif}

@@ -28,7 +28,7 @@ defineProps<{ to?: string; disabled?: boolean }>()
   -webkit-tap-highlight-color: transparent;
 }
 .gbtn.dim { opacity: 0.45; }
-.gbtn:active .inner { background: #2a5a35; }
+.gbtn:active .inner { background: #33583B; }   /* 按下去：比品牌深綠再深一點 */
 .band { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; }
 .glow {
   position: absolute;

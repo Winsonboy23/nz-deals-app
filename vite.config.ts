@@ -14,7 +14,7 @@ export default defineConfig({
         name: 'KiteWise',
         short_name: 'KiteWise',
         description: 'Spot the specials. Cook smart. Live lighter.',
-        theme_color: '#507857',   // 跟頂欄同一個綠（index.html 的 theme-color）
+        theme_color: '#3F6B48',   // 跟頂欄同一個綠（index.html 的 theme-color）
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',

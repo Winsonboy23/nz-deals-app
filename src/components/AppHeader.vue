@@ -54,6 +54,8 @@ const first = computed(() => name.value.split('@')[0].trim().split(/\s+/)[0] ?? 
   color: rgba(255, 255, 255, 0.94);
   font-size: 13px;
   font-weight: 600;
+  /* 固定行高：「Hastings ·」和「3 家店 ›」是兩塊各自置中，行高 normal 時中文字（Noto Sans TC）那塊比較高，兩塊會差半格 */
+  line-height: 1.25;
   gap: 5px;
 }
 .hd-store :deep(.dot) { box-shadow: 0 0 0 1.5px #fff; }
@@ -76,7 +78,7 @@ const first = computed(() => name.value.split('@')[0].trim().split(/\s+/)[0] ?? 
 .hd-search svg { width: 19px; height: 19px; flex: none; fill: none; stroke: var(--ink-3); stroke-width: 2.2; stroke-linecap: round; }
 .hd-icon { position: relative; width: 40px; height: 40px; flex: none; display: flex; align-items: center; justify-content: center; }
 .hd-icon svg { width: 27px; height: 27px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-/* 清單幾項：風箏橘小圓點、深綠字（橘底白字太淡） */
+/* 清單幾項：淺綠底深綠字（首頁改版規格二） */
 .hd-badge {
   position: absolute;
   top: 1px;
@@ -85,8 +87,8 @@ const first = computed(() => name.value.split('@')[0].trim().split(/\s+/)[0] ?? 
   height: 19px;
   padding: 0 5px;
   border-radius: 10px;
-  background: var(--kite);
-  color: var(--brand-deep);
+  background: var(--brand-tint);
+  color: var(--brand);
   box-shadow: 0 0 0 2px var(--brand);
   font-size: 11px;
   font-weight: 800;
@@ -94,12 +96,14 @@ const first = computed(() => name.value.split('@')[0].trim().split(/\s+/)[0] ?? 
   text-align: center;
 }
 .hd-me { width: 50px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+/* 頭像：淺綠底深綠字（首頁改版規格二）；有大頭貼就蓋過去 */
 .hd-av {
   width: 34px;
   height: 34px;
   border-radius: 50%;
   border: 2px solid #fff;
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--brand-tint);
+  color: var(--brand);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -109,6 +113,6 @@ const first = computed(() => name.value.split('@')[0].trim().split(/\s+/)[0] ?? 
   font-size: 15px;
 }
 .hd-av img { width: 100%; height: 100%; object-fit: cover; }
-.hd-av svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+.hd-av svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .hd-name { max-width: 100%; font-size: 11px; font-weight: 600; line-height: 1.2; }
 </style>

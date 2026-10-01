@@ -375,7 +375,8 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
 .chev { display: inline-block; transition: transform 0.15s; opacity: 0.8; }
 .chev.open { transform: rotate(180deg); }
 .grp { padding: 8px 12px 2px; font-size: 12px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.02em; }
-.stag { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: var(--brand-deep); color: #fff; margin-right: 4px; line-height: 1.5; }
+/* 小標籤（特價）：淺綠底深綠字（2026-10-01 首頁改版規格二） */
+.stag { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: var(--brand-tint); color: var(--brand); margin-right: 4px; line-height: 1.5; }
 .stag.club { background: var(--paper-2); color: var(--ink-2); }
 .pulse { animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }

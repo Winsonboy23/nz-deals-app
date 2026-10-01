@@ -8,8 +8,8 @@ import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
 import PriceLine from '../components/PriceLine.vue'
 import { rankPrice } from '../lib/compare'
-import { chainClass, chainName, chainOf, displayName, money, unitLabel } from '../lib/format'
-import { chainBadge, t } from '../composables/useI18n'
+import { chainClass, chainOf, displayName, money, unitLabel } from '../lib/format'
+import { t } from '../composables/useI18n'
 import type { Group } from '../lib/types'
 
 // 關注中：商品頁按 ☆ 的東西。這週你的店有特價的排上面（可點進商品頁），沒特價的排下面只列名字。
@@ -95,12 +95,13 @@ function others(g: Group): string {
             :to="`/p/${encodeURIComponent(g.key)}`"
             style="padding: 8px 0; border-top: 1px solid var(--line); gap: 9px"
           >
-            <ProductThumb :special="g.best.special" variant="tn" style="width: 46px; height: 46px" />
+            <!-- 最便宜那家：商品圖左上角的店色圓點（首頁改版規格三：店名不再做成標籤） -->
+            <ProductThumb :special="g.best.special" variant="tn" style="width: 46px; height: 46px">
+              <span class="dot" :class="chainClass(g.best.store.id)" />
+            </ProductThumb>
             <div class="grow" style="min-width: 0">
               <div class="t ell" style="font-size: 14.5px">{{ displayName(g.best.special) }}</div>
               <div style="display: flex; align-items: center; gap: 7px; margin-top: 4px">
-                <span v-if="g.offers.length >= 2" class="tag best" :class="chainClass(g.best.store.id)">✓ {{ chainBadge(g.best.store.id) }}</span>
-                <template v-else><span class="dot" :class="chainClass(g.best.store.id)" /><span class="small" style="flex: none">{{ chainName(g.best.store.id) }}</span></template>
                 <span class="ell" style="font-size: 12px; color: var(--ink-2)">{{ detail(g) }}</span>
               </div>
               <div v-if="others(g)" class="others" style="margin-top: 3px">{{ others(g) }}</div>

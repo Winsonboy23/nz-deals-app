@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // AI 食譜問卷第 2 頁「你家有哪些廚具」（KiteWise 3-7）：Chris 定稿的可愛風廚房插圖（public/kitchen/，原圖 2816×1536 縮成 1200／800 寬），
-// 9 樣廚具在圖上各疊一個透明按鈕（熱區）。點一下切換有／沒有：有＝深綠圓角框＋亮綠光暈＋右上角綠圓勾；沒有＝蓋一層半透明白，變淡。
+// 9 樣廚具在圖上各疊一個透明按鈕（熱區）。點一下切換有／沒有：有＝品牌深綠圓角框＋淡綠光暈＋右上角綠圓勾；沒有＝蓋一層半透明白，變淡。
 // 圖是點陣圖，改不了東西本身的顏色，所以都用疊的。點到的那一樣跳出名字 1.5 秒（手機上圖很小，看不出是什麼）。
 // 熱區外的背景（盆栽、刀架、櫥櫃、插座、磁磚…）點了沒反應；熱區是矩形，難免包到一點背景（例如調味罐在爐台框裡）。
 import { onBeforeUnmount, ref } from 'vue'
@@ -78,7 +78,7 @@ function tipAt(s: Spot) {
 <style scoped>
 /* 深綠＝家裡有（App 目前只有淺色模式）。isolation：勾勾和名字標籤的 z-index 只在圖裡面比，不會蓋到頁面上其他東西 */
 .kp {
-  --pick: #1c4526;
+  --pick: var(--brand);
   position: relative;
   isolation: isolate;
   aspect-ratio: 2816 / 1536;
@@ -90,7 +90,7 @@ function tipAt(s: Spot) {
   -webkit-user-select: none;
 }
 .pic { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-/* 熱區：沒有＝白霧蓋著變淡、沒框；有＝透明、深綠框＋亮綠光暈 */
+/* 熱區：沒有＝白霧蓋著變淡、沒框；有＝透明、品牌深綠框＋淡綠光暈（2026-10-01 跟著首頁改版的色票） */
 .hs {
   position: absolute;
   border: 2.5px solid transparent;
@@ -99,7 +99,7 @@ function tipAt(s: Spot) {
   overflow: visible;
   transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
-.hs.on { background: transparent; border-color: var(--pick); box-shadow: 0 0 0 3px rgba(166, 206, 78, 0.55); }
+.hs.on { background: transparent; border-color: var(--pick); box-shadow: 0 0 0 3px rgba(90, 133, 98, 0.45); }
 /* 右上角小綠圓勾：疊在框角上、蓋過隔壁的框和白霧；不吃點擊（點擊範圍只有熱區本身） */
 .hs::after {
   content: '';
