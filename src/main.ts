@@ -6,6 +6,9 @@ import { readCache } from './lib/cache'
 import { useSiteSettings } from './composables/useSiteSettings'
 import { OLD_HOST, encodePayload, exportGuestData, safeReturnPath } from './lib/migrate'
 
+// www.kitewise.co.nz 一律導到沒有 www 的主網址：兩個網址的 localStorage 是分開的，留兩個入口會讓人的店和清單分家（2026-10-01）。
+if (location.hostname === 'www.kitewise.co.nz') location.replace('https://kitewise.co.nz' + location.pathname + location.search + location.hash)
+
 // Nothing to compare until stores are picked, so the picker is the front door.
 router.beforeEach((to) => {
   if (['/stores', '/admin', '/migrate', '/privacy', '/delete-data'].includes(to.path)) return true   // 後台不用選店；搬家頁要先把舊網址的店搬進來；隱私權政策、刪除資料說明是給 Meta 審核的公開網址
