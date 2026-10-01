@@ -278,7 +278,7 @@ async function share() {
 .lrow { color: inherit; text-decoration: none; }
 .opt { margin-left: 6px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
 .rstep { display: flex; gap: 12px; margin-top: 12px; font-size: 15.5px; line-height: 1.45; }
-.rstep b { flex: none; width: 16px; font-family: 'Inter Tight', Inter, sans-serif; font-weight: 900; color: var(--brand); }
+.rstep b { flex: none; width: 16px; font-weight: 800; color: var(--brand); }
 /* 寶寶支線：開關打開才出現。提醒用螢光黃，「先取出寶寶的份」那張卡用綠框白底，比一般步驟醒目 */
 .babywarn { margin-top: 12px; padding: 8px 12px; border-radius: 10px; background: var(--hl); font-size: 14px; font-weight: 700; line-height: 1.35; }
 .babycard { margin-top: 14px; padding: 12px 14px; border: 2px solid var(--brand); border-radius: var(--r); background: var(--card); }

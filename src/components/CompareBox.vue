@@ -66,7 +66,7 @@ const rows = computed<Row[]>(() => {
       </div>
       <div class="p"><PriceLine :special="r.offer.special" detail align="right" /></div>
       <div
-        style="font-family: 'Inter Tight', Inter, sans-serif; font-weight: 900; font-size: 16px; flex: none; width: 14px"
+        style="font-weight: 800; font-size: 16px; flex: none; width: 14px"
       >
         {{ r.isBest && rows.length >= 2 ? '✓' : '' }}
       </div>

@@ -6,7 +6,7 @@ import Loading from '../components/Loading.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { rankPrice } from '../lib/compare'
 import { chainClass, chainOf, displayName, money, unitLabel } from '../lib/format'
-import { chainBadge, t } from '../composables/useI18n'
+import { t } from '../composables/useI18n'
 import type { Group } from '../lib/types'
 
 const { topDeduped, loading } = useSpecials()
@@ -43,13 +43,13 @@ function others(g: Group): string {
         style="padding: 6px 0; border-top: 1px solid var(--line); gap: 9px"
       >
         <div class="rank">{{ i + 1 }}</div>
-        <ProductThumb :special="g.best.special" variant="tn" style="width: 46px; height: 46px" />
+        <!-- 最便宜那家：商品圖左上角的店色圓點（首頁改版規格三：店名不再做成標籤） -->
+        <ProductThumb :special="g.best.special" variant="tn" style="width: 46px; height: 46px">
+          <span class="dot" :class="chainClass(g.best.store.id)" />
+        </ProductThumb>
         <div class="grow">
           <div class="t ell" style="font-size: 14.5px">{{ displayName(g.best.special) }}</div>
           <div style="display: flex; align-items: center; gap: 7px; margin-top: 4px">
-            <span class="tag best" :class="chainClass(g.best.store.id)">
-              ✓ {{ chainBadge(g.best.store.id) }}
-            </span>
             <span class="ell" style="font-size: 12px; color: var(--ink-2)">{{ detail(g) }}</span>
           </div>
           <div class="others" style="margin-top: 3px">{{ others(g) }}</div>
