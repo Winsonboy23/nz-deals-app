@@ -6,10 +6,10 @@ import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
 import { usePush } from '../composables/usePush'
 import { useAdmin } from '../composables/useAdmin'
-import { useCards, type LoyaltyCard } from '../composables/useCards'
+import { cardCls, cardTitle, useCards } from '../composables/useCards'
 import CardBarcode from '../components/CardBarcode.vue'
 import { lang, setLang, t } from '../composables/useI18n'
-import { chainClass, chainName } from '../lib/format'
+import { chainName } from '../lib/format'
 import { AccountError, deleteAccount } from '../lib/account'
 
 const { selectedStores } = useStores()
@@ -36,8 +36,6 @@ const town = computed(() => {
 /** 會員卡（2026-10-01 改版，照設計稿疊成一疊）：前 3 張，第一張在最上面，後面兩張往左右斜出來露出顏色；點了去 /me/cards */
 const { cards, loading: cardsLoading } = useCards()
 const pile = computed(() => cards.value.slice(0, 3))
-const cardTitle = (c: LoyaltyCard) => (c.chain === 'other' ? c.label || t('cards.other') : chainName(c.chain))
-const cardCls = (c: LoyaltyCard) => (c.chain === 'other' ? 'other' : chainClass(c.chain))
 
 function toggleFood() {
   foodOnly.value = !foodOnly.value
@@ -99,7 +97,11 @@ async function doDelete() {
       </div>
       <RouterLink v-if="pile.length" class="pile" :class="'n' + pile.length" to="/me/cards" :aria-label="t('me.cards')">
         <div v-for="(c, i) in pile" :key="c.id" class="pc" :class="[cardCls(c), 'pc' + i]">
-          <div class="pc-name ell">{{ cardTitle(c) }}</div>
+          <div class="pc-top">
+            <div class="pc-name">{{ cardTitle(c) }}</div>
+            <!-- Club+ 卡面：右上紅黃兩點（紅超黃超都能用） -->
+            <span v-if="c.chain === 'clubplus'" class="pc-dots" aria-hidden="true"><i class="nw" /><i class="pns" /></span>
+          </div>
           <div class="pc-panel">
             <CardBarcode class="pc-bar" :code="c.code" :format="c.format" />
             <div class="pc-num ell">{{ c.code }}</div>
@@ -237,17 +239,22 @@ async function doDelete() {
 }
 /* 右下角一塊淡淡的圓弧（設計稿卡面上的裝飾） */
 .pc::after { content: ''; position: absolute; right: -46px; bottom: -46px; width: 120px; height: 120px; border-radius: 50%; border: 22px solid rgba(255, 255, 255, 0.16); }
-.pc.nw { background: var(--nw); }
+/* Club+ 深色卡面（跟會員卡頁一樣）、Everyday Rewards 綠超色、其他深灰 */
+.pc.cp { background: linear-gradient(145deg, #2b3b31 0%, #18221b 55%, #101712 100%); }
 .pc.ww { background: var(--ww); }
-.pc.pns { background: var(--pns); color: var(--ink); }
-.pc.pns::after { border-color: rgba(0, 0, 0, 0.07); }
 .pc.other { background: #3a3a3a; }
 .pc0 { z-index: 3; }
 .pc1 { z-index: 2; transform: translateX(-38px) rotate(-8deg); }
 .pc2 { z-index: 1; transform: translateX(38px) rotate(8deg); }
 /* 只有兩張：後面那張往右斜 */
 .n2 .pc1 { transform: translateX(34px) rotate(7deg); }
-.pc-name { font-family: var(--font-head); font-weight: 700; font-size: 21px; line-height: 1.2; padding: 0 2px; }
+.pc-top { display: flex; align-items: center; gap: 8px; }
+/* 名字最多兩行（「Everyday Rewards」一行放不下） */
+.pc-name { flex: 1; min-width: 0; font-family: var(--font-head); font-weight: 700; font-size: 21px; line-height: 1.2; padding: 0 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.pc-dots { flex: none; display: inline-flex; gap: 4px; }
+.pc-dots i { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.9); }
+.pc-dots .nw { background: var(--nw); }
+.pc-dots .pns { background: var(--pns); }
 .pc-panel { position: relative; z-index: 1; margin-top: auto; background: #fff; color: var(--ink); border-radius: 12px; padding: 12px 6px 8px; }
 .pc-bar { height: 62px; }
 .pc-num { margin-top: 6px; text-align: center; font-family: 'Inter Tight', Inter, sans-serif; font-weight: 800; font-size: 14px; letter-spacing: 0.5px; font-variant-numeric: tabular-nums; }

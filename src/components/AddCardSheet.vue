@@ -1,22 +1,21 @@
 <script setup lang="ts">
-// 加一張會員卡：選超市 → 掃截圖／照片（或手動打號碼）→ 存。長相照 MatchSheet（.dim + .bsheet + 把手），根元素是一層 div，外面的 <Transition name="sheet"> 要講明時間。
+// 加一張會員卡：選哪種卡（Club+／Everyday Rewards／其他）→ 掃截圖／照片（或手動打號碼）→ 存。長相照 MatchSheet（.dim + .bsheet + 把手），根元素是一層 div，外面的 <Transition name="sheet"> 要講明時間。
 // 讀條碼：先試瀏覽器內建的 BarcodeDetector（Chrome Android 有），沒有或讀不到再動態載入 ZXing。iPhone Safari 沒有 BarcodeDetector，一律走 ZXing。
 import { computed, ref } from 'vue'
-import { useCards, type CardChain } from '../composables/useCards'
+import { cardCls, cardTitle, useCards, type CardChain } from '../composables/useCards'
 import { t } from '../composables/useI18n'
-import { chainName } from '../lib/format'
 import { cleanCode, ean13Valid, toJsBarcodeFormat } from '../lib/barcode'
 
 const emit = defineEmits<{ done: []; dismiss: [] }>()
 const { add } = useCards()
 
-const CHAINS: { id: CardChain; cls: string }[] = [
-  { id: 'newworld', cls: 'nw' },
-  { id: 'woolworths', cls: 'ww' },
-  { id: 'paknsave', cls: 'pns' },
-  { id: 'other', cls: 'other' },
+/** 三種卡（2026-10-01）：紅超黃超共用一張 Club+、綠超的 Everyday Rewards、其他（要填名稱）。左邊一張小卡面、名字、副標 */
+const CHAINS: { id: CardChain; sub: () => string }[] = [
+  { id: 'clubplus', sub: () => t('cards.clubplusSub') },
+  { id: 'woolworths', sub: () => 'Woolworths' },
+  { id: 'other', sub: () => t('cards.otherSub') },
 ]
-const chainLabel = (c: CardChain) => (c === 'other' ? t('cards.other') : chainName(c))
+const chainLabel = (c: CardChain) => cardTitle({ chain: c, label: null })
 
 const chain = ref<CardChain | null>(null)
 const label = ref('')
@@ -125,9 +124,14 @@ async function save(): Promise<void> {
       <div class="h2" style="font-size: 22px">{{ t('cards.addTitle') }}</div>
 
       <div class="sec" style="margin-top: 16px">{{ t('cards.which') }}</div>
-      <div class="chips" style="margin-top: 8px">
-        <button v-for="c in CHAINS" :key="c.id" type="button" class="chip" :class="[c.cls, { on: chain === c.id }]" @click="chain = c.id">
-          <span class="dot" :class="c.cls" />{{ chainLabel(c.id) }}
+      <div class="opts" role="radiogroup" :aria-label="t('cards.which')" style="margin-top: 8px">
+        <button v-for="c in CHAINS" :key="c.id" type="button" class="opt" :class="{ on: chain === c.id }" role="radio" :aria-checked="chain === c.id" @click="chain = c.id">
+          <span class="face" :class="cardCls({ chain: c.id })" aria-hidden="true"><template v-if="c.id === 'clubplus'"><i class="nw" /><i class="pns" /></template></span>
+          <span class="opt-text">
+            <span class="opt-name">{{ chainLabel(c.id) }}</span>
+            <span class="opt-sub">{{ c.sub() }}</span>
+          </span>
+          <span class="opt-tick" aria-hidden="true">✓</span>
         </button>
       </div>
       <div v-if="chain === 'other'" class="field" style="margin-top: 10px">
@@ -168,8 +172,24 @@ async function save(): Promise<void> {
 </template>
 
 <style scoped>
-.dot.other { background: #3a3a3a; }
-.chip.on.other { background: #3a3a3a; border-color: #3a3a3a; color: #fff; }
+/* 選卡：一列一種，選中＝綠框淺綠底（跟 .chip.on 一樣） */
+.opts { display: flex; flex-direction: column; gap: 8px; }
+.opt { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--card); }
+.opt.on { background: var(--brand-tint); border-color: var(--brand); }
+/* 小卡面：顏色跟會員卡頁一樣（Club+ 深色、右上紅黃兩點；綠超色；其他深灰） */
+.face { position: relative; flex: none; width: 46px; height: 30px; border-radius: 6px; }
+.face.cp { background: linear-gradient(145deg, #2b3b31 0%, #18221b 55%, #101712 100%); }
+.face.ww { background: var(--ww); }
+.face.other { background: #3a3a3a; }
+.face i { position: absolute; top: 5px; width: 7px; height: 7px; border-radius: 50%; }
+.face i.nw { right: 14px; background: var(--nw); }
+.face i.pns { right: 5px; background: var(--pns); }
+.opt-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.opt-name { font-size: 15px; font-weight: 700; line-height: 1.25; }
+/* keep-all：中文只在空白處換行，「共用」不會被拆成兩行 */
+.opt-sub { font-size: 12.5px; color: var(--ink-2); line-height: 1.3; word-break: keep-all; }
+.opt-tick { flex: none; font-weight: 900; color: var(--brand-deep); opacity: 0; }
+.opt.on .opt-tick { opacity: 1; }
 .scan { position: relative; height: 52px; font-size: 16px; cursor: pointer; }
 .scan.busy { opacity: 0.55; }
 /* 檔案欄藏起來但不用 display:none，點外面的 label 就會開選圖 */

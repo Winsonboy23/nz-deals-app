@@ -1,15 +1,18 @@
 // 我的 → 會員卡：使用者的超市會員卡，到店裡打開給店員掃。只存號碼、不存圖（截圖是個資；App 自己畫條碼，掃得比截圖穩）。
 // 只給登入者：存在 loyalty_cards（migrations/007-loyalty-cards.sql，RLS 只有本人讀寫），跨裝置都在；訪客是空的。登入狀態變了就重讀。
+// 2026-10-01 Chris 規格：New World、PAK'nSAVE（和 Four Square）共用同一張 Club+（2026-06-15 上線，舊的 New World Clubcard 07-26 停用），
+// 兩家的卡合併成一張 'clubplus'（migrations/010-loyalty-clubplus.sql 把舊資料改掉）。
 import { ref, watch } from 'vue'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './useAuth'
+import { t } from './useI18n'
 
-export type CardChain = 'newworld' | 'woolworths' | 'paknsave' | 'other'
+export type CardChain = 'clubplus' | 'woolworths' | 'other'
 
 export interface LoyaltyCard {
   id: string
   chain: CardChain
-  /** 自訂名稱（其他用；三家是 null） */
+  /** 自訂名稱（其他用；Club+、Everyday Rewards 是 null） */
   label: string | null
   /** 條碼內容（號碼） */
   code: string
@@ -18,6 +21,24 @@ export interface LoyaltyCard {
   position: number
 }
 export type NewCard = Pick<LoyaltyCard, 'chain' | 'label' | 'code' | 'format'>
+
+/** 資料庫的 chain → 卡別。舊值 newworld / paknsave（10-01 前存的、或還開著舊版 App 的人存的）一律當 Club+ */
+function toChain(chain: string): CardChain {
+  if (chain === 'clubplus' || chain === 'newworld' || chain === 'paknsave') return 'clubplus'
+  return chain === 'woolworths' ? 'woolworths' : 'other'
+}
+const fromRow = (r: LoyaltyCard): LoyaltyCard => ({ ...r, chain: toChain(r.chain) })
+
+/** 卡面上的名字：Club+、Everyday Rewards；其他是自訂名稱 */
+export function cardTitle(c: Pick<LoyaltyCard, 'chain' | 'label'>): string {
+  if (c.chain === 'clubplus') return 'Club+'
+  if (c.chain === 'woolworths') return 'Everyday Rewards'
+  return c.label || t('cards.other')
+}
+/** 卡面底色的 class：cp（Club+ 深色卡面）、ww（綠超色）、other（深灰） */
+export function cardCls(c: Pick<LoyaltyCard, 'chain'>): string {
+  return c.chain === 'clubplus' ? 'cp' : c.chain === 'woolworths' ? 'ww' : 'other'
+}
 
 const COLS = 'id,chain,label,code,format,position'
 const { user } = useAuth()
@@ -35,7 +56,7 @@ async function load(): Promise<void> {
   try {
     const { data, error } = await supabase.from('loyalty_cards').select(COLS).eq('user_id', uid).order('position').order('created_at')
     // 讀的時候登出或換了帳號 → 這份不是他的，丟掉
-    if (!error && user.value?.id === uid) cards.value = (data ?? []) as LoyaltyCard[]
+    if (!error && user.value?.id === uid) cards.value = ((data ?? []) as LoyaltyCard[]).map(fromRow)
   } finally {
     loading.value = false
   }
@@ -48,7 +69,7 @@ async function add(c: NewCard): Promise<boolean> {
   const position = cards.value.reduce((m, x) => Math.max(m, x.position + 1), 0)
   const { data, error } = await supabase.from('loyalty_cards').insert({ ...c, user_id: uid, position }).select(COLS).single()
   if (error || !data) return false
-  cards.value = [...cards.value, data as LoyaltyCard]
+  cards.value = [...cards.value, fromRow(data as LoyaltyCard)]
   return true
 }
 

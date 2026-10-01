@@ -74,7 +74,7 @@ const shown = computed(() => (cat.value === 'all' ? sections.value : sections.va
 
 function note(r: Row): string {
   const bits = [r.store.name]
-  if (r.special.club_only) bits.push('Clubcard')
+  if (r.special.club_only) bits.push('Club+')
   else {
     const was = wasPriceOf(r.special)
     if (was) bits.push(`was ${money(was)}`)

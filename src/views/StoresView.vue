@@ -25,7 +25,7 @@ function subtitle(r: RankedStore): string {
   const bits: string[] = []
   bits.push(r.km == null ? t('stores.unknownDistance') : `${r.km.toFixed(1)} km`)
   if (!r.hasData) bits.push(t('stores.noData'))
-  else if (chainOf(r.store.id) === 'newworld') bits.push('Clubcard')
+  else if (chainOf(r.store.id) === 'newworld') bits.push('Club+')
   return bits.join(' · ')
 }
 
