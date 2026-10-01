@@ -531,7 +531,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'fresh.multi': { en: '{q} for {v}', zh: '{q} 件 {v}' },
 }
 
-const lang = ref<Lang>(readCache<Lang>('lang') ?? 'zh')
+const lang = ref<Lang>(readCache<Lang>('lang') ?? 'en')
 const zhCats = ref<Record<string, string>>({})
 let zhLoaded = false
 

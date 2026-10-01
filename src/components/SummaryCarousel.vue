@@ -47,11 +47,46 @@ function onScroll() {
   const off = (k: HTMLElement) => Math.abs(k.offsetLeft - x0 - el.scrollLeft)
   at.value = kids.reduce((best, k, i) => (off(k) < off(kids[best]) ? i : best), 0)
 }
+/** 點小圓點跳到那張（電腦上沒有手指可以滑） */
+function go(i: number) {
+  const el = rail.value
+  const kids = el ? ([...el.children] as HTMLElement[]) : []
+  if (el && kids[i]) el.scrollTo({ left: kids[i].offsetLeft - kids[0].offsetLeft, behavior: 'smooth' })
+}
+/** 滑鼠拖：按住左右拉；拖超過 5px 就吞掉放開時的點擊（不然會開卡片的連結）。放開後跳到最近那張 */
+let drag: { x: number; left: number; moved: boolean } | null = null
+function down(e: PointerEvent) {
+  if (e.pointerType !== 'mouse' || !rail.value) return
+  drag = { x: e.clientX, left: rail.value.scrollLeft, moved: false }
+}
+function move(e: PointerEvent) {
+  const el = rail.value
+  if (!drag || !el) return
+  const dx = e.clientX - drag.x
+  if (!drag.moved && Math.abs(dx) < 5) return
+  drag.moved = true
+  el.style.scrollSnapType = 'none'
+  el.scrollLeft = drag.left - dx
+}
+function up() {
+  if (!drag) return
+  const moved = drag.moved
+  if (rail.value) rail.value.style.scrollSnapType = ''
+  if (moved) {
+    onScroll()
+    go(at.value)
+    setTimeout(() => (drag = null))
+  } else drag = null
+}
+function clickCapture(e: MouseEvent) {
+  if (drag?.moved) { e.preventDefault(); e.stopPropagation() }
+}
 </script>
 
 <template>
   <div class="sm">
-    <div ref="rail" class="hscroll sm-rail" @scroll.passive="onScroll">
+    <div ref="rail" class="hscroll sm-rail" @scroll.passive="onScroll"
+      @pointerdown="down" @pointermove="move" @pointerup="up" @pointerleave="up" @click.capture="clickCapture" @dragstart.prevent>
       <!-- ① 已省下（清單這週打勾、有原價的才算）；還沒省到就提醒去打勾，附近幾家店幾項特價退到下一行 -->
       <div class="sm-card sm-saved">
         <template v-if="saved.amount > 0">
@@ -116,7 +151,7 @@ function onScroll() {
         <div class="sm-go">{{ t('home.sumCardsGo') }}</div>
       </RouterLink>
     </div>
-    <div class="sm-dots" aria-hidden="true"><i v-for="i in 4" :key="i" :class="{ on: at === i - 1 }" /></div>
+    <div class="sm-dots"><button v-for="i in 4" :key="i" type="button" :class="{ on: at === i - 1 }" :aria-label="`${i} / 4`" @click="go(i - 1)"><i /></button></div>
   </div>
 </template>
 
@@ -172,7 +207,9 @@ a.sm-card:active { transform: scale(0.985); }
 .sm-stack .bc { fill: #fff; }
 .sm-stack .bl { fill: none; stroke: var(--brand); stroke-width: 1.3; }
 /* 小圓點：現在這張是深綠 */
-.sm-dots { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
+.sm-dots { display: flex; justify-content: center; margin-top: 2px; }
+/* 圓點本身 6px，按鈕留大一點好點 */
+.sm-dots button { padding: 6px 3px; border: 0; background: none; cursor: pointer; display: flex; }
 .sm-dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(28, 33, 29, 0.18); transition: background-color 0.25s var(--ease); }
-.sm-dots i.on { background: var(--brand); }
+.sm-dots .on i { background: var(--brand); }
 </style>
