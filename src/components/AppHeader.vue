@@ -59,7 +59,7 @@ const first = computed(() => name.value.split('@')[0].trim().split(/\s+/)[0] ?? 
   gap: 5px;
 }
 .hd-store :deep(.dot) { box-shadow: 0 0 0 1.5px #fff; }
-.hd-store :deep(.dots) { gap: 5px; }
+.hd-store :deep(.dots) { gap: 5px; padding-left: 2px; } /* .pill 有 overflow:hidden，白圈 1.5px 會被切，留 2px */
 .hd-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
 .hd-search {
   flex: 1;
