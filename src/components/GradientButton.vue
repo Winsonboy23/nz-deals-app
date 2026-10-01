@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Originkit「Moving Gradient Button」的 Vue 版（使用者 2026-09-10 指定給 AI 食譜用）。
-// 照元件預設：黑底白字、6px 白色邊帶、全圓角、邊帶裡兩道藍→綠的光順時針轉（約 11 秒一圈）。
+// 照元件預設：6px 白色邊帶、全圓角、邊帶裡兩道藍→綠的光順時針轉（約 11 秒一圈）；底色 2026-10-01 從黑改成品牌深綠。
 // 字級改成 App 的 17px（原本 40px / 40px 64px 內距是桌機用的）。
 defineProps<{ to?: string; disabled?: boolean }>()
 </script>
@@ -28,7 +28,7 @@ defineProps<{ to?: string; disabled?: boolean }>()
   -webkit-tap-highlight-color: transparent;
 }
 .gbtn.dim { opacity: 0.45; }
-.gbtn:active .inner { background: #1a1a1a; }
+.gbtn:active .inner { background: #2a5a35; }
 .band { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; }
 .glow {
   position: absolute;
@@ -50,9 +50,9 @@ defineProps<{ to?: string; disabled?: boolean }>()
   gap: 8px;
   padding: 0 18px;
   border-radius: 999px;
-  background: #000;
-  font-family: 'Inter Tight', Inter, sans-serif;
-  font-weight: 800;
+  background: var(--brand-deep);
+  font-family: var(--font-head);
+  font-weight: 700;
   font-size: 17px;
   white-space: nowrap;
 }

@@ -297,7 +297,7 @@ function ap(key: string) {
 .f-wood { fill: var(--k-wood); }
 .f-top { fill: var(--k-top); }
 .f-line { fill: var(--k-line); }
-.f-white { fill: var(--paper); }
+.f-white { fill: var(--card); }
 .f-steel { fill: var(--k-steel); }
 .f-dark { fill: var(--k-dark); }
 .f-acc { fill: var(--k-acc); }
@@ -323,7 +323,7 @@ function ap(key: string) {
   padding: 4px 10px;
   border-radius: 999px;
   background: var(--pick);
-  color: var(--paper);
+  color: var(--card);
   font-size: 12.5px;
   font-weight: 800;
   line-height: 1.2;
@@ -334,5 +334,5 @@ function ap(key: string) {
 .tip.end { transform: translate(-100%, calc(-100% - 4px)); }
 .tip.below.end { transform: translate(-100%, 4px); }
 .tip.mid { transform: translate(-50%, -50%); }
-.tip.off { background: var(--paper); color: var(--ink-3); text-decoration: line-through; box-shadow: 0 0 0 1.5px var(--line), 0 2px 8px rgba(17, 17, 17, 0.12); }
+.tip.off { background: var(--card); color: var(--ink-3); text-decoration: line-through; box-shadow: 0 0 0 1.5px var(--line), 0 2px 8px rgba(17, 17, 17, 0.12); }
 </style>

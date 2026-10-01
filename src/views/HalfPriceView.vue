@@ -140,15 +140,17 @@ const rows = computed<Stack<Row>[]>(() =>
         <div class="card" @click="go(st.head)">
           <ProductThumb :special="st.head.special" :class="{ stack: st.items.length > 1 }">
             <span class="dot" :class="chainClass(st.head.store.id)" />
-            <span class="tag pct deal">-{{ Math.round(discountDepth(st.head.special) * 100) }}%</span>
-            <button
-              v-if="st.items.length > 1"
-              class="tag stackn"
-              :class="{ on: opened === 'h' + st.key }"
-              @click.stop="toggle('h' + st.key)"
-            >
-              {{ t('card.variants', { n: st.items.length }) }}
-            </button>
+            <span class="thumb-foot">
+              <span class="tag pct deal">-{{ Math.round(discountDepth(st.head.special) * 100) }}%</span>
+              <button
+                v-if="st.items.length > 1"
+                class="tag stackn"
+                :class="{ on: opened === 'h' + st.key }"
+                @click.stop="toggle('h' + st.key)"
+              >
+                {{ t('card.variants', { n: st.items.length }) }}
+              </button>
+            </span>
           </ProductThumb>
           <div class="price"><PriceLine :special="st.head.special" detail /></div>
           <div class="name" style="margin-top: 6px">{{ displayName(st.head.special) }}</div>
@@ -189,15 +191,17 @@ const rows = computed<Stack<Row>[]>(() =>
           <div class="card" @click="go(st.head)">
             <ProductThumb :special="st.head.special" :class="{ stack: st.items.length > 1 }">
               <span class="dot pns" />
-              <span class="tag low">{{ t('tag.low') }}</span>
-              <button
-                v-if="st.items.length > 1"
-                class="tag stackn"
-                :class="{ on: opened === 'p' + st.key }"
-                @click.stop="toggle('p' + st.key)"
-              >
-                {{ t('card.variants', { n: st.items.length }) }}
-              </button>
+              <span class="thumb-foot">
+                <span class="tag low">{{ t('tag.low') }}</span>
+                <button
+                  v-if="st.items.length > 1"
+                  class="tag stackn"
+                  :class="{ on: opened === 'p' + st.key }"
+                  @click.stop="toggle('p' + st.key)"
+                >
+                  {{ t('card.variants', { n: st.items.length }) }}
+                </button>
+              </span>
             </ProductThumb>
             <div class="price"><PriceLine :special="st.head.special" detail /></div>
             <div class="name" style="margin-top: 6px">{{ displayName(st.head.special) }}</div>

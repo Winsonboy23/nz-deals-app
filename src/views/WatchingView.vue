@@ -76,7 +76,7 @@ function others(g: Group): string {
     <!-- 空的 -->
     <div v-else-if="!watched.size" class="pad" style="margin-top: 20px">
       <div class="empty">
-        <div style="font-size: 22px; color: #c4c4c0; line-height: 1">☆</div>
+        <div style="font-size: 22px; color: var(--ink-3); line-height: 1">☆</div>
         <div class="h3" style="margin-top: 9px; font-size: 15.5px">{{ t('watching.empty') }}</div>
         <div class="s" style="margin-top: 3px">{{ t('watching.emptyHint') }}</div>
       </div>

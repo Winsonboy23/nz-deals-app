@@ -308,12 +308,12 @@ function backToForm() {
 </template>
 
 <style scoped>
-.srow { width: 100%; text-align: left; background: var(--paper); color: inherit; }
+.srow { width: 100%; text-align: left; background: var(--card); color: inherit; }
 .srow.off { opacity: 0.5; }
 .nm { min-width: 0; font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .q { padding: 12px 12px; gap: 10px; }
 .ql { flex: 1; min-width: 0; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-.ql b { width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 12px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.ql b { width: 22px; height: 22px; border-radius: 50%; background: var(--brand-deep); color: #fff; font-size: 12px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .qs { width: 132px; flex: none; }
 .qstep { height: 34px; padding: 0 6px; gap: 2px; }
 .qstep button { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 16px; background: none; }

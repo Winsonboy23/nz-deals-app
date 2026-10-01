@@ -4,6 +4,7 @@ import { bi, recipeImg, useRecipes, type RankedRecipe, isIllustration } from '..
 import { useStores } from '../composables/useStores'
 import { useSpecials } from '../composables/useSpecials'
 import Loading from '../components/Loading.vue'
+import AppHeader from '../components/AppHeader.vue'
 import { t } from '../composables/useI18n'
 import { chainClass, money } from '../lib/format'
 import { nzMonday } from '../lib/week'
@@ -48,17 +49,14 @@ const sections = computed(() => {
 </script>
 
 <template>
-  <div class="screen">
-    <div class="pad hrow" style="margin-top: 14px">
-      <div class="h1">{{ t('recipes.title') }}</div>
-      <RouterLink class="pill soft" to="/stores" style="flex: none">
-        <span class="dots"><span v-for="s in selectedStores" :key="s.id" class="dot" :class="chainClass(s.id)" /></span>
-        {{ t('common.stores', { n: selectedStores.length }) }}
-      </RouterLink>
-    </div>
-    <div class="pad sub" style="margin-top: 8px">{{ t('recipes.sub') }}</div>
+  <div class="screen has-header">
+    <AppHeader />
+    <!-- 選了哪幾家店在頂欄那一行（AppHeader），這裡只剩標題 -->
+    <div class="pad" style="margin-top: 16px"><div class="h1">{{ t('recipes.title') }}</div></div>
+    <div class="pad sub" style="margin-top: 6px">{{ t('recipes.sub') }}</div>
 
-    <div class="chips nowrap" style="margin: 12px 0 0 var(--gutter)">
+    <!-- 篩選：選中的是綠框圓角，沒選的只有字（設計稿） -->
+    <div class="chips nowrap rc-filters">
       <button v-for="[id, label] in FILTERS" :key="id" class="chip" :class="{ on: filter === id }" @click="filter = id">{{ t(label) }}</button>
     </div>
 
@@ -94,16 +92,21 @@ const sections = computed(() => {
 </template>
 
 <style scoped>
+/* 篩選 chips：沒選的只有字，選中的綠框淺綠底（.chip.on） */
+.rc-filters { margin: 12px 0 0; padding-left: var(--gutter); gap: 4px; }
+.rc-filters .chip { height: 34px; padding: 0 12px; border-radius: 10px; }
+.rc-filters .chip:not(.on) { border-color: transparent; background: none; color: var(--ink-2); }
 /* 瀑布流兩欄：右欄整欄往下推 28px，兩欄故意不對齊 */
-.rc-cols { display: flex; align-items: flex-start; gap: var(--gutter); margin-top: 12px; }
-.rc-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--gutter); }
+.rc-cols { display: flex; align-items: flex-start; gap: 12px; margin-top: 12px; }
+.rc-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 .rc-col + .rc-col { margin-top: 28px; }
+/* 卡片：白底圓角淡陰影 */
 .rc {
   display: block;
-  border: 1px solid var(--line);
   border-radius: var(--r);
   overflow: hidden;
-  background: var(--paper);
+  background: var(--card);
+  box-shadow: var(--shadow);
   color: inherit;
   text-decoration: none;
 }
@@ -111,17 +114,17 @@ const sections = computed(() => {
 .rc-img { position: relative; aspect-ratio: 1 / 1; background: var(--paper-2); }
 .rc-img.tall { aspect-ratio: 4 / 5; }
 .rc-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.rc-dots { position: absolute; left: 7px; bottom: 7px; padding: 4px 5px; border-radius: 8px; background: var(--paper); }
+.rc-dots { position: absolute; left: 7px; bottom: 7px; padding: 4px 5px; border-radius: 8px; background: var(--card); }
 .rc-sec { margin-top: 20px; }
 /* AI 生的圖：右上角小字「示意圖」 */
-.rc-ill { position: absolute; right: 7px; top: 7px; padding: 3px 6px; border-radius: 6px; background: var(--paper); color: var(--ink-2); font-size: 10.5px; font-weight: 700; line-height: 1.2; }
-.rc-body { padding: 9px 10px 10px; }
+.rc-ill { position: absolute; right: 7px; top: 7px; padding: 3px 6px; border-radius: 6px; background: var(--card); color: var(--ink-2); font-size: 10.5px; font-weight: 700; line-height: 1.2; }
+.rc-body { padding: 10px 11px 11px; }
 .rc-t {
-  font-family: 'Inter Tight', Inter, sans-serif;
-  font-weight: 800;
+  font-family: var(--font-head);
+  font-weight: 700;
   font-size: 15px;
-  line-height: 1.2;
-  letter-spacing: -0.2px;
+  line-height: 1.25;
+  letter-spacing: -0.1px;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;

@@ -154,11 +154,11 @@ function detailLine(storeId: string, unit: string | null): string {
         <ProductThumb
           :special="best.special"
           variant="big"
-          style="width: 104px; height: 104px; border-radius: 12px; flex: none"
+          style="width: 104px; height: 104px; border-radius: 12px; flex: none; background: var(--card)"
         />
         <div style="flex: 1; min-width: 0">
           <div style="font-size: 12px; color: var(--ink-2)" class="ell">{{ crumb }}</div>
-          <div class="h2" style="font-size: 25px; margin-top: 3px">
+          <div class="h2" style="font-size: 22px; margin-top: 3px">
             {{ displayName(best.special) }}
           </div>
           <div v-if="unitLabel(best.special)" class="sub" style="margin-top: 3px; font-size: 13px">

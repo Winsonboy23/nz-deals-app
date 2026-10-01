@@ -193,8 +193,8 @@ function addBuys() {
 </template>
 
 <style scoped>
-.rcard { border: 1px solid var(--line); border-radius: var(--r); background: var(--paper); overflow: hidden; }
-.rhead { display: block; width: 100%; text-align: left; padding: 12px 14px; background: var(--paper); color: inherit; }
+.rcard { border-radius: var(--r); background: var(--card); box-shadow: var(--shadow); overflow: hidden; }
+.rhead { display: block; width: 100%; text-align: left; padding: 12px 14px; background: var(--card); color: inherit; }
 button.rhead:active { background: var(--paper-2); }
 .ph { width: 72px; height: 72px; border-radius: 10px; object-fit: cover; flex: none; background: var(--paper-2); }
 .rbody { padding: 12px 14px 16px; border-top: 1px solid var(--line); }
@@ -203,13 +203,13 @@ button.rhead:active { background: var(--paper-2); }
 .credit { display: block; margin-top: 6px; font-size: 11px; color: var(--ink-3); text-decoration: none; }
 .irow { color: inherit; text-decoration: none; }
 .pin { width: 24px; height: 24px; border-radius: 8px; flex: none; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; }
-.pin.have { background: var(--ink); color: #fff; }
-.pin.buy { border: 1.5px dashed #b5b5b0; color: var(--ink-2); }
+.pin.have { background: var(--brand); color: #fff; }
+.pin.buy { border: 1.5px dashed #AEB8AB; color: var(--ink-2); }
 .pin.st { background: var(--paper-2); color: var(--ink-3); }
-.stbox { background: var(--paper-2); border-style: dashed; }
+.stbox { background: var(--paper-2); border: 1px dashed #BCC5B9; box-shadow: none; }
 .stbox .t { font-weight: 600; }
 .qty { margin-left: 8px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
 .rstep { display: flex; gap: 12px; margin-top: 12px; font-size: 15.5px; line-height: 1.45; }
-.rstep b { flex: none; width: 16px; font-family: 'Inter Tight', Inter, sans-serif; font-weight: 900; }
-.tipbox { margin-top: 16px; padding: 12px 14px; border-radius: var(--r); background: var(--paper-2); font-size: 14px; line-height: 1.45; }
+.rstep b { flex: none; width: 16px; font-family: 'Inter Tight', Inter, sans-serif; font-weight: 900; color: var(--brand); }
+.tipbox { margin-top: 16px; padding: 12px 14px; border-radius: var(--r); background: var(--brand-tint); font-size: 14px; line-height: 1.45; }
 </style>

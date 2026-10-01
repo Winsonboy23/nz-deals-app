@@ -17,8 +17,8 @@ const to = computed(() => (s.value.product_key ? `/p/${encodeURIComponent(s.valu
   <RouterLink
     :to="to"
     :style="{
-      border: best ? '2px solid var(--ink)' : '1px solid var(--line)',
-      background: best ? '#FFFCF0' : '',
+      border: best ? '2px solid var(--brand)' : '1px solid var(--line)',
+      background: best ? 'var(--brand-tint)' : 'var(--card)',
       borderRadius: '14px',
       padding: '9px 12px',
       display: 'flex',

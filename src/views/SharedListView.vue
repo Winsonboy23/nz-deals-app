@@ -64,7 +64,7 @@ function copyIn() {
     <template v-else>
       <div class="pad" style="margin-top: 14px">
         <div class="box">
-          <div class="ghead" style="background: #111; color: #fff"><span class="ell">{{ name }}</span><span>{{ t('common.items', { n: rows.length }) }}</span></div>
+          <div class="ghead" style="background: var(--brand-deep); color: #fff"><span class="ell">{{ name }}</span><span>{{ t('common.items', { n: rows.length }) }}</span></div>
           <div v-for="r in rows" :key="r.id" class="lrow" style="padding: 9px 12px; gap: 9px">
             <div class="cb" :class="{ on: r.checked }" style="width: 24px; height: 24px; font-size: 12px">✓</div>
             <ProductThumb v-if="thumb(r)" :special="thumb(r)!" variant="sq" class="list-tn" />
