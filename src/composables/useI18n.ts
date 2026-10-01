@@ -72,6 +72,8 @@ const DICT: Record<string, { en: string; zh: string }> = {
     zh: '把超市會員卡的號碼存在這裡，結帳時打開給店員掃。只存號碼，不存照片。',
   },
   'cards.add': { en: '+ Add a card', zh: '+ 加一張卡' },
+  'cards.addFirst': { en: '+ Add a loyalty card', zh: '＋ 加會員卡' },
+  'cards.count': { en: '{n} ›', zh: '{n} 張 ›' },
   'cards.more': { en: 'More', zh: '更多' },
   'cards.moveUp': { en: 'Move up', zh: '往上移' },
   'cards.moveDown': { en: 'Move down', zh: '往下移' },
