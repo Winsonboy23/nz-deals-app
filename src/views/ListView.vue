@@ -187,7 +187,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
 
     <div v-if="empty" class="pad" style="margin-top: 20px">
       <div class="empty">
-        <div style="font-size: 22px; color: #c4c4c0; line-height: 1">☰</div>
+        <div style="font-size: 22px; color: var(--ink-3); line-height: 1">☰</div>
         <div class="h3" style="margin-top: 9px; font-size: 15.5px">{{ t('list.empty') }}</div>
         <div class="s" style="margin-top: 3px">{{ t('list.emptyHint') }}</div>
       </div>
@@ -375,7 +375,7 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
 .chev { display: inline-block; transition: transform 0.15s; opacity: 0.8; }
 .chev.open { transform: rotate(180deg); }
 .grp { padding: 8px 12px 2px; font-size: 12px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.02em; }
-.stag { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: var(--ink); color: var(--paper); margin-right: 4px; line-height: 1.5; }
+.stag { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: var(--brand-deep); color: #fff; margin-right: 4px; line-height: 1.5; }
 .stag.club { background: var(--paper-2); color: var(--ink-2); }
 .pulse { animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
@@ -396,13 +396,13 @@ const productLink = (key: string) => `/p/${encodeURIComponent(key)}`
 .seen { font-size: 11.5px; color: var(--ink-3); }
 .est { font-size: 11px; font-weight: 600; margin-right: 2px; color: var(--ink-3); }
 .cnt { display: flex; align-items: center; gap: 3px; flex: none; font-size: 12px; color: var(--ink-2); }
-.cnt input { width: 44px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); text-align: center; font-size: 14px; padding: 0 2px; }
+.cnt input { width: 44px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-align: center; font-size: 14px; padding: 0 2px; }
 .cnt input::-webkit-outer-spin-button, .cnt input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .ai-hint { display: block; width: 100%; text-align: left; background: none; padding: 0 12px 8px 60px; margin-top: -3px; font-size: 12.5px; line-height: 1.4; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
 .edit { gap: 8px; padding: 8px 10px 10px 42px; background: var(--paper-2); }
 .edit input::-webkit-outer-spin-button, .edit input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 /* 自由輸入配對：「配對」小鈕、原本打的字、輸入框下的一行提示 */
-.mbtn { flex: none; height: 26px; padding: 0 9px; border-radius: 13px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.mbtn { flex: none; height: 26px; padding: 0 9px; border-radius: 13px; border: 1px solid var(--brand); background: var(--card); color: var(--brand-deep); font-size: 12px; font-weight: 700; white-space: nowrap; }
 .typed { font-size: 11.5px; color: var(--ink-3); }
 .notice { margin-top: 6px; font-size: 12.5px; color: var(--ink-2); }
 </style>

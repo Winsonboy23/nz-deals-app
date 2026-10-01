@@ -49,7 +49,7 @@ const rows = computed<Row[]>(() => {
       :key="r.key"
       class="lrow"
       :to="to"
-      :style="{ padding: '7px 12px', background: r.isBest ? '#FFFCF0' : '' }"
+      :style="{ padding: '7px 12px', background: r.isBest ? 'var(--brand-tint)' : '' }"
     >
       <ProductThumb :special="r.offer.special" variant="sq" />
       <span class="dot" :class="chainClass(r.offer.store.id)" />

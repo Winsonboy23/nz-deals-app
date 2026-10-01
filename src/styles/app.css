@@ -1,4 +1,4 @@
-/* App shell on top of the approved artboard styles. design.css is untouched except here. */
+/* App shell on top of the shared styles in design.css（色票、卡片、按鈕都在那裡）。 */
 @import './design.css';
 
 *,
@@ -49,6 +49,10 @@ input {
   overflow: visible;
   padding-top: max(12px, env(safe-area-inset-top));
   padding-bottom: calc(95px + env(safe-area-inset-bottom));
+}
+/* 有綠色頂欄（AppHeader）的頁：頂欄自己貼到最上面、自己留安全區 */
+.screen.has-header {
+  padding-top: 0;
 }
 .screen.with-footbar {
   padding-bottom: calc(135px + env(safe-area-inset-bottom));
@@ -123,8 +127,7 @@ input {
 .hscroll::-webkit-scrollbar {
   display: none;
 }
-.pill,
-.iconbtn {
+.pill {
   flex: none;
   white-space: nowrap;
   max-width: 100%;
@@ -138,7 +141,7 @@ input {
   border-color: var(--paper-2);
 }
 
-/* Photos sit inside the tinted placeholder blocks from the boards */
+/* 商品圖：白底卡片上直接放圖（multiply 讓圖片的白底融進去）；沒圖的佔位才有淺灰底 */
 .thumb,
 .tn {
   overflow: hidden;
@@ -163,6 +166,9 @@ input {
   line-height: 1.1;
   padding: 2px;
 }
+.thumb.ph {
+  background: var(--paper-2);
+}
 
 .lrow.dim-row {
   opacity: 0.42;
@@ -185,65 +191,45 @@ input {
   text-decoration: line-through;
   color: var(--ink-3);
 }
-.mini .was {
-  letter-spacing: 0;
-}
 .empty {
+  background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--r);
   padding: 26px 16px;
   text-align: center;
 }
 
-/* Noto Sans TC runs a little taller than Inter, so the fixed-height cards need a few more px */
-.zh .grid3 .card {
-  height: 174px;
-}
-.zh .grid3.g2 .card {
-  height: 196px;
-}
-
-/* 2026-09-07：商品卡圖片放大，圖：文字 ≈ 6：4 */
-.grid3 .card { height: 264px; }
-.grid3 .thumb { height: 150px; }
-.grid3.g2 .card { height: 280px; }
-.grid3.g2 .thumb { height: 166px; }
-.zh .grid3 .card { height: 272px; }
-.zh .grid3.g2 .card { height: 288px; }
+/* 商品卡：圖片正方形、卡片高度跟著內容（同一列一樣高，grid 自己拉齊） */
+.grid3 .thumb { height: auto; aspect-ratio: 1 / 1; }
 .thumb .tag.best { left: 6px; top: 6px; }   /* 圖片區有 overflow:hidden，徽章移進來才不會被切 */
 
-/* 選店頁的三家標籤：點亮用店色 */
+/* 選店頁、半價頁的三家標籤：點亮用店色 */
 .chip.on.nw{background:var(--nw);border-color:var(--nw);color:#fff}
 .chip.on.ww{background:var(--ww);border-color:var(--ww);color:#fff}
 .chip.on.pns{background:var(--pns);border-color:var(--pns);color:var(--ink)}
-.chip.on .dot{background:#fff}
+.chip.on.nw .dot,.chip.on.ww .dot{background:#fff}
 .chip.on.pns .dot{background:var(--ink)}
-
-/* 首頁半價／生鮮的小卡片：真實商品名很長，加寬並讓名字可以兩行（設計稿假設名字很短） */
-.mini{width:200px;height:auto;min-height:98px}
-.mini .name{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.25}
 
 /* 黃超卡片圖片區的「低價標籤」：放左下角（跟首頁卡片一樣） */
 .thumb .tag.low{position:absolute;left:6px;bottom:6px;z-index:2}
 
-/* 文字對齊卡片（2026-09-07 使用者要求）：卡片格子維持貼滿螢幕，文字、標籤、小卡片的左邊線改成跟卡片裡的圖片／價格同一條（1px 框線 + 10px 內距 = 11px）。原設計是 20px。 */
-:root{--gutter:11px}   /* 文字對齊卡片裡的圖片／價格（1px 框線 + 10px 內距）；試過 4px 使用者要改回來 */
+/* 頁面左右留白；卡片、標題、按鈕都對齊這條線（2026-10-01 改版：卡片是浮起來的白卡，原本 11px 是為了對齊滿版格子裡的字） */
+:root{--gutter:16px}
 .pad{padding:0 var(--gutter)}
 .hscroll{padding-left:var(--gutter)}
 .chips.nowrap,.hscroll{padding-right:var(--gutter)}
 
-/* Browse：比價框跟下面的格子一樣貼滿螢幕、同一條外框線（2026-09-07 使用者要求兩種排法同寬） */
-.cmp-flush{margin-bottom:8px}
-.cmp-flush .box{border-radius:0}
+/* Browse：比價框跟下面的格子同寬（2026-09-07 使用者要求兩種排法同寬） */
+.cmp-flush{margin:0 var(--gutter) 8px}
 /* 清單的小照片：比 44px 再小一點，留位置給數量按鈕 */
 .list-tn.tn.sq{width:36px;height:36px;border-radius:8px}
 
 /* 動效（2026-09-07）：點下去輕輕縮一下、狀態變化慢慢過去（呼吸感）；換頁淡入上滑；商品頁從底下滑上來。 */
 :root{--ease:cubic-bezier(.22,1,.36,1);--ease-sheet:cubic-bezier(.4,.08,.25,1)}
-.chip,.pill,.btn,.lrow.tap,.card,.mini,.cb,.seg>div,.tg,.iconbtn,.link,.tabbar a,.tabbar button{
+.chip,.pill,.btn,.lrow.tap,.card,.mini,.cb,.seg>div,.tg,.link,.tabbar a,.tabbar button{
   transition:transform .28s var(--ease),background-color .28s var(--ease),color .28s var(--ease),border-color .28s var(--ease),opacity .28s var(--ease),box-shadow .28s var(--ease);
 }
-.chip:active,.pill:active,.lrow.tap:active,.card:active,.mini:active,.iconbtn:active{transform:scale(.97)}
+.chip:active,.pill:active,.lrow.tap:active,.card:active,.mini:active{transform:scale(.97)}
 .btn:active{transform:scale(.985)}
 .page-enter-active{transition:opacity .26s var(--ease),transform .26s var(--ease)}
 .page-leave-active{transition:opacity .16s var(--ease)}
@@ -261,13 +247,17 @@ input {
 .note .dot{flex:none}
 
 /* 首頁卡片右下角「3 種口味」 */
-.thumb .tag.variants{position:absolute;right:6px;bottom:6px;z-index:2;background:#111;color:#fff}
+.thumb .tag.variants{position:absolute;right:6px;bottom:6px;z-index:2;background:var(--brand-deep);color:#fff}
 
-/* 疊卡片（半價頁）：圖片後面露出兩張卡的邊；右下角「N 款」點了在原地攤開 */
-.thumb.stack{box-shadow:3px 3px 0 -1px var(--paper),3px 3px 0 0 var(--line),6px 6px 0 -1px var(--paper),6px 6px 0 0 var(--line)}
-.thumb .tag.stackn{position:absolute;right:6px;bottom:6px;z-index:3;background:#111;color:#fff;border:0}
-.thumb .tag.stackn.on{background:#fff;color:#111;box-shadow:0 0 0 1.5px #111 inset}
-.grid3 .expand{grid-column:1/-1;background:var(--paper-2);border-bottom:1px solid var(--line);padding:10px 0}
+/* 疊卡片（半價頁）：圖片外框一圈細線，後面露出兩張卡的邊（白底圖片才看得出是一疊）；右下角「N 款」點了在原地攤開 */
+.thumb.stack{box-shadow:0 0 0 1px var(--line),3px 3px 0 0 var(--card),3px 3px 0 1px var(--line),6px 6px 0 0 var(--card),6px 6px 0 1px var(--line)}
+.thumb .tag.stackn{position:absolute;right:6px;bottom:6px;z-index:3;background:var(--brand-deep);color:#fff;border:0}
+.thumb .tag.stackn.on{background:var(--card);color:var(--brand-deep);box-shadow:0 0 0 1.5px var(--brand-deep) inset}
+/* 圖片下緣那排標籤（折扣／低價標在左、「N 款」在右）：卡片窄（三欄白卡）放不下兩個時，右邊那個換到上一行，不疊在一起 */
+.thumb .thumb-foot{position:absolute;left:6px;right:6px;bottom:6px;z-index:2;display:flex;flex-wrap:wrap-reverse;align-items:flex-end;gap:4px;pointer-events:none}
+.thumb .thumb-foot .tag{position:static;height:19px;padding:0 6px;font-size:10.5px;pointer-events:auto}
+.thumb .thumb-foot .tag.variants,.thumb .thumb-foot .tag.stackn{margin-left:auto}
+.grid3 .expand{grid-column:1/-1;background:var(--paper-2);border-radius:14px;padding:10px 0}
 .stackitem{flex:none;width:106px;display:block}
 .stackitem .s{font-size:11.5px;color:var(--ink-2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 
@@ -282,17 +272,20 @@ button.btn{width:100%}
 /* 價格排版（PriceLine，2026-09-15）：單件價大字，條件小框跟在旁邊（[卡] 會員價、[2 件] 湊件），說明另起一行 */
 .pl{display:inline-flex;flex-wrap:wrap;align-items:baseline;column-gap:.28em;row-gap:2px;max-width:100%;vertical-align:baseline}
 .pl.right{justify-content:flex-end;text-align:right}
-.pl .cond{display:inline-block;flex:none;font-family:Inter,"Noto Sans TC",sans-serif;font-size:max(10px,.46em);font-weight:800;letter-spacing:0;line-height:1.35;padding:0 .4em;border-radius:.35em;border:1.5px solid var(--ink);color:var(--ink);background:var(--paper);white-space:nowrap;transform:translateY(-.08em)}
-.pl .cond.multi{background:var(--ink);color:#fff}
+.pl .cond{display:inline-block;flex:none;font-family:Inter,"Noto Sans TC",sans-serif;font-size:max(10px,.46em);font-weight:800;letter-spacing:0;line-height:1.35;padding:0 .4em;border-radius:.35em;border:1.5px solid var(--brand-deep);color:var(--brand-deep);background:var(--card);white-space:nowrap;transform:translateY(-.08em)}
+.pl .cond.multi{background:var(--brand-deep);color:#fff}
 .pl .pl-main .qty{font-size:.62em;font-weight:800;letter-spacing:0;margin-right:.1em}
+/* 有原價（打折中）的現價用橘色（設計稿）；劃掉的原價是灰色 */
+.pl.sale .pl-main{color:var(--kite-deep)}
+.pl .pl-was{flex:none;font-family:Inter,"Noto Sans TC",sans-serif;font-size:max(11px,.62em);font-weight:600;letter-spacing:0;color:var(--ink-3)}
 /* 沒原價的促銷名（Fresh Deal／Low Price）：不是要做到的條件，是店家的標籤，灰底跟黃超的「低價標籤」同色 */
-.pl .cond.promo{background:#E9E9E6;color:#5F5F5C;border-color:#E9E9E6}
+.pl .cond.promo{background:#E8ECE4;color:#59625B;border-color:#E8ECE4}
 .pl .pl-detail{flex-basis:100%;min-width:0;font-family:Inter,"Noto Sans TC",sans-serif;font-size:11.5px;font-weight:600;color:var(--ink-2);letter-spacing:0;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pl.wrap .pl-detail{white-space:normal}
 .pl .pl-detail s{color:var(--ink-3)}
 
 /* ── loading 動畫（2026-09-20）──
-   .skel 骨架會閃光；.pulse 文字一明一暗；.loadbar 是畫面頂端跑來跑去的細線。 */
+   .skel 骨架會閃光；.pulse 文字一明一暗；.loadbar 是畫面頂端跑來跑去的細線（橘色，綠色頂欄上也看得到）。 */
 .skel {
   position: relative;
   overflow: hidden;
@@ -325,7 +318,7 @@ button.btn{width:100%}
   right: 0;
   height: 3px;
   z-index: 60;
-  background: rgba(17, 17, 17, 0.08);
+  background: rgba(243, 154, 46, 0.18);
   overflow: hidden;
   pointer-events: none;
 }
@@ -335,7 +328,7 @@ button.btn{width:100%}
   bottom: 0;
   width: 38%;
   border-radius: 2px;
-  background: var(--ink);
+  background: var(--kite);
   animation: loadbar 1.1s ease-in-out infinite;
 }
 @keyframes loadbar {

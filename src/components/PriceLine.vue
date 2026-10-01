@@ -3,13 +3,14 @@
 // 沒原價的綠超促銷加灰底小框（[本週鮮價]／[低價]／[清倉]，2026-09-24）。
 // detail 開著就多一行說明：一般價（會員價的）／幾件多少、每件多少（湊件的）／劃掉的原價；unit 開著再加每公斤／每 100 克。
 // 列表卡片、商品頁、同類可比清單都用這一個，三處才不會一處有標一處沒標。字級跟著外層（.price / .p）走。
+// 有原價（打折中）的現價是橘色（2026-10-01 改版，class sale）；wasFirst 開著就把劃掉的原價放在現價前面同一行（首頁的生鮮、半價小卡，照設計稿）。
 import { computed } from 'vue'
 import { multiUnitPrice } from '../lib/compare'
 import { money, priceSuffix, unitLabel, wasPriceOf } from '../lib/format'
 import { t } from '../composables/useI18n'
 import type { Special } from '../lib/types'
 
-const props = defineProps<{ special: Special; detail?: boolean; unit?: boolean; align?: 'left' | 'right'; wrap?: boolean }>()
+const props = defineProps<{ special: Special; detail?: boolean; unit?: boolean; align?: 'left' | 'right'; wrap?: boolean; wasFirst?: boolean }>()
 const s = computed(() => props.special)
 const multi = computed(() => (s.value.multi_buy && s.value.multi_buy.qty > 0 ? s.value.multi_buy : null))
 const was = computed(() => wasPriceOf(s.value))
@@ -34,12 +35,17 @@ const terms = computed(() => {
 })
 /** 劃掉的原價：不是會員價、又有原價才劃（會員價那行已經寫了一般價，不再劃一次） */
 const strike = computed(() => (!s.value.club_only && was.value ? money(was.value) : ''))
+/** 說明行裡的劃掉原價（wasFirst 時已經放到現價前面，說明行就不再寫） */
+const strikeInDetail = computed(() => (props.wasFirst ? '' : strike.value))
+/** 打折中：有原價而且比現價高（黃超沒有原價，wasPriceOf 已經是 null） */
+const onSale = computed(() => !!was.value && was.value > s.value.price)
 const unitText = computed(() => (props.unit ? unitLabel(s.value) : null))
-const hasDetail = computed(() => !!props.detail && (terms.value.length > 0 || !!strike.value || !!unitText.value))
+const hasDetail = computed(() => !!props.detail && (terms.value.length > 0 || !!strikeInDetail.value || !!unitText.value))
 </script>
 
 <template>
-  <span class="pl" :class="{ right: align === 'right', wrap }">
+  <span class="pl" :class="{ right: align === 'right', wrap, sale: onSale }">
+    <s v-if="wasFirst && strike" class="pl-was">{{ strike }}</s>
     <!-- 湊件的大字是「2 件 $7.50」（2026-09-24 使用者：大字 $4.15 旁邊掛 [2 件] 看起來像 4.15 買兩件）；單買價退到說明行 -->
     <span v-if="multi" class="pl-main"><span class="qty">{{ t('price.multiQty', { q: multi.qty }) }}</span>{{ money(multi.total) }}</span>
     <span v-else class="pl-main">{{ money(s.price) }}<span v-if="priceSuffix(s)" class="unit">{{ priceSuffix(s) }}</span></span>
@@ -48,8 +54,8 @@ const hasDetail = computed(() => !!props.detail && (terms.value.length > 0 || !!
     <!-- 說明行的順序：條件（一般價／湊件）→ 劃掉的原價 → 單價；窄卡片截掉的是最後面的單價，不是條件 -->
     <span v-if="hasDetail" class="pl-detail">
       <template v-for="(x, i) in terms" :key="i"><template v-if="i"> · </template>{{ x }}</template>
-      <template v-if="strike"><template v-if="terms.length"> · </template><s>{{ strike }}</s></template>
-      <template v-if="unitText"><template v-if="terms.length || strike"> · </template>{{ unitText }}</template>
+      <template v-if="strikeInDetail"><template v-if="terms.length"> · </template><s>{{ strikeInDetail }}</s></template>
+      <template v-if="unitText"><template v-if="terms.length || strikeInDetail"> · </template>{{ unitText }}</template>
     </span>
   </span>
 </template>

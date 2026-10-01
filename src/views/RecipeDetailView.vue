@@ -231,8 +231,8 @@ async function share() {
   height: 34px;
   padding: 0 13px;
   border-radius: 17px;
-  background: #fff;
-  color: var(--ink);
+  background: var(--card);
+  color: var(--brand-deep);
   font-weight: 800;
   font-size: 14px;
   display: inline-flex;
@@ -244,7 +244,7 @@ async function share() {
   left: 10px;
   bottom: 10px;
   max-width: calc(100% - 20px);
-  background: var(--ink);
+  background: var(--brand-deep);
   color: #fff;
   font-size: 11px;
   font-weight: 800;
@@ -261,7 +261,7 @@ async function share() {
   top: 10px;
   padding: 4px 8px;
   border-radius: 8px;
-  background: #fff;
+  background: var(--card);
   color: var(--ink-2);
   font-size: 11px;
   font-weight: 700;
@@ -271,17 +271,17 @@ async function share() {
 .credit { margin-top: 6px; font-size: 11px; color: var(--ink-3); }
 .credit a { color: inherit; text-decoration: none; }
 .rbar { width: 6px; height: 36px; border-radius: 3px; flex: none; background: var(--line); }
-.stbox { background: var(--paper-2); border-style: dashed; }
+.stbox { background: var(--paper-2); border: 1px dashed #BCC5B9; box-shadow: none; }
 .rbar.nw { background: var(--nw); }
 .rbar.ww { background: var(--ww); }
 .rbar.pns { background: var(--pns); }
 .lrow { color: inherit; text-decoration: none; }
 .opt { margin-left: 6px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
 .rstep { display: flex; gap: 12px; margin-top: 12px; font-size: 15.5px; line-height: 1.45; }
-.rstep b { flex: none; width: 16px; font-family: 'Inter Tight', Inter, sans-serif; font-weight: 900; }
-/* 寶寶支線：開關打開才出現。提醒用螢光黃，「先取出寶寶的份」那張卡用黑框，比一般步驟醒目 */
+.rstep b { flex: none; width: 16px; font-family: 'Inter Tight', Inter, sans-serif; font-weight: 900; color: var(--brand); }
+/* 寶寶支線：開關打開才出現。提醒用螢光黃，「先取出寶寶的份」那張卡用綠框白底，比一般步驟醒目 */
 .babywarn { margin-top: 12px; padding: 8px 12px; border-radius: 10px; background: var(--hl); font-size: 14px; font-weight: 700; line-height: 1.35; }
-.babycard { margin-top: 14px; padding: 12px 14px; border: 2px solid var(--ink); border-radius: var(--r); }
+.babycard { margin-top: 14px; padding: 12px 14px; border: 2px solid var(--brand); border-radius: var(--r); background: var(--card); }
 .babycard-t { font-size: 16px; font-weight: 800; }
 .babyage { margin-top: 10px; font-size: 14.5px; line-height: 1.45; }
 .babyage b { display: block; font-weight: 800; }
@@ -294,7 +294,7 @@ async function share() {
   margin-top: 16px;
   padding: 12px 14px;
   border-radius: var(--r);
-  background: var(--paper-2);
+  background: var(--brand-tint);
   font-size: 14px;
   line-height: 1.45;
 }

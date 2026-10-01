@@ -9,6 +9,7 @@ const router = useRouter()
 const { signIn, isIn } = useAuth()
 /** Facebook 鈕：後台 settings.facebook_login = 'on' 才出現（Supabase 的 Facebook provider 設好之前按了會失敗） */
 const { facebookLogin } = useSiteSettings()
+const logo = import.meta.env.BASE_URL + 'brand/kitewise-logo-a.svg'
 if (isIn.value) void router.replace('/me')
 
 /** 按了之後那顆轉圈到 Google／Facebook 頁面出現為止；失敗才會回來把圈圈收掉。 */
@@ -29,13 +30,14 @@ async function go(provider: 'google' | 'facebook') {
   <div class="screen" style="padding-bottom: 40px">
     <div class="pad" style="margin-top: 6px">
       <RouterLink class="back" to="/me">‹ {{ t('me.title') }}</RouterLink>
-      <div class="h1" style="margin-top: 8px">{{ facebookLogin ? t('common.signIn') : t('auth.title') }}</div>
+      <img :src="logo" alt="KiteWise" style="display: block; width: 100%; height: auto; margin-top: 12px" />
+      <div class="h1" style="margin-top: 18px">{{ facebookLogin ? t('common.signIn') : t('auth.title') }}</div>
       <div class="sub" style="margin-top: 8px; font-size: 15px; line-height: 1.5">{{ t('auth.guestNote') }}</div>
     </div>
     <div class="pad" style="margin-top: 22px">
       <div class="box">
         <div v-for="k in ['auth.why1', 'auth.why2', 'auth.why3']" :key="k" class="lrow" style="padding: 13px 12px">
-          <span style="font-size: 18px; flex: none">✓</span>
+          <span style="font-size: 18px; flex: none; color: var(--brand)">✓</span>
           <div class="t" style="font-size: 15px">{{ t(k) }}</div>
         </div>
       </div>

@@ -115,7 +115,7 @@ function missingClasses(g: Group): string[] {
   <div class="screen">
     <div class="pad" style="margin-top: 10px">
       <div class="field solid" style="height: 56px">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
         </svg>
         <input
@@ -130,7 +130,7 @@ function missingClasses(g: Group): string[] {
     <Loading v-if="loading && q.trim().length >= 2 && !stacks.length" />
     <div v-else-if="q.trim().length >= 2 && !stacks.length" class="pad" style="margin-top: 22px">
       <div class="empty">
-        <div style="font-size: 22px; color: #c4c4c0; line-height: 1">?</div>
+        <div style="font-size: 22px; color: var(--ink-3); line-height: 1">?</div>
         <div class="h3" style="margin-top: 9px; font-size: 15.5px">
           {{ t('search.empty', { q: q.trim() }) }}
         </div>

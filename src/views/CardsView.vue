@@ -193,7 +193,7 @@ async function added(): Promise<void> {
 .lc.pns { background: var(--pns); color: var(--ink); }
 .lc.other { background: #3a3a3a; }
 .lc-top { display: flex; align-items: center; gap: 10px; }
-.lc-name { flex: 1; min-width: 0; padding-left: 4px; font-family: 'Inter Tight', 'Noto Sans TC', Inter, sans-serif; font-weight: 900; font-size: 26px; letter-spacing: -0.4px; line-height: 1.15; }
+.lc-name { flex: 1; min-width: 0; padding-left: 4px; font-family: var(--font-head); font-weight: 700; font-size: 26px; letter-spacing: -0.4px; line-height: 1.15; }
 .lc-more { flex: none; width: 40px; height: 40px; border-radius: 20px; background: rgba(255, 255, 255, 0.2); color: inherit; font-size: 22px; font-weight: 900; line-height: 1; display: flex; align-items: center; justify-content: center; }
 .lc.pns .lc-more { background: rgba(0, 0, 0, 0.08); }
 /* 白底條碼區放在卡片中間 */
@@ -212,15 +212,15 @@ async function added(): Promise<void> {
 .addcard {
   width: 100%;
   height: 64px;
-  border: 1.5px dashed #c2c2bd;
+  border: 1.5px dashed #AEB8AB;
   border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Inter Tight', 'Noto Sans TC', Inter, sans-serif;
-  font-weight: 800;
+  font-family: var(--font-head);
+  font-weight: 600;
   font-size: 17px;
-  color: var(--ink-2);
+  color: var(--brand-deep);
 }
 
 /* 放大：蓋住整個畫面（連分頁列），全白 */

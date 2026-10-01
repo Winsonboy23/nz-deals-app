@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import ProductCard from '../components/ProductCard.vue'
 import CompareBox from '../components/CompareBox.vue'
 import Loading from '../components/Loading.vue'
+import AppHeader from '../components/AppHeader.vue'
 import { useSpecials } from '../composables/useSpecials'
 import { useStores } from '../composables/useStores'
 import { useSettings } from '../composables/useSettings'
@@ -117,8 +118,9 @@ function toggleFood() {
 </script>
 
 <template>
-  <div class="screen">
-    <div class="pad hrow" style="margin-top: 4px">
+  <div class="screen has-header">
+    <AppHeader />
+    <div class="pad hrow" style="margin-top: 16px">
       <div class="h1">{{ t('browse.title') }}</div>
       <div style="display: flex; align-items: center; gap: 10px">
         <span style="font-size: 14px; font-weight: 600; color: var(--ink-2)">

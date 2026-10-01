@@ -50,6 +50,9 @@ const nearby = computed(() =>
 )
 const hidden = computed(() => candidates.value.length - nearby.value.length)
 
+/** LOGO 在 public/brand/（GitHub Pages 的子路徑也要對，所以前面接 BASE_URL） */
+const logo = import.meta.env.BASE_URL + 'brand/kitewise-logo-a.svg'
+
 function typeTownInstead() {
   locating.value = 'denied'
 }
@@ -63,20 +66,20 @@ async function done() {
 <template>
   <!-- A1 · Locating -->
   <div v-if="splash" class="screen">
-    <div class="pad" style="margin-top: 56px">
-      <div class="h1" style="font-size: 54px; line-height: 0.96">KiteWise</div>
+    <div class="pad" style="margin-top: 48px">
+      <img :src="logo" alt="KiteWise · Spot the specials. Cook smart. Live lighter." style="display: block; width: 100%; height: auto" />
       <div class="sub" style="margin-top: 24px; font-size: 16px; line-height: 1.45">
         {{ t('stores.tagline') }}<br />New World · Woolworths · PAK'nSAVE.
       </div>
     </div>
     <div class="pad" style="margin-top: 58px; display: flex; align-items: center; gap: 18px">
-      <svg width="46" height="46" viewBox="0 0 46 46" style="flex: none" class="spin">
+      <svg width="46" height="46" viewBox="0 0 46 46" style="flex: none; color: var(--brand-deep)" class="spin">
         <circle
           cx="23"
           cy="23"
           r="19"
           fill="none"
-          stroke="#111"
+          stroke="currentColor"
           stroke-width="3"
           stroke-linecap="round"
           stroke-dasharray="86 120"
@@ -87,7 +90,7 @@ async function done() {
       </div>
     </div>
     <div class="pad" style="margin-top: 58px; text-align: center">
-      <button class="link" style="border-bottom: 2px solid #111" @click="typeTownInstead">
+      <button class="link" style="border-bottom: 2px solid currentColor" @click="typeTownInstead">
         {{ t('stores.typeTown') }}
       </button>
     </div>
@@ -106,7 +109,7 @@ async function done() {
           width: 52px;
           height: 52px;
           border-radius: 14px;
-          background: #111;
+          background: var(--brand-deep);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -146,7 +149,7 @@ async function done() {
           gap: 10px;
         "
       >
-        <span class="tag" style="background: #111; color: #fff; height: 22px">
+        <span class="tag" style="background: var(--brand-deep); color: #fff; height: 22px">
           {{ t('stores.island.' + islands[0]) }}
         </span>
         <span class="sub" style="font-size: 13px">{{ t('stores.islandNote') }}</span>
@@ -236,7 +239,7 @@ async function done() {
         width: 100%;
         max-width: 480px;
         padding: 12px var(--gutter) calc(20px + env(safe-area-inset-bottom));
-        background: var(--paper);
+        background: var(--card);
         border-top: 1px solid var(--line);
         z-index: 20;
       "

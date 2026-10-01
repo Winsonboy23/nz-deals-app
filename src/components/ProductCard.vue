@@ -32,8 +32,11 @@ const to = computed(() => (s.value.product_key ? `/p/${encodeURIComponent(s.valu
         ✓ {{ chainBadge(offer.store.id) }}
       </span>
       <span v-else class="dot" :class="chainClass(offer.store.id)" />
-      <TagChip v-if="tag" :tag="tag" deal />
-      <span v-if="variants && variants > 1" class="tag variants">{{ t('card.variants', { n: variants }) }}</span>
+      <!-- 圖片下緣：折扣標在左、「N 款」在右；卡片窄放不下時「N 款」自己換到上一行，不會疊在一起 -->
+      <span v-if="tag || (variants && variants > 1)" class="thumb-foot">
+        <TagChip v-if="tag" :tag="tag" deal />
+        <span v-if="variants && variants > 1" class="tag variants">{{ t('card.variants', { n: variants }) }}</span>
+      </span>
     </ProductThumb>
     <div class="price"><PriceLine :special="s" detail unit /></div>
     <div class="name">{{ displayName(s) }}</div>
