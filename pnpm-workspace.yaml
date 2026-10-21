@@ -1,0 +1,4 @@
+# pnpm 12 起要先核准哪些套件可以跑安裝腳本，不核准 install 會直接失敗（ERR_PNPM_IGNORED_BUILDS）。
+# esbuild 的腳本只是確認平台二進位檔有裝到，放行。
+allowBuilds:
+  esbuild: true

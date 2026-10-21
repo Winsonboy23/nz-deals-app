@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "packageManager": "pnpm@12.4.1",
   "scripts": {
     "dev": "node scripts/sync-zh.mjs && vite",
     "build": "node scripts/legal-static.mjs && node scripts/sync-zh.mjs && vue-tsc --noEmit && vite build",

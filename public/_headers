@@ -1,0 +1,20 @@
+# Cloudflare Pages 的回應標頭（部署時會一起上傳，不會出現在網址裡）。
+# Vite 產出的 assets 檔名帶 hash，可以永久快取；index.html、service worker、manifest 每次都要重新驗證，
+# 不然舊頁載新 chunk 會 404（main.ts 有自動重整的保險，但能不要發生最好）。
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/sw.js
+  Cache-Control: no-cache
+
+/push-sw.js
+  Cache-Control: no-cache
+
+/manifest.webmanifest
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
+
+/
+  Cache-Control: no-cache

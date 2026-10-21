@@ -1,0 +1,13 @@
+// Cloudflare 部署設定（2026-10-22）：純靜態站，用 Workers 的 static assets（Pages 的新版，wrangler 4 建新專案一律走這條）。
+// 本機：pnpm build 之後 `npx wrangler deploy`；GitHub：推 main 由 .github/workflows/deploy-cloudflare.yml 自動做同一件事。
+// 回應標頭在 public/_headers（build 會帶進 dist）。
+{
+  "name": "kitewise",
+  "compatibility_date": "2026-10-22",
+  "assets": {
+    "directory": "./dist",
+    // 找不到的路徑回 404，不要回 index.html：App 用 hash 路由，真正的路徑只有 /、/privacy.html、/delete-data.html
+    "not_found_handling": "none"
+  },
+  "observability": { "enabled": false }
+}
