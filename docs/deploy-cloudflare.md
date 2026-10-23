@@ -31,7 +31,9 @@ corepack pnpm build && npx wrangler deploy
 2. **Meta（Facebook 登入）**：Meta 開發者後台 → App 設定 → App Domains 加新網域；隱私權政策網址改成新網址的 `/privacy.html`。
 3. **訪客資料搬家**：App 後台「開關」頁把 `migrate_host` 填成新網址的主機名（例如 `kitewise.yongguang-web.workers.dev`）。填了之後，舊網址一打開就會把訪客的店、清單、語言帶去新網址（src/lib/migrate.ts）。確定新站沒問題再填。
 4. **推播**：訂閱綁在網址上，舊網址訂的在新網址要重新訂一次。
-5. **自訂網域**：Cloudflare 後台 → Workers & Pages → kitewise → Settings → Domains & Routes → Add custom domain。網域不在 Cloudflare 管的話要先把 DNS 搬過去或加 CNAME。
+5. **自訂網域**：kitewise.nz 和 kitewise.co.nz 買在 1st Domains（帳號 12574924）。2026-10-24 已把 kitewise.nz 加進 Cloudflare（nameserver：earl.ns.cloudflare.com、jule.ns.cloudflare.com），1st Domains 那邊關掉 parking、填上這兩個 nameserver。
+   生效後（Cloudflare 網域狀態變 Active）：刪掉 DNS 裡掃進來的兩筆停泊紀錄（A kitewise.nz → 210.55.30.93、CNAME www），再 `npx wrangler deploy`，wrangler.jsonc 的 routes 會自動把 kitewise.nz 和 www 接上。
+   kitewise.co.nz 之後同樣流程加進 Cloudflare，再用 Redirect Rule 轉到 kitewise.nz。
 
 ## 舊站怎麼處理
 

@@ -4,6 +4,13 @@
 {
   "name": "kitewise",
   "compatibility_date": "2026-10-22",
+  // 正式網域 kitewise.nz（DNS 在同一個 Cloudflare 帳號，custom_domain 會自動建 DNS 紀錄與憑證；2026-10-24）。
+  // 第一次 deploy 前要先把 Cloudflare 掃進來的 1st Domains 停泊紀錄（A kitewise.nz、CNAME www）刪掉，不然會說紀錄已存在。
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "kitewise.nz", "custom_domain": true },
+    { "pattern": "www.kitewise.nz", "custom_domain": true }
+  ],
   "assets": {
     "directory": "./dist",
     // 找不到的路徑回 404，不要回 index.html：App 用 hash 路由，真正的路徑只有 /、/privacy.html、/delete-data.html
