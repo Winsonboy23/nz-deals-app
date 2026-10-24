@@ -27,8 +27,8 @@
   "r2_buckets": [
     { "binding": "DATA", "bucket_name": "kitewise-data" }
   ],
-  // 費用保險：單次請求 CPU 超過 50 ms 就砍（正常請求幾 ms；超過代表迴圈寫壞或被灌）
-  "limits": { "cpu_ms": 50 },
+  // 費用保險：單次請求 CPU 超過 200 ms 就砍（正常請求幾 ms；/ingest 一批 1,000 列和重建一家店 3,000 多列的 R2 快照要幾十 ms，10-25 從 50 放寬）
+  "limits": { "cpu_ms": 200 },
   // 公開值（anon key 本來就在前端 bundle 裡），不是機密。機密（INGEST_TOKEN 等）用 `wrangler secret put`。
   "vars": {
     "SUPABASE_URL": "https://mzuckacocbeuekdzikzu.supabase.co",

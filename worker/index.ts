@@ -3,18 +3,13 @@
 // 只有 wrangler.jsonc 的 run_worker_first 列的四組路徑會進來：/api/*、/auth/*、/ingest/*、/admin/*。
 // 其他路徑由 static assets 直接出檔，不經過這裡。
 //
-// 現在真的有功能的只有 GET /api/specials/:store（Supabase 快取代理，10-25 以前就有，原樣搬進來）和 GET /api/health。
-// /auth、/ingest、/admin 先回 501，之後的階段再填。/ingest/* 已經先驗 Bearer token（沒帶就 401）。
+// 現在真的有功能的：GET /api/specials/:store（Supabase 快取代理，10-25 以前就有，原樣搬進來）、GET /api/health、
+// /ingest/*（階段 2，worker/ingest.ts：爬蟲寫 D1 + 重建 R2 快照，Bearer token 沒帶就 401）。/auth、/admin 先回 501，之後的階段再填。
 import { Hono } from 'hono'
+import type { Env } from './env'
+import ingest from './ingest'
 
-export type Env = {
-  DB: D1Database
-  DATA: R2Bucket
-  SUPABASE_URL: string
-  SUPABASE_ANON_KEY: string
-  /** 爬蟲與 price-worker 用的鑰匙，`wrangler secret put INGEST_TOKEN` */
-  INGEST_TOKEN?: string
-}
+export type { Env }
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -125,7 +120,7 @@ app.use('/ingest/*', async (c, next) => {
   if (!token || !got || !timingSafeEqual(got, token)) return c.json({ error: 'unauthorized' }, 401)
   await next()
 })
-app.all('/ingest/*', (c) => c.json({ error: 'not implemented', stage: 2 }, 501))
+app.route('/ingest', ingest)
 
 /** 長度相同時逐字比，避免用 === 比 token 洩漏長度與前綴（常數時間）。 */
 function timingSafeEqual(a: string, b: string): boolean {
