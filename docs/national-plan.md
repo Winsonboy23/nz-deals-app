@@ -139,7 +139,7 @@ AI 食譜 ──▶ Worker /api/ai-recipe（OPENAI_API_KEY 放 secret，每日�
 | 階段 | 內容 | 誰 | 驗收 |
 |---|---|---|---|
 | 0 | 訂 Workers Paid（帳號層級）；建 D1 `kitewise`、R2 `kitewise-data`；Worker 加 Hono 骨架與 secrets | 前端 | `wrangler d1 execute` 建表成功 — **✅ 2026-10-25 做完**：D1 `kitewise`（OC 區）29 張表（`migrations/0001_init.sql`）、R2 `kitewise-data`、`worker/index.ts` Hono 骨架（/api/health、/api/specials 代理照舊；/ingest 驗 Bearer 回 501、/auth /admin 回 501）、`INGEST_TOKEN` 已放 Worker secret 與 Mac mini `~/nz-deals/.env`（另加 `INGEST_URL=https://kitewise.nz`） |
-| 1 | 匯入可沿用的資料：products、families、categories、settings、recipes 字典、admins | 前端 | 筆數對得上 Supabase |
+| 1 | 匯入可沿用的資料：products、families、categories、settings、recipes 字典、admins | 前端 | 筆數對得上 Supabase — **✅ 2026-10-25 做完**：爬蟲 repo 的 `scripts/migrate-to-d1.ts`（`export` → `apply --remote` → `verify --remote`，INSERT OR REPLACE 可重跑）灌進 D1 `kitewise`：chains 3、stores 387（island 由 region 推：Woolworths 的 CAN/OTA/STL/NSN/MBH/TAS/WTC 是 SI）、categories 781（name_zh 全有）、products 26,676、families 4,549（從 family_dict 彙整）、chain_items 21,241（← product_ids）、settings 8、admins 2、recipes 61；九張表筆數與 Supabase 全部一致。products 的 brand / size / image_url 來源沒有，先 null，階段 2 爬蟲補。踩到：D1 單句 100 KB 要算 UTF-8 位元組（中文 3 bytes）；UNION ALL 超過約 8 項會 `too many terms in compound SELECT`；這台到 Cloudflare 偶爾 fetch failed，腳本會重試 3 次 |
 | 2 | 爬蟲改成雙寫（Supabase + `/ingest/*`），先 11 家店 | Mac mini | D1 的 11 家店資料與 Supabase 一致，R2 快照產生 |
 | 3 | 前端 `/api/specials` 改讀 R2 快照；其他讀取改 D1；用 feature flag 切換 | 前端 | App 全部頁面在 D1 上跑通 |
 | 4 | 登入、清單、關注、推播、AI 食譜搬到 Worker；現有登入使用者的清單匯過去 | 前端 | 登入後同步正常，推播收得到 |
