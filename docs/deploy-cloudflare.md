@@ -6,7 +6,8 @@
 
 - Cloudflare 帳號：winsonboy23@gmail.com，專案名稱 `kitewise`（Workers static assets，也就是新版的 Pages）。
 - 網址：https://kitewise.yongguang-web.workers.dev （之後接自訂網域就換成那個）。
-- 設定檔：`wrangler.jsonc`（專案名、assets 目錄 `dist`、找不到的路徑回 404）。
+- 設定檔：`wrangler.jsonc`（專案名、assets 目錄 `dist`、找不到的路徑回 404、`/api/*` 交給 `worker/index.js`）。
+- `worker/index.js`：特價資料的 Supabase 快取代理 `/api/specials/<store>?v=…`，邊緣快取 7 天、key 帶爬蟲抓取時間，Supabase 每個版本只送一次（2026-10-25，為了 Egress 額度）。
 - 回應標頭：`public/_headers`（assets 永久快取；index、sw.js、manifest 不快取）。
 - 自動部署：`.github/workflows/deploy-cloudflare.yml`，推到 main 就 build + deploy。
 

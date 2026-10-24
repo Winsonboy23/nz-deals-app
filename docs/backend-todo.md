@@ -146,3 +146,18 @@
 | Mainland Mild & Creamy Edam 700g（有 Clubcard 特價那週） | Havelock North 紅超 | member_price 9.99、regular_price 13.89、club_only 為真 |
 | Mainland Cheese Edam 700g | Hastings 綠超 | price 11.50、regular_price 13.90、member_price 空（人人都有的 Special） |
 | 任一綠超 Member Price 商品 | 任一綠超 | member_price 非空 |
+
+---
+
+## 10. Supabase 傳出流量（Egress）要降（2026-10-25 新增）
+
+**現況**：免費方案 Egress 5 GB/月，10 月週期（10/5–11/5）第 20 天就用了 4.67 GB；上個週期也超過，11/2 起會被限制（402）。Log Ingestion 7.1 GB／上限 1 GB，之後也會管。MAU 為 0，流量全是匿名讀取。
+
+**前端已做**（commit 88c6088）：App 不再直接向 Supabase 下載特價，改走 kitewise.nz 的 Worker 快取代理 `/api/specials/<store>?v=<last_fetched_at>`，同一個版本 Supabase 只送一次，其餘由 Cloudflare 送。
+
+**爬蟲這邊要做**：
+- 比對新舊（added／changed／removed）、名字配對時讀 specials／products 的量是第二大宗。只讀必要欄位（不要 `select *`），或在 Mac mini 本機留上一次抓取的快照直接比對，不要每次從資料庫整包讀回來。
+- 每小時測試抓取那種頻率不要再開；每日三次即可。
+- 之後擴店（全紐西蘭）前，價格要改成按連鎖存、全商品目錄放 Cloudflare R2，詳見聊天紀錄 2026-10-25。
+
+**驗收**：Supabase 後台 Usage → Egress 下個週期 < 1 GB；Log Ingestion < 1 GB。
