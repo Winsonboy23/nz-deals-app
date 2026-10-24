@@ -1,0 +1,173 @@
+# KiteWise 全國版：搬到 Cloudflare 的規格
+
+日期：2026-10-25
+狀態：規格，尚未開工。現有 11 家店的版本（Supabase）只是測試，11 月後可直接被本版取代，不續費 Supabase。
+分工：前端與 Worker API 在這個 repo（nz-deals-app）；爬蟲與 price-worker 在 Mac mini 的 nz-deals-crawler repo。
+
+---
+
+## 0. 目標與原則
+
+- 覆蓋全紐西蘭三家連鎖約 390 家店（Woolworths 約 190、New World 約 140、PAK'nSAVE 約 60）。
+- 全部跑在 Cloudflare：Workers（API）+ D1（資料庫）+ R2（每店每週的特價快照檔）。Supabase 退場。
+- **價格按連鎖存，不按店存。** 包裝食品、冷凍、乾貨三家都是全連鎖統一價；只有生鮮各店自己訂價、各店賣的東西不一樣。這是資料量從 8 GB 變 1 GB、爬蟲從 13 小時變 2 小時的關鍵，不是可選項。
+- 使用者看到的體驗不變：選 1 到 3 家店 → 同一樣東西哪家最便宜、分類瀏覽、搜尋、清單、關注、推播、食譜、AI 食譜。
+- 「沒有資料」永遠不寫成「沒特價」（沿用 2026-09 的原則）。
+
+## 1. 架構
+
+```
+Mac mini 爬蟲 ──(HTTPS, Bearer token)──▶ Worker /ingest/* ──▶ D1
+                                                 │
+                                                 └─▶ R2  specials/<store>/<week>.json（每次抓完重建）
+手機 App（kitewise.nz）──▶ Worker /api/*  ──讀──▶ R2 快照 / D1
+                        ──▶ Worker /auth/* （Google 登入，Cookie session）
+後台（kitewise.nz/admin）──▶ Cloudflare Access 保護 ──▶ Worker /admin/*
+Mac mini price-worker ──▶ Worker /ingest/price-requests（領單、回填）
+AI 食譜 ──▶ Worker /api/ai-recipe（OPENAI_API_KEY 放 secret，每日上限記在 D1）
+```
+
+一個 Worker（現在的 `kitewise`）同時出靜態檔和 API，`run_worker_first` 只對 `/api/*`、`/auth/*`、`/ingest/*`、`/admin/*` 生效。API 用 Hono 寫（永光寺那站已經在用，照抄架構）。
+
+## 2. 資料模型（D1 / SQLite）
+
+### 2.1 連鎖與店
+
+| 表 | 欄位 | 說明 |
+|---|---|---|
+| `chains` | id (woolworths / newworld / paknsave), name, member_label（Everyday Rewards / Club+） | 三列 |
+| `stores` | id, chain_id, name, region, island, lat, lng, online, last_fetched_at, catalog_at | 約 390 列。id 沿用現在的格式 `chain:storeId` |
+
+### 2.2 商品（連鎖一份，不分店）
+
+| 表 | 欄位 | 說明 |
+|---|---|---|
+| `products` | key (PK), display_name, brand, size, category_id, family_key, is_food, image_url | 跨店共用的字典，沿用現在的 product_key 規則；display_name 用前端 displayName 的拼法 |
+| `chain_items` | chain_id, product_id (超市編號), product_key, name_listed, url, seen_at；PK (chain_id, product_id) | 一個連鎖裡這個編號對應哪個 key；取代現在的 product_ids |
+| `families` | key, name_en, name_zh | 同類可比 |
+| `categories` | id, level, parent_id, name, name_zh | 以 Foodstuffs 分類為主幹，Woolworths 用對照表映射（現有 taxonomy 邏輯搬過來） |
+
+### 2.3 價格（核心）
+
+| 表 | 欄位 | 說明 |
+|---|---|---|
+| `chain_prices` | chain_id, product_key, week_start, price, regular_price, member_price, multi_buy (JSON), badges (JSON 陣列), price_unit, unit_price, unit_price_unit, promo_type；PK (chain_id, product_key, week_start) | **包裝食品**：全連鎖一份。每週約 1 萬列 |
+| `store_prices` | store_id, product_key, week_start, 同上價格欄位；PK (store_id, product_key, week_start) | **生鮮**（fruit-and-vegetables、meat-poultry-and-seafood 兩個第一層）各店自己一份；其他分類只有在跟連鎖價不同時才寫一列（例外價）。每週約 3 萬列 |
+| `store_specials` | store_id, week_start, product_keys (JSON 陣列或壓縮字串) | 這家店這週「哪些商品在特價」的清單，一店一週一列。查「某店特價」= 這張表的 key 清單 join chain_prices，再用 store_prices 覆蓋 |
+| `store_items` | store_id, product_key, seen_at；PK (store_id, product_key) | 全商品目錄的「這家店有沒有賣」。取代現在的 catalog 表，商品本身不重複存 |
+
+讀「Hastings Woolworths 這週特價」的順序：`store_specials` 拿 key 清單 → `chain_prices` 拿連鎖價 → `store_prices` 有的就覆蓋。這個合併在爬蟲寫完時做一次，結果寫成 R2 快照，App 不用自己 join。
+
+保留 8 週，每週清一次更舊的。
+
+### 2.4 使用者
+
+| 表 | 說明 |
+|---|---|
+| `users` | id, google_sub, email, name, avatar, created_at |
+| `sessions` | id, user_id, expires_at（Cookie 裡只放 session id） |
+| `user_stores` | 選的店 |
+| `lists`, `list_items` | 清單，含分享 token |
+| `watches` | 關注的 product_key |
+| `push_subscriptions`, `notifications` | 推播 |
+| `ai_recipes`, `ai_usage` | AI 食譜紀錄與每日次數 |
+
+### 2.5 營運
+
+| 表 | 說明 |
+|---|---|
+| `settings` | key/value（live_prices、ai_recipes、announce、recipe_weekly…） |
+| `admins` | email 白名單（後台另有 Cloudflare Access 擋第一道） |
+| `crawl_runs`, `crawl_stores` | 沿用現在的欄位，含 slices / badges / tree |
+| `admin_jobs` | 派工單 |
+| `price_requests` | 即時查價的單；price-worker 用 token 來領 |
+| `name_matches` | 名字配對結果 |
+
+### 2.6 R2
+
+- `specials/<store_id>/<week_start>.json`：這家店這週合併好的特價（跟 App 現在拿到的欄位一樣，加 badges、regular_price、member_price），約 1 MB，gzip 後約 150 KB。每次抓完重建，留 2 週。
+- `catalog/<store_id>.json`：這家店有賣的 key 清單，一站模式查「有沒有賣」用。
+
+## 3. API（Worker）
+
+公開、可快取：
+- `GET /api/stores` 店清單（含 last_fetched_at）
+- `GET /api/specials/:store?v=<last_fetched_at>` 直接回 R2 快照，邊緣快取 7 天（現在的代理改成讀 R2，不再打資料庫）
+- `GET /api/history/:key?stores=a,b,c` 近 8 週價格
+- `GET /api/catalog/:store?v=<catalog_at>` 有賣的 key 清單
+- `GET /api/settings` 公開開關
+
+需登入（Cookie session）：
+- `GET/PUT /api/me/stores`、`/api/me/list`、`/api/me/watches`、`/api/me/push`
+- `POST /api/ai-recipe`
+- `POST /api/price-requests`（一站即時查價送單）、`GET /api/price-requests/:id`
+
+爬蟲與 price-worker（Bearer token，放 Worker secret 與 Mac mini 的 .env）：
+- `POST /ingest/run/start`、`POST /ingest/run/:id/store`（每店結果與保命指標）、`POST /ingest/run/:id/finish`
+- `POST /ingest/chain-prices`、`/ingest/store-prices`、`/ingest/store-specials`、`/ingest/store-items`、`/ingest/products`、`/ingest/chain-items`：每批最多 1,000 列，upsert，可重送
+- `POST /ingest/snapshot/:store/:week` 觸發重建 R2 快照（或 ingest finish 時自動做）
+- `GET /ingest/price-requests/claim`、`POST /ingest/price-requests/:id/result`
+
+後台（Cloudflare Access 保護 `/admin/*`，免費方案 50 個使用者夠用）：
+- 現有後台五頁的讀寫端點。
+
+## 4. 登入
+
+- 自己接 Google OIDC：`/auth/google` 導去 Google → `/auth/callback` 換 token、驗 id_token、建 `users`／`sessions`、寫 HttpOnly Secure Cookie、導回原頁。用 `jose` 驗簽，不用大框架。
+- 前端跟 API 同網域（kitewise.nz），Cookie 直接帶，不用 CORS、不用在前端存 token。
+- 訪客照舊全功能可用（localStorage），登入只是同步到帳號。
+- Google Cloud Console 的 OAuth 用戶端要加 `https://kitewise.nz/auth/callback`；對外上線前要過 Google 的同意畫面審核（logo、隱私權政策網址已有）。
+- 推播：VAPID 公私鑰放 Worker secret；發送由 Worker 的 Cron Trigger 做（週一抓完觸發），不再靠 Mac mini。
+
+## 5. 爬蟲怎麼改（Mac mini）
+
+抓法：
+1. **每個連鎖挑一家「參考店」整個分類翻**，拿包裝食品的連鎖價與徽章 → `chain_prices`。三家各約 150 個請求。
+2. **每家店只抓兩件事**：(a) 生鮮兩個第一層分類的價格 → `store_prices`；(b) 這家店的特價商品清單（只要 key，不要整筆） → `store_specials`。綠超每店約 10 個請求，紅超黃超 Algolia 篩 onPromotion 約 3 到 5 個。
+3. **每週一次**每家店翻全目錄拿「有沒有賣」→ `store_items`。
+4. 寫入全部改成打 `/ingest/*`，批次 1,000 列；Supabase 的寫入在過渡期保留雙寫，切換後拿掉。
+5. 保命機制照 backend-todo §5：分類沒拿滿不寫、徽章歸零先當失敗，這些指標跟著 `/ingest/run/:id/store` 送上來。
+
+估算（要實測修正）：每次抓取約 3 家參考店 450 個請求 + 390 店 × 8 個 ≈ 3,600 個請求，間隔 1.5 秒約 1.5 小時；一天三次約 4.5 小時，一台 Mac mini 可以。全目錄那次一週一次約 390 × 30 = 12,000 個請求，約 5 小時，排在週日夜間。被擋的風險：綠超一天從約 1,750 個請求變約 4,000 個，要觀察 429／403，必要時拉長間隔或分兩台。
+
+連鎖價怎麼判定「統一」：參考店抓到的價格先當連鎖價；第 2 步各店抓到的包裝商品價若與連鎖價不同，寫進 `store_prices` 當例外，並在報告列出「例外比例」。例外比例若長期高於 5%，代表假設錯，要回頭改。
+
+## 6. 搬遷順序
+
+| 階段 | 內容 | 誰 | 驗收 |
+|---|---|---|---|
+| 0 | 訂 Workers Paid（帳號層級）；建 D1 `kitewise`、R2 `kitewise-data`；Worker 加 Hono 骨架與 secrets | 前端 | `wrangler d1 execute` 建表成功 |
+| 1 | 匯入可沿用的資料：products、families、categories、settings、recipes 字典、admins | 前端 | 筆數對得上 Supabase |
+| 2 | 爬蟲改成雙寫（Supabase + `/ingest/*`），先 11 家店 | Mac mini | D1 的 11 家店資料與 Supabase 一致，R2 快照產生 |
+| 3 | 前端 `/api/specials` 改讀 R2 快照；其他讀取改 D1；用 feature flag 切換 | 前端 | App 全部頁面在 D1 上跑通 |
+| 4 | 登入、清單、關注、推播、AI 食譜搬到 Worker；現有登入使用者的清單匯過去 | 前端 | 登入後同步正常，推播收得到 |
+| 5 | 後台搬到 `/admin`，Cloudflare Access 保護 | 前端 | 五頁都能用 |
+| 6 | 停雙寫，Supabase 退場 | 兩邊 | 一週無 Supabase 請求 |
+| 7 | 擴店：Hawke's Bay 11 → 北島 → 全國，每階段看爬蟲時間、請求數、429 次數、例外比例 | Mac mini | 每階段報告 |
+
+階段 0 到 3 大約兩週，4 到 6 再一到兩週，7 看超市反應。
+
+## 7. 額度與費用
+
+| 項目 | 全國版估算 | Cloudflare 額度 |
+|---|---|---|
+| D1 大小 | 約 1 GB（8 週） | 免費 5 GB／付費單庫 10 GB |
+| D1 每日寫入 | 約 2 萬列，全目錄那天約 10 萬 | 免費 10 萬／付費 5,000 萬每月 |
+| D1 每日讀取 | 看使用者數，快照走 R2 所以很少 | 免費 500 萬 |
+| R2 | 不到 1 GB | 免費 10 GB |
+| Worker 請求 | 每使用者每天約 10 次 | 免費每天 10 萬／付費每月 1,000 萬 |
+| 費用 | Workers Paid 美金 5／月，其餘在額度內 | — |
+
+## 8. 風險
+
+- **連鎖統一價的假設**：Foodstuffs 各店是加盟主，特價清單是全國的但偶有例外；用例外比例監控。
+- **超市封鎖**：請求量翻倍。先北島、再全國，盯 429。
+- **D1 是 SQLite**：沒有 RLS、沒有 jsonb 查詢，權限在 Worker 判斷；大批 upsert 要用 batch API。
+- **Google 登入審核**：對外前要送審，提早開始。
+- **Mac mini 單點**：爬蟲和 price-worker 仍在一台機器上；壞了全國資料停更。至少每日備份 D1（`wrangler d1 export`）。
+
+## 9. 現在就要做的
+
+1. Cloudflare 後台訂 Workers Paid（帳號層級，一次就好）。
+2. 給我一個 Google Cloud 專案的 OAuth 用戶端（或我建一個新的，需要你登入 Google Cloud Console）。
+3. 爬蟲那邊先照第 5 節評估「參考店 + 各店生鮮」的請求數，實測一家店。
