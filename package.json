@@ -9,17 +9,22 @@
     "build": "node scripts/legal-static.mjs && node scripts/sync-zh.mjs && vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
-    "test": "node --test \"tests/**/*.test.ts\""
+    "test": "node --test \"tests/**/*.test.ts\"",
+    "typecheck:worker": "tsc -p worker",
+    "d1:local": "npx wrangler d1 migrations apply kitewise --local",
+    "d1:remote": "npx wrangler d1 migrations apply kitewise --remote"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",
     "@zxing/browser": "^0.2.1",
     "@zxing/library": "^0.23.0",
+    "hono": "^4.13.13",
     "jsbarcode": "^3.12.3",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261023.1",
     "@types/node": "^26.4.1",
     "@vitejs/plugin-vue": "^5.2.1",
     "typescript": "~5.9.2",

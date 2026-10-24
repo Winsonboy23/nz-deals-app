@@ -6,3 +6,6 @@ screenshots/_contact.html
 # build 時由 scripts/legal-static.mjs 從 src/data/legal.json 產生
 public/privacy.html
 public/delete-data.html
+
+# wrangler 本機狀態（D1 本機副本、快取）
+.wrangler

@@ -7,7 +7,14 @@
 - Cloudflare 帳號：winsonboy23@gmail.com，專案名稱 `kitewise`（Workers static assets，也就是新版的 Pages）。
 - 網址：https://kitewise.yongguang-web.workers.dev （之後接自訂網域就換成那個）。
 - 設定檔：`wrangler.jsonc`（專案名、assets 目錄 `dist`、找不到的路徑回 404、`/api/*` 交給 `worker/index.js`）。
-- `worker/index.js`：特價資料的 Supabase 快取代理 `/api/specials/<store>?v=…`，邊緣快取 7 天、key 帶爬蟲抓取時間，Supabase 每個版本只送一次（2026-10-25，為了 Egress 額度）。
+- `worker/index.ts`（Hono，2026-10-25 全國版階段 0）：`/api/*`、`/auth/*`、`/ingest/*`、`/admin/*` 進 Worker，其他出靜態檔。
+  - `GET /api/specials/<store>?v=…`：特價資料的 Supabase 快取代理，邊緣快取 7 天、key 帶爬蟲抓取時間，Supabase 每個版本只送一次（為了 Egress 額度）。
+  - `GET /api/health`：D1 / R2 綁定有沒有通。
+  - `/ingest/*` 要 `Authorization: Bearer <INGEST_TOKEN>`（secret），現在回 501；`/auth/*`、`/admin/*` 回 501，之後階段填。
+  - 型別檢查：`pnpm typecheck:worker`。
+- D1 `kitewise`（binding `DB`，OC 區）、R2 `kitewise-data`（binding `DATA`）。表用 `migrations/*.sql` 管，**只加不刪**：
+  `pnpm d1:local`（本機副本）／`pnpm d1:remote`（正式）。deploy 不會自動跑 migration，加了新檔要手動 `pnpm d1:remote`。
+- 機密只用 `npx wrangler secret put <NAME>`（目前：`INGEST_TOKEN`）。費用保險：`wrangler.jsonc` 的 `limits.cpu_ms = 50`。
 - 回應標頭：`public/_headers`（assets 永久快取；index、sw.js、manifest 不快取）。
 - 自動部署：`.github/workflows/deploy-cloudflare.yml`，推到 main 就 build + deploy。
 

@@ -71,6 +71,7 @@ AI 食譜 ──▶ Worker /api/ai-recipe（OPENAI_API_KEY 放 secret，每日�
 | `watches` | 關注的 product_key |
 | `push_subscriptions`, `notifications` | 推播 |
 | `ai_recipes`, `ai_usage` | AI 食譜紀錄與每日次數 |
+| `loyalty_cards` | 會員卡錢包（現有功能，10-25 階段 0 補進來） |
 
 ### 2.5 營運
 
@@ -82,6 +83,7 @@ AI 食譜 ──▶ Worker /api/ai-recipe（OPENAI_API_KEY 放 secret，每日�
 | `admin_jobs` | 派工單 |
 | `price_requests` | 即時查價的單；price-worker 用 token 來領 |
 | `name_matches` | 名字配對結果 |
+| `recipes` | 食譜正本（現有 Supabase `recipes` 表，10-25 階段 0 補進來；id / week_start / source / published / reviewed / data JSON） |
 
 ### 2.6 R2
 
@@ -136,7 +138,7 @@ AI 食譜 ──▶ Worker /api/ai-recipe（OPENAI_API_KEY 放 secret，每日�
 
 | 階段 | 內容 | 誰 | 驗收 |
 |---|---|---|---|
-| 0 | 訂 Workers Paid（帳號層級）；建 D1 `kitewise`、R2 `kitewise-data`；Worker 加 Hono 骨架與 secrets | 前端 | `wrangler d1 execute` 建表成功 |
+| 0 | 訂 Workers Paid（帳號層級）；建 D1 `kitewise`、R2 `kitewise-data`；Worker 加 Hono 骨架與 secrets | 前端 | `wrangler d1 execute` 建表成功 — **✅ 2026-10-25 做完**：D1 `kitewise`（OC 區）29 張表（`migrations/0001_init.sql`）、R2 `kitewise-data`、`worker/index.ts` Hono 骨架（/api/health、/api/specials 代理照舊；/ingest 驗 Bearer 回 501、/auth /admin 回 501）、`INGEST_TOKEN` 已放 Worker secret 與 Mac mini `~/nz-deals/.env`（另加 `INGEST_URL=https://kitewise.nz`） |
 | 1 | 匯入可沿用的資料：products、families、categories、settings、recipes 字典、admins | 前端 | 筆數對得上 Supabase |
 | 2 | 爬蟲改成雙寫（Supabase + `/ingest/*`），先 11 家店 | Mac mini | D1 的 11 家店資料與 Supabase 一致，R2 快照產生 |
 | 3 | 前端 `/api/specials` 改讀 R2 快照；其他讀取改 D1；用 feature flag 切換 | 前端 | App 全部頁面在 D1 上跑通 |
