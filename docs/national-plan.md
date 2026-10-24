@@ -171,3 +171,30 @@ AI 食譜 ──▶ Worker /api/ai-recipe（OPENAI_API_KEY 放 secret，每日�
 1. Cloudflare 後台訂 Workers Paid（帳號層級，一次就好）。
 2. 給我一個 Google Cloud 專案的 OAuth 用戶端（或我建一個新的，需要你登入 Google Cloud Console）。
 3. 爬蟲那邊先照第 5 節評估「參考店 + 各店生鮮」的請求數，實測一家店。
+
+---
+
+## 10. 給接手開發的 AI／工程師：先讀這段
+
+**兩個 repo、兩個角色，不要互相改對方的東西：**
+
+| 角色 | Repo | 範圍 |
+|---|---|---|
+| A 前端＋Worker | GitHub `Winsonboy23/nz-deals-app`（公開，本檔所在） | `src/`（Vue 3 App）、`worker/`（Cloudflare Worker API）、`wrangler.jsonc`、D1 schema 與 migrations、R2 快照格式、Google 登入、後台 |
+| B 爬蟲 | GitHub `Winsonboy23/nz-deals-crawler`（私人，跑在 Mac mini） | 抓三家超市、寫入 `/ingest/*`、price-worker、保命機制 |
+
+兩邊的**契約**就是本檔第 2 節（資料欄位）、第 3 節（`/ingest/*` API）。改契約要同時改本檔並通知對方。
+
+**現況（2026-10-25）**
+- 正式站 https://kitewise.nz 已在 Cloudflare 上跑（Worker `kitewise`，Workers static assets），資料還在 Supabase（專案 mzuckacocbeuekdzikzu，只是測試資料，11 月後不續費）。
+- `worker/index.js` 已有一支 `/api/specials` 快取代理，是第 3 節 API 的雛形，之後改讀 R2 快照。
+- 前端讀資料集中在 `src/composables/useSpecials.ts`（特價）、`useStores.ts`（店）、`useStorePrices.ts`（即時查價）、`useList.ts`／`useSync.ts`（清單同步）、`useAuth.ts`（登入）、`usePush.ts`（推播）、`src/lib/aiRecipe.ts`（AI 食譜）。所有 `supabase.from(...)`、`supabase.rpc(...)`、`supabase.auth` 的呼叫就是要換掉的地方，用 `grep -rn "supabase\." src` 列出。
+- 前端的價格顯示與排序規則不要動：單件價為基準（`src/lib/compare.ts` 的 `rankPrice`）、`PriceLine.vue` 負責所有價格排版、文案「沒有資料」不說「沒特價」。
+- 既有文件：`docs/deploy-cloudflare.md`（部署）、`docs/backend-todo.md`（爬蟲已完成與待辦）。
+- 工具：pnpm 12（`corepack pnpm`）、Node 24、`npx wrangler`（這台 Mac 已登入 Cloudflare 帳號 winsonboy23@gmail.com）。測試：`pnpm test`、`pnpm typecheck`、`pnpm build`。
+
+**工作方式**
+- 照第 6 節的階段順序做，每個階段一個 PR 或一個 commit 系列，commit 訊息寫做了什麼、驗收數字多少。
+- 不碰正式資料的破壞性操作（DROP、TRUNCATE、DELETE 整表）；D1 的 schema 用 migrations 檔，只加不刪。
+- 任何秘密（OAuth client secret、ingest token、OPENAI key、VAPID 私鑰）只放 `wrangler secret put` 與 Mac mini 的 `.env`，不進 git、不印在對話。
+- 每個階段做完回報：改了哪些檔、怎麼驗證、數字、還有什麼要決定。
