@@ -93,6 +93,16 @@ async function fetchStore(store: Store): Promise<StoreData> {
       fetchedAt,
     }
   }
+  // 先走 Cloudflare 的快取代理（worker/index.js）：同一個版本只有第一個人會讓 Supabase 送資料，之後都由 Cloudflare 送，
+  // Supabase 的傳出流量才不會爆（2026-10-25）。本機開發沒有代理、或代理失敗，就退回下面直接打 Supabase。
+  const viaProxy = await fromProxy(store, fetchedAt)
+  if (viaProxy) {
+    if (viaProxy.rows.length) {
+      dropPrefix(`sp:${store.id}:`)
+      writeCache(cacheKey, pack(viaProxy.week, viaProxy.rows), 'sp:')
+    }
+    return { store, week: viaProxy.week, stale: !!viaProxy.week && viaProxy.week !== thisWeek.value, rows: viaProxy.rows, error: null, fetchedAt }
+  }
   // This week if the store has it, otherwise that store's most recent week.
   const head = await supabase
     .from('specials')
@@ -129,6 +139,27 @@ async function fetchStore(store: Store): Promise<StoreData> {
   dropPrefix(`sp:${store.id}:`)   // 這家店上一次抓取的快取丟掉，不然每次抓取都留一份會塞爆 localStorage
   writeCache(cacheKey, pack(week, rows), 'sp:')
   return { store, week, stale: week !== thisWeek.value, rows, error: null, fetchedAt }
+}
+
+type RawRow = Special & { products?: { family_key: string | null; family_name_en: string | null; family_name_zh: string | null } | null }
+/** PostgREST 的列（products 是巢狀物件）攤平成 Special */
+function flatten(r: RawRow): Special {
+  const { products, ...rest } = r
+  return { ...rest, family_key: products?.family_key ?? null, family_name_en: products?.family_name_en ?? null, family_name_zh: products?.family_name_zh ?? null } as Special
+}
+/** 向同網域的 /api/specials 要（Cloudflare Worker 快取代理）。拿不到回 null，由呼叫端退回直接打 Supabase。 */
+async function fromProxy(store: Store, fetchedAt: string | null): Promise<{ week: string | null; rows: Special[] } | null> {
+  if (import.meta.env.DEV) return null   // vite dev 沒有 Worker
+  try {
+    const q = new URLSearchParams({ v: fetchedAt ?? 'na', select: COLS_FAMILY })
+    const res = await fetch(`/api/specials/${encodeURIComponent(store.id)}?${q}`, { headers: { accept: 'application/json' } })
+    if (!res.ok) return null
+    const body = (await res.json()) as { week?: string | null; rows?: RawRow[] }
+    if (!body || !Array.isArray(body.rows)) return null
+    return { week: body.week ?? null, rows: body.rows.map(flatten) }
+  } catch {
+    return null
+  }
 }
 
 /** 同一家店同時只抓一次：App 啟動時 watch(selectedStores) 跟 onMounted 都會叫 load()，以前會各打一次 Supabase。 */
