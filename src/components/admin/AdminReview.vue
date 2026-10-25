@@ -75,7 +75,7 @@ async function loadPairs() {
       pairs.value = rows.map((r) => {
         const aid = r.dict_key.split('|')[1]
         const fallback = r.display_name ?? r.product_key.replace(/_/g, ' ')
-        return { dictKey: r.dict_key, productKey: r.product_key, confidence: r.confidence, matchedTo: r.matched_to, a: toSpecial(r.a, aid, 'newworld:?', fallback), b: toSpecial(r.b, r.matched_to, 'woolworths:?', fallback), aMissing: !r.a, bMissing: !r.b, sent: '' as const }
+        return { dictKey: r.dict_key, productKey: r.product_key, confidence: r.confidence, matchedTo: r.matched_to, a: toSpecial(r.a, aid, 'newworld:?', fallback), b: toSpecial(r.b, r.matched_to, 'woolworths:?', fallback), aMissing: r.a?.price == null, bMissing: r.b?.price == null, sent: '' as const }   // 本週連鎖價沒有這個 key → 跟 Supabase 版一樣標「本週特價表沒有這筆」
       })
     } catch (e) {
       err.value = adminErr(e)
