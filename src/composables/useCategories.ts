@@ -1,5 +1,6 @@
 import { ref, shallowRef } from 'vue'
 import { supabase } from '../lib/supabase'
+import { apiGet, useD1 } from '../lib/api'
 import { readCache, writeCache } from '../lib/cache'
 import type { Category } from '../lib/types'
 
@@ -7,7 +8,9 @@ const byId = shallowRef<Record<string, Category>>(readCache('categories') ?? {})
 const loaded = ref(Object.keys(byId.value).length > 0)
 
 async function loadCategories(): Promise<void> {
-  const { data, error } = await supabase.from('categories').select('id,level,parent_id,name')
+  const { data, error } = useD1()
+    ? await apiGet<Category[]>('/api/categories').then((d) => ({ data: d, error: d ? null : 'api' }))
+    : await supabase.from('categories').select('id,level,parent_id,name')
   if (error || !data) return
   const map: Record<string, Category> = {}
   for (const c of data as Category[]) map[c.id] = c

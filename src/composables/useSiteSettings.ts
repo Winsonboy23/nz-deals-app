@@ -3,6 +3,7 @@
 // 注意跟 useSettings.ts 不同：那支是這台裝置自己的偏好（只看食品），這支是全站設定。
 import { ref } from 'vue'
 import { supabase } from '../lib/supabase'
+import { apiGet, useD1 } from '../lib/api'
 
 const livePrices = ref(true)
 const aiRecipes = ref(true)
@@ -19,7 +20,9 @@ function loadSiteSettings(): Promise<void> {
 }
 
 async function read(): Promise<void> {
-  const { data, error } = await supabase.from('settings').select('key,value')
+  const { data, error } = useD1()
+    ? await apiGet<Array<{ key: string; value: string }>>('/api/settings').then((d) => ({ data: d, error: d ? null : 'api' }))
+    : await supabase.from('settings').select('key,value')
   if (error || !data) return
   const v = new Map((data as Array<{ key: string; value: string }>).map((r) => [r.key, r.value]))
   livePrices.value = v.get('live_prices') !== 'off'

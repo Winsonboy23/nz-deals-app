@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ProductThumb from '../components/ProductThumb.vue'
 import { supabase } from '../lib/supabase'
+import { apiProducts, useD1 } from '../lib/api'
 import { useList } from '../composables/useList'
 import { useSpecials } from '../composables/useSpecials'
 import { t } from '../composables/useI18n'
@@ -25,6 +26,13 @@ const weekBefore = (mon: string) => { const d = new Date(mon + 'T00:00:00Z'); d.
 async function loadPics(keys: string[]): Promise<void> {
   const need = keys.filter((k) => !groups.value.has(k))
   if (!need.length) return
+  if (useD1()) {   // 階段 3：D1 的 products 有圖和名字（爬蟲雙寫補的），不用翻 specials
+    const got = (await apiProducts({ keys: need })) ?? []
+    const next = { ...pics.value }
+    for (const p of got) if (!next[p.key]) next[p.key] = { product_key: p.key, store_id: '', product_id: p.key, image_url: p.image_url, name: p.display_name, category_id: p.category_id } as unknown as Special
+    pics.value = next
+    return
+  }
   // 週一凌晨這週還沒抓到 → 退一週
   for (const week of [thisWeek.value, weekBefore(thisWeek.value)]) {
     const { data } = await supabase.from('specials').select('product_key,store_id,product_id,image_url,name,category_id').eq('week_start', week).in('product_key', need)

@@ -7,6 +7,7 @@ import { chainOf } from '../lib/format'
 import { readCache, writeCache } from '../lib/cache'
 import { nzMonday } from '../lib/week'
 import { supabase } from '../lib/supabase'
+import { apiGet, useD1 } from '../lib/api'
 import type { ChainId, Offer, Store } from '../lib/types'
 
 /** Text in both UI languages. Dish names and steps are translated; product names stay English (§8). */
@@ -111,7 +112,9 @@ function usable(d: Partial<Recipe> | null | undefined): boolean {
 }
 
 async function loadRecipes(): Promise<void> {
-  const { data, error } = await supabase.from('recipes').select('id,week_start,reviewed,data').eq('published', true)
+  const { data, error } = useD1()
+    ? await apiGet<unknown[]>('/api/recipes').then((d) => ({ data: d, error: d ? null : 'api' }))   // 階段 3：D1 的 recipes（published 的）
+    : await supabase.from('recipes').select('id,week_start,reviewed,data').eq('published', true)
   if (!error && data?.length) {
     const rows = data as Array<{ id: string; week_start: string | null; reviewed: boolean; data: Omit<Recipe, 'weekStart' | 'reviewed'> }>
     const bad = rows.filter((r) => !usable(r.data)).map((r) => r.id)

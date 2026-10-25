@@ -4,6 +4,7 @@
 // 查詢都批次（一次 in(...) 多個 key、多家店）；候選放記憶體（店 + 清單 key），切店或清單變了只補缺的，那家特價重抓過才重算那家。
 import { shallowRef } from 'vue'
 import { supabase } from '../lib/supabase'
+import { apiProducts, useD1 } from '../lib/api'
 import { catLevel } from '../lib/format'
 import { cleanWords, coverage, searchWords } from '../lib/nameClean'
 import { unitRate, type Need } from '../lib/size'
@@ -98,7 +99,9 @@ async function fetchProducts(keys: string[]): Promise<void> {
   const need = keys.filter((k) => !products.has(k))
   for (let i = 0; i < need.length; i += CHUNK) {
     const chunk = need.slice(i, i + CHUNK)
-    const { data, error } = await supabase.from('products').select('key,display_name,category_id,family_key').in('key', chunk)
+    const { data, error } = useD1()
+      ? await apiProducts({ keys: chunk }).then((d) => ({ data: d, error: d ? null : 'api' }))
+      : await supabase.from('products').select('key,display_name,category_id,family_key').in('key', chunk)
     if (error) return
     for (const k of chunk) products.set(k, null)
     for (const r of (data ?? []) as ProductRow[]) products.set(r.key, r)
@@ -108,7 +111,9 @@ async function fetchFamilies(fams: string[]): Promise<void> {
   const need = fams.filter((f) => !families.has(f))
   for (let i = 0; i < need.length; i += CHUNK) {
     const chunk = need.slice(i, i + CHUNK)
-    const { data, error } = await supabase.from('products').select('key,family_key').in('family_key', chunk)
+    const { data, error } = useD1()
+      ? await apiProducts({ families: chunk }).then((d) => ({ data: d, error: d ? null : 'api' }))
+      : await supabase.from('products').select('key,family_key').in('family_key', chunk)
     if (error) return
     for (const f of chunk) families.set(f, [])
     for (const r of (data ?? []) as Array<{ key: string; family_key: string }>) families.get(r.family_key)?.push(r.key)

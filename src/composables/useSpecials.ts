@@ -1,5 +1,6 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import { supabase } from '../lib/supabase'
+import { apiAvailable, apiBase, apiGet, useD1 } from '../lib/api'
 import { dropPrefix, readCache, writeCache } from '../lib/cache'
 import { nzMonday, weeksBack } from '../lib/week'
 import { buildGroup, byUnitThenPrice, discountDepth, toOffer } from '../lib/compare'
@@ -149,10 +150,11 @@ function flatten(r: RawRow): Special {
 }
 /** 向同網域的 /api/specials 要（Cloudflare Worker 快取代理）。拿不到回 null，由呼叫端退回直接打 Supabase。 */
 async function fromProxy(store: Store, fetchedAt: string | null): Promise<{ week: string | null; rows: Special[] } | null> {
-  if (import.meta.env.DEV) return null   // vite dev 沒有 Worker
+  if (!apiAvailable()) return null   // vite dev 沒有 Worker（除非 VITE_API_BASE 指到 wrangler dev）
   try {
     const q = new URLSearchParams({ v: fetchedAt ?? 'na', select: COLS_FAMILY })
-    const res = await fetch(`/api/specials/${encodeURIComponent(store.id)}?${q}`, { headers: { accept: 'application/json' } })
+    if (useD1()) q.set('src', 'd1')   // 階段 3：讀 R2 快照（worker/snapshot.ts），不碰 Supabase
+    const res = await fetch(`${apiBase()}/api/specials/${encodeURIComponent(store.id)}?${q}`, { headers: { accept: 'application/json' } })
     if (!res.ok) return null
     const body = (await res.json()) as { week?: string | null; rows?: RawRow[] }
     if (!body || !Array.isArray(body.rows)) return null
@@ -372,6 +374,7 @@ function history(key: string): Promise<HistoryRow[]> {
   const cached = historyCache.get(cacheKey)
   if (cached) return cached
   const p = (async () => {
+    if (useD1()) return (await apiGet<HistoryRow[]>(`/api/history/${encodeURIComponent(key)}?stores=${encodeURIComponent(ids.join(','))}`)) ?? []
     const { data } = await supabase
       .from('specials')
       .select('store_id,week_start,price,multi_buy')

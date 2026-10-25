@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { readCache, writeCache } from '../lib/cache'
 import { supabase } from '../lib/supabase'
+import { apiGet, useD1 } from '../lib/api'
 import { chainOf } from '../lib/format'
 
 export type Lang = 'en' | 'zh'
@@ -544,9 +545,10 @@ async function loadZhCats(): Promise<void> {
   } catch {
     zhCats.value = {}
   }
-  // 正本是 taxonomy_zh 表（後台改得到，公開讀）；讀不到就維持打包進來的那份
-  const { data } = await supabase.from('taxonomy_zh').select('name,zh')
-  const rows = (data ?? []) as Array<{ name: string; zh: string }>
+  // 正本是 taxonomy_zh 表（後台改得到，公開讀）；讀不到就維持打包進來的那份。src=d1 時從 Worker 拿（categories.name_zh）
+  const rows: Array<{ name: string; zh: string }> = useD1()
+    ? (await apiGet<Array<{ name: string; zh: string }>>('/api/taxonomy-zh')) ?? []
+    : (((await supabase.from('taxonomy_zh').select('name,zh')).data ?? []) as Array<{ name: string; zh: string }>)
   if (rows.length) {
     const next = { ...zhCats.value }
     for (const r of rows) next[r.name] = r.zh

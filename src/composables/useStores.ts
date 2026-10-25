@@ -1,5 +1,6 @@
 import { computed, ref, shallowRef } from 'vue'
 import { supabase } from '../lib/supabase'
+import { apiGet, useD1 } from '../lib/api'
 import { readCache, writeCache } from '../lib/cache'
 import pilotStores from '../data/pilot-stores.json'
 import { haversineKm, islandOf } from '../lib/geo'
@@ -49,10 +50,12 @@ const locating = ref<'idle' | 'busy' | 'ok' | 'denied'>(coords.value ? 'ok' : 'i
 async function loadStores(): Promise<void> {
   if (loading.value) return
   loading.value = true
-  const { data, error } = await supabase
-    .from('stores')
-    .select('id,chain_id,store_id,name,region,lat,lng,online_shopping,last_fetched_at')
-    .order('name')
+  const { data, error } = useD1()
+    ? await apiGet<Store[]>('/api/stores').then((d) => ({ data: d, error: d ? null : 'api' }))   // 階段 3：D1 的 stores（形狀一樣）
+    : await supabase
+      .from('stores')
+      .select('id,chain_id,store_id,name,region,lat,lng,online_shopping,last_fetched_at')
+      .order('name')
   loading.value = false
   if (error || !data) return
   all.value = onlyShown(data as Store[])

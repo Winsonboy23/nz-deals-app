@@ -17,7 +17,7 @@ interface PriceRow {
   unit_price_unit: string | null
   promo_type: string | null
 }
-interface ProductRow { key: string; display_name: string; brand: string | null; size: string | null; category_id: string | null; family_key: string | null; is_food: number; image_url: string | null }
+interface ProductRow { key: string; display_name: string; brand: string | null; size: string | null; category_id: string | null; family_key: string | null; is_food: number; image_url: string | null; family_name_en: string | null; family_name_zh: string | null }
 interface ItemRow { product_key: string; product_id: string; url: string | null; name_listed: string | null }
 
 const UNIT_TEXT: Record<string, string> = { each: ' each', kg: ' kg', pack: ' pack', litre: ' L' }
@@ -39,7 +39,7 @@ export async function buildSnapshot(env: Env, storeId: string, week: string) {
   const [cp, spr, prods, items, st] = await Promise.all([
     env.DB.prepare('select cp.* from chain_prices cp join json_each(?) k on k.value = cp.product_key where cp.chain_id = ? and cp.week_start = ?').bind(keysJson, chain, week).all<PriceRow>(),
     env.DB.prepare('select * from store_prices where store_id = ? and week_start = ?').bind(storeId, week).all<PriceRow>(),
-    env.DB.prepare('select p.* from products p join json_each(?) k on k.value = p.key').bind(keysJson).all<ProductRow>(),
+    env.DB.prepare('select p.*, f.name_en as family_name_en, f.name_zh as family_name_zh from products p join json_each(?) k on k.value = p.key left join families f on f.key = p.family_key').bind(keysJson).all<ProductRow>(),
     env.DB.prepare('select ci.product_key, ci.product_id, ci.url, ci.name_listed from chain_items ci join json_each(?) k on k.value = ci.product_key where ci.chain_id = ? order by ci.seen_at').bind(keysJson, chain).all<ItemRow>(),
     env.DB.prepare('select last_fetched_at from stores where id = ?').bind(storeId).first<{ last_fetched_at: string | null }>(),
   ])
@@ -90,6 +90,8 @@ export async function buildSnapshot(env: Env, storeId: string, week: string) {
       is_special: badges.length > 0,
       regular_price: pr.regular_price,
       member_price: pr.member_price,
+      // 同類可比：跟 App 從 Supabase 拿 `products(family_key,family_name_en,family_name_zh)` 的巢狀形狀一樣，前端 flatten 直接吃
+      products: p ? { family_key: p.family_key, family_name_en: p.family_name_en, family_name_zh: p.family_name_zh } : null,
     })
   }
   return { week, store_id: storeId, built_at: new Date().toISOString(), rows, missing_price: missingPrice }

@@ -6,12 +6,19 @@
 // 現在真的有功能的：GET /api/specials/:store（Supabase 快取代理，10-25 以前就有，原樣搬進來）、GET /api/health、
 // /ingest/*（階段 2，worker/ingest.ts：爬蟲寫 D1 + 重建 R2 快照，Bearer token 沒帶就 401）。/auth、/admin 先回 501，之後的階段再填。
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 import type { Env } from './env'
 import ingest from './ingest'
+import api from './api'
+import { snapshotKey } from './snapshot'
+import { nzMonday } from './week'
 
 export type { Env }
 
 const app = new Hono<{ Bindings: Env }>()
+
+// 本機開發 vite 在 5173、Worker 在 8787，跨來源要 CORS；正式站同網域用不到。舊網址（Zeabur／co.nz）之後導過來也先放行。
+app.use('/api/*', cors({ origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://kitewise.nz', 'https://www.kitewise.nz', 'https://kitewise.co.nz', 'https://www.kitewise.co.nz', 'https://nz-deals.zeabur.app'] }))
 
 // ── /api 公開 ────────────────────────────────────────────────────────────────
 
@@ -58,6 +65,16 @@ app.get('/api/specials/:store', async (c) => {
   const select = c.req.query('select') ?? '*'
   if (!STORE_ID.test(storeId) || !SELECT_OK.test(select)) return c.json({ error: 'bad request' }, 400)
 
+  // 階段 3（2026-10-25）：App 帶 src=d1 就讀 R2 快照（爬蟲雙寫時重建，worker/snapshot.ts），不碰 Supabase。
+  // 哪一週：這家店 store_specials 裡 ≤ 這週一的最新一週。沒有就回空（這家店還沒進 D1）。快取 1 小時：快照跟 stores.last_fetched_at（App 帶的 v）同一次更新，但有幾秒的先後。
+  if (c.req.query('src') === 'd1') {
+    const wk = await c.env.DB.prepare('select max(week_start) as w from store_specials where store_id = ? and week_start <= ?').bind(storeId, nzMonday()).first<{ w: string | null }>()
+    if (!wk?.w) return c.json({ week: null, rows: [] }, 200, { 'cache-control': 'public, max-age=300' })
+    const obj = await c.env.DATA.get(snapshotKey(storeId, wk.w))
+    if (!obj) return c.json({ week: wk.w, rows: [], error: 'snapshot missing' }, 200, { 'cache-control': 'no-store' })
+    return new Response(obj.body, { status: 200, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=3600', 'x-kw-source': 'r2' } })
+  }
+
   // 邊緣快取：鑰匙就是完整網址（含 store、v、select）
   const cache = caches.default
   const cacheKey = new Request(c.req.url, { method: 'GET' })
@@ -88,10 +105,7 @@ async function fromSupabase(env: Env, storeId: string, select: string):
   Promise<{ ok: true; body: { week: string | null; rows: unknown[] } } | { ok: false; error: string }> {
   const base = `${env.SUPABASE_URL}/rest/v1/specials`
   const headers = { apikey: env.SUPABASE_ANON_KEY, authorization: `Bearer ${env.SUPABASE_ANON_KEY}` }
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
-  const d = new Date(today + 'T00:00:00Z')
-  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7))
-  const monday = d.toISOString().slice(0, 10)
+  const monday = nzMonday()
 
   const headQ = new URLSearchParams({ select: 'week_start', store_id: `eq.${storeId}`, week_start: `lte.${monday}`, order: 'week_start.desc', limit: '1' })
   const head = await fetch(`${base}?${headQ}`, { headers })
@@ -121,6 +135,7 @@ app.use('/ingest/*', async (c, next) => {
   await next()
 })
 app.route('/ingest', ingest)
+app.route('/api', api)
 
 /** 長度相同時逐字比，避免用 === 比 token 洩漏長度與前綴（常數時間）。 */
 function timingSafeEqual(a: string, b: string): boolean {

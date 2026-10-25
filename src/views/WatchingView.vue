@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import ProductThumb from '../components/ProductThumb.vue'
 import Loading from '../components/Loading.vue'
 import { supabase } from '../lib/supabase'
+import { apiProducts, useD1 } from '../lib/api'
 import { useSpecials } from '../composables/useSpecials'
 import { useAuth } from '../composables/useAuth'
 import { useSync } from '../composables/useSync'
@@ -32,7 +33,9 @@ watch(
     if (!need.length) return
     namesLoading.value = true
     try {
-      const { data } = await supabase.from('products').select('key,display_name').in('key', need)
+      const { data } = useD1()
+        ? { data: (await apiProducts({ keys: need })) ?? [] }
+        : await supabase.from('products').select('key,display_name').in('key', need)
       const next = { ...names.value }
       for (const r of data ?? []) next[r.key as string] = r.display_name as string
       for (const k of need) if (!(k in next)) next[k] = k.replace(/_/g, ' ')
