@@ -1,6 +1,8 @@
 // AI 食譜前端（v3，docs/recipes-ai-design.md §5）：挑候選池、呼叫 Edge Function、本機每日額度、食譜紀錄。
 // 模型只能從「錨」（你勾的食材）和「池」（你的店這週的特價）裡挑，回的是編號，所以價格和加清單都精確。
+// 全國版階段 4（docs/stage4-contract.md §4、§6）：資料來源是 d1 時生成打 Worker 的 POST /api/ai-recipe、紀錄走 /api/me/ai-recipes（cookie 登入；回應與錯誤碼跟 Edge Function 一樣）。
 import { supabase } from './supabase'
+import { apiFetch, apiGet, useD1 } from './api'
 import { readCache, writeCache } from './cache'
 import { discountDepth } from './compare'
 import { catLevel, chainShort, displayName } from './format'
@@ -134,6 +136,10 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
     const r = await fetch(DEV_URL, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
     status = r.status
     data = await r.json().catch(() => null)
+  } else if (useD1()) {
+    const r = await apiFetch<{ error?: string }>('POST', '/api/ai-recipe', body)
+    status = r.status || 500   // 網路錯誤 status 0 → 當 failed
+    data = r.data
   } else {
     const r = await supabase.functions.invoke('ai-recipe', { body })
     // supabase-js 把非 2xx 當錯誤，錯誤內容在 context.json()
@@ -259,18 +265,25 @@ const fromRow = (r: Row): AiRecipe => ({
   image: r.image_url ? { url: r.image_url, photographer: r.image_credit?.photographer ?? '', link: r.image_credit?.link ?? '' } : null,
 })
 export async function historyList(): Promise<AiRecipe[]> {
+  if (useD1()) return ((await apiGet<Row[]>('/api/me/ai-recipes')) ?? []).map(fromRow)
   const { data } = await supabase.from('ai_recipes').select(COLS).order('created_at', { ascending: false }).limit(100)
   return ((data ?? []) as unknown as Row[]).map(fromRow)
 }
 export async function historyGet(id: string): Promise<AiRecipe | null> {
+  if (useD1()) {
+    const r = await apiGet<Row>(`/api/me/ai-recipes/${encodeURIComponent(id)}`)
+    return r ? fromRow(r) : null
+  }
   const { data } = await supabase.from('ai_recipes').select(COLS).eq('id', id).limit(1)
   const r = (data as unknown as Row[] | null)?.[0]
   return r ? fromRow(r) : null
 }
 export async function historyCount(): Promise<number> {
+  if (useD1()) return ((await apiGet<Row[]>('/api/me/ai-recipes')) ?? []).length   // 契約沒有 count 端點；最多 100 筆（HISTORY_MAX 是 10）直接數
   const { count } = await supabase.from('ai_recipes').select('id', { count: 'exact', head: true })
   return count ?? 0
 }
 export async function historyDelete(id: string): Promise<void> {
+  if (useD1()) { await apiFetch('DELETE', `/api/me/ai-recipes/${encodeURIComponent(id)}`); return }
   await supabase.from('ai_recipes').delete().eq('id', id)
 }

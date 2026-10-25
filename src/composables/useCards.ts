@@ -2,8 +2,10 @@
 // 只給登入者：存在 loyalty_cards（migrations/007-loyalty-cards.sql，RLS 只有本人讀寫），跨裝置都在；訪客是空的。登入狀態變了就重讀。
 // 2026-10-01 Chris 規格：New World、PAK'nSAVE（和 Four Square）共用同一張 Club+（2026-06-15 上線，舊的 New World Clubcard 07-26 停用），
 // 兩家的卡合併成一張 'clubplus'（migrations/010-loyalty-clubplus.sql 把舊資料改掉）。
+// 全國版階段 4（docs/stage4-contract.md §3）：資料來源是 d1 時改打 Worker 的 /api/me/cards（cookie 登入；列的形狀一樣）。
 import { ref, watch } from 'vue'
 import { supabase } from '../lib/supabase'
+import { apiFetch, apiGet, apiPost, useD1 } from '../lib/api'
 import { useAuth } from './useAuth'
 import { t } from './useI18n'
 
@@ -54,7 +56,9 @@ async function load(): Promise<void> {
   }
   loading.value = true
   try {
-    const { data, error } = await supabase.from('loyalty_cards').select(COLS).eq('user_id', uid).order('position').order('created_at')
+    const { data, error } = useD1()
+      ? await apiGet<LoyaltyCard[]>('/api/me/cards').then((d) => ({ data: d, error: d ? null : 'api' }))
+      : await supabase.from('loyalty_cards').select(COLS).eq('user_id', uid).order('position').order('created_at')
     // 讀的時候登出或換了帳號 → 這份不是他的，丟掉
     if (!error && user.value?.id === uid) cards.value = ((data ?? []) as LoyaltyCard[]).map(fromRow)
   } finally {
@@ -67,7 +71,9 @@ async function add(c: NewCard): Promise<boolean> {
   const uid = user.value?.id
   if (!uid) return false
   const position = cards.value.reduce((m, x) => Math.max(m, x.position + 1), 0)
-  const { data, error } = await supabase.from('loyalty_cards').insert({ ...c, user_id: uid, position }).select(COLS).single()
+  const { data, error } = useD1()
+    ? await apiPost<LoyaltyCard>('/api/me/cards', c).then((d) => ({ data: d, error: d ? null : 'api' }))
+    : await supabase.from('loyalty_cards').insert({ ...c, user_id: uid, position }).select(COLS).single()
   if (error || !data) return false
   cards.value = [...cards.value, fromRow(data as LoyaltyCard)]
   return true
@@ -75,7 +81,9 @@ async function add(c: NewCard): Promise<boolean> {
 
 async function remove(id: string): Promise<void> {
   cards.value = cards.value.filter((c) => c.id !== id)   // 先改畫面再打網路
-  const { error } = await supabase.from('loyalty_cards').delete().eq('id', id)
+  const error = useD1()
+    ? await apiFetch('DELETE', `/api/me/cards/${encodeURIComponent(id)}`).then((r) => (r.status >= 200 && r.status < 300 ? null : r.status))
+    : (await supabase.from('loyalty_cards').delete().eq('id', id)).error
   if (error) await load()   // 沒刪掉 → 照資料庫的重來
 }
 
@@ -90,7 +98,13 @@ async function move(id: string, dir: -1 | 1): Promise<void> {
   const before = new Map(cards.value.map((x) => [x.id, x.position]))
   cards.value = list.map((x, position) => ({ ...x, position }))
   const changed = cards.value.filter((x) => before.get(x.id) !== x.position)
-  const res = await Promise.all(changed.map((x) => supabase.from('loyalty_cards').update({ position: x.position }).eq('id', x.id)))
+  const res = await Promise.all(
+    changed.map((x) =>
+      useD1()
+        ? apiFetch('PATCH', `/api/me/cards/${encodeURIComponent(x.id)}`, { position: x.position }).then((r) => ({ error: r.status >= 200 && r.status < 300 ? null : r.status }))
+        : supabase.from('loyalty_cards').update({ position: x.position }).eq('id', x.id),
+    ),
+  )
   if (res.some((r) => r.error)) await load()
 }
 

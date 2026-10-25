@@ -31,6 +31,10 @@
   "limits": { "cpu_ms": 200 },
   // 公開值（anon key 本來就在前端 bundle 裡），不是機密。機密（INGEST_TOKEN 等）用 `wrangler secret put`。
   "vars": {
+    // 階段 4（docs/stage4-contract.md）：Google OAuth 用戶端 id 是公開值；DEV_LOGIN 正式一定空字串（.dev.vars 設 1 才開 /auth/dev-login）
+    "GOOGLE_CLIENT_ID": "991666308220-asq2eknlnbh7e5f3m84p5809sgbjedel.apps.googleusercontent.com",
+    "DEV_LOGIN": "",
+    "OPENAI_RECIPE_MODEL": "gpt-5.4-mini",
     "SUPABASE_URL": "https://mzuckacocbeuekdzikzu.supabase.co",
     "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16dWNrYWNvY2JldWVrZHppa3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1OTM2ODEsImV4cCI6MjEwNDE2OTY4MX0.PsMxNPREbVMpan-qPpmyOcFV4bz7T9J9o7k4ac_j55E"
   },

@@ -1,7 +1,9 @@
 // 登入後：選的店、清單、關注 跟帳號同步（CLAUDE.md §7 會員表）。
 // 規則：訪客的店和清單在登入時「合併」進帳號（聯集，店最多 5 間）；之後本機一改就推上去；帳號是真相。
+// 全國版階段 4（docs/stage4-contract.md §3、§6）：資料來源是 d1 時改打 Worker 的 /api/me/*（cookie 登入），合併規則一樣。
 import { ref, watch } from 'vue'
 import { supabase } from '../lib/supabase'
+import { apiDelete, apiGet, apiPost, apiPut, useD1 } from '../lib/api'
 import { useAuth } from './useAuth'
 import { useStores, MAX_STORES, onePerChain } from './useStores'
 import { useList, type ListItem } from './useList'
@@ -27,9 +29,39 @@ const toItem = (r: ListRow): ListItem => ({ id: r.id, key: r.product_key, name: 
 const toRow = (i: ListItem, idx: number) => ({ id: i.id, list_id: listId.value, product_key: i.key, free_text: i.name, qty: i.qty, checked: i.checked, source: i.key ? 'special' : 'manual', position: idx, price: i.price ?? null, checked_at: i.checkedAt ?? null })
 const LIST_COLS = 'id,product_key,free_text,qty,checked,position,price,checked_at'
 
+interface SyncPayload { stores: string[]; list: { id: string; share_token: string | null; items: ListRow[] }; watches: string[] }
+
+/** d1：一次拿店／清單／關注，合併規則跟下面 Supabase 版一樣 */
+async function pullD1(): Promise<void> {
+  const d = await apiGet<SyncPayload>('/api/me/sync')
+  if (!d) return   // 沒登入／斷線：什麼都不動
+  let didMerge = false
+  const accountStores = d.stores ?? []
+  const union = onePerChain([...accountStores, ...selectedIds.value]).slice(0, MAX_STORES)
+  if (union.join() !== accountStores.join()) {
+    await apiPut('/api/me/stores', { ids: union })
+    if (accountStores.length) didMerge = true
+  }
+  if (union.join() !== selectedIds.value.join()) { selectedIds.value = union; if (accountStores.length) didMerge = true }
+
+  listId.value = d.list.id
+  shareToken.value = d.list.share_token ?? null
+  const account = [...(d.list.items ?? [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)).map(toItem)
+  const local = items.value.map((i) => (isUuid(i.id) ? i : { ...i, id: uuid() }))
+  const seen = new Set(account.map((i) => i.key ?? `t:${i.name.toLowerCase()}`))
+  const extra = local.filter((i) => !seen.has(i.key ?? `t:${i.name.toLowerCase()}`))
+  if (extra.length && account.length) didMerge = true
+  items.value = [...account, ...extra]
+  if (extra.length) await pushList()
+
+  watched.value = new Set(d.watches ?? [])
+  merged.value = didMerge
+}
+
 async function pull(uid: string): Promise<void> {
   pulling = true
   try {
+    if (useD1()) { await pullD1(); return }
     let didMerge = false
     // 店：帳號的在前，本機沒在帳號裡的補上；每家超市只留一間、最多 3 間
     const us = await supabase.from('user_stores').select('store_id,position').eq('user_id', uid).order('position')
@@ -73,6 +105,7 @@ async function pull(uid: string): Promise<void> {
 async function pushStores(): Promise<void> {
   const uid = user.value?.id
   if (!uid || pulling) return
+  if (useD1()) { await apiPut('/api/me/stores', { ids: selectedIds.value }); return }
   await supabase.from('user_stores').delete().eq('user_id', uid)
   if (selectedIds.value.length) await supabase.from('user_stores').insert(selectedIds.value.map((store_id, position) => ({ user_id: uid, store_id, position })))
 }
@@ -81,6 +114,7 @@ async function pushList(): Promise<void> {
   const uid = user.value?.id
   if (!uid || !listId.value) return
   const rows = items.value.map(toRow)
+  if (useD1()) { await apiPut('/api/me/list/items', { items: rows }); return }   // Worker 整組取代（upsert + 刪不在裡面的）
   if (rows.length) {
     let { error } = await supabase.from('list_items').upsert(rows, { onConflict: 'id' })
     // product_key 不在 products 裡（FK）→ 當自由輸入存
@@ -107,6 +141,12 @@ async function toggleWatch(key: string): Promise<void> {
   if (removing) next.delete(key)
   else next.add(key)
   watched.value = next
+  if (useD1()) {
+    const path = `/api/me/watches/${encodeURIComponent(key)}`
+    if (removing) await apiDelete(path)
+    else await apiPut(path, {})
+    return
+  }
   if (removing) await supabase.from('watchlist').delete().eq('user_id', uid).eq('product_key', key)
   else await supabase.from('watchlist').upsert({ user_id: uid, product_key: key }, { onConflict: 'user_id,product_key' })
 }
@@ -115,6 +155,11 @@ const isWatched = (key: string) => watched.value.has(key)
 /** 分享連結：第一次按就產生 token，之後同一條。 */
 async function shareUrl(): Promise<string | null> {
   if (!listId.value) return null
+  if (!shareToken.value && useD1()) {
+    const r = await apiPost<{ share_token: string }>('/api/me/list/share', {})
+    if (!r?.share_token) return null
+    shareToken.value = r.share_token
+  }
   if (!shareToken.value) {
     const token = uuid().replace(/-/g, '').slice(0, 16)
     const { error } = await supabase.from('shopping_lists').update({ share_token: token }).eq('id', listId.value)

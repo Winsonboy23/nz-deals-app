@@ -10,6 +10,11 @@ import { cors } from 'hono/cors'
 import type { Env } from './env'
 import ingest from './ingest'
 import api from './api'
+import auth from './auth'
+import me, { publicLists } from './me'
+import { HTTPException } from 'hono/http-exception'
+import ai from './ai'
+import live from './live'
 import { snapshotKey } from './snapshot'
 import { nzMonday } from './week'
 
@@ -18,7 +23,10 @@ export type { Env }
 const app = new Hono<{ Bindings: Env }>()
 
 // 本機開發 vite 在 5173、Worker 在 8787，跨來源要 CORS；正式站同網域用不到。舊網址（Zeabur／co.nz）之後導過來也先放行。
-app.use('/api/*', cors({ origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://kitewise.nz', 'https://www.kitewise.nz', 'https://kitewise.co.nz', 'https://www.kitewise.co.nz', 'https://nz-deals.zeabur.app'] }))
+const ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://kitewise.nz', 'https://www.kitewise.nz', 'https://kitewise.co.nz', 'https://www.kitewise.co.nz', 'https://nz-deals.zeabur.app']
+// credentials: true → 階段 4 的 cookie 登入要讓本機 vite（5173）帶 cookie 打 8787
+app.use('/api/*', cors({ origin: ORIGINS, credentials: true }))
+app.use('/auth/*', cors({ origin: ORIGINS, credentials: true }))
 
 // ── /api 公開 ────────────────────────────────────────────────────────────────
 
@@ -135,7 +143,6 @@ app.use('/ingest/*', async (c, next) => {
   await next()
 })
 app.route('/ingest', ingest)
-app.route('/api', api)
 
 /** 長度相同時逐字比，避免用 === 比 token 洩漏長度與前綴（常數時間）。 */
 function timingSafeEqual(a: string, b: string): boolean {
@@ -145,13 +152,19 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0
 }
 
-// ── /auth、/admin：之後的階段 ───────────────────────────────────────────────
-
-app.all('/auth/*', (c) => c.json({ error: 'not implemented', stage: 4 }, 501))
+// ── 階段 4（docs/stage4-contract.md）：登入、使用者資料、AI 食譜、即時查價 ─────
+// 掛載順序：/api/me 和 live／ai 的具體路徑先，/api 的公開讀取（api.ts）後；/admin 是階段 5
+app.route('/auth', auth)
+app.route('/api/me', me)
+app.route('/api', publicLists)   // GET /api/lists/:token（分享清單，公開）
+app.route('/api', ai)
+app.route('/api', live)
 app.all('/admin/*', (c) => c.json({ error: 'not implemented', stage: 5 }, 501))
+app.route('/api', api)
 
 app.notFound((c) => c.json({ error: 'not found' }, 404))
 app.onError((err, c) => {
+  if (err instanceof HTTPException) return err.getResponse()   // requireUser 丟的 401 {"error":"sign_in_required"} 等
   console.error(err)
   return c.json({ error: 'internal' }, 500)
 })

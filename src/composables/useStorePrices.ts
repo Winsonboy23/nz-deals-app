@@ -2,8 +2,11 @@
 //  - 後端週一批次幫登入者的清單先查好（Phase 2b §9b）
 //  - 點「一站」缺什麼就即時送單（RPC request_prices），Mac mini 上的 price-worker 幾秒內去問，這裡每 2 秒盯狀態，好了就重讀（2026-09-10）
 // 這週一換價之前查的當過期，不用、會重問。同一組（店 × 商品）2 分鐘內不重送。
+// 全國版階段 4（docs/stage4-contract.md §5、§6）：資料來源是 d1 時改打 Worker（/api/live-prices、/api/name-matches、/api/chain-items、
+// POST /api/price-requests、/api/price-requests/status）；回的列跟 Supabase 的表一樣形狀。
 import { ref, shallowRef } from 'vue'
 import { supabase } from '../lib/supabase'
+import { apiFetch, apiGet, qs, useD1 } from '../lib/api'
 import { useSiteSettings } from './useSiteSettings'
 import { useAuth } from './useAuth'
 import type { StorePrice } from '../lib/types'
@@ -68,7 +71,9 @@ async function load(storeIds: string[], keys: string[], force = false): Promise<
   try {
     const map = new Map<string, StorePrice>()
     for (let i = 0; i < keys.length; i += 100) {
-      const { data, error } = await supabase.from('store_prices').select(COLS).in('store_id', storeIds).in('product_key', keys.slice(i, i + 100))
+      const { data, error } = useD1()
+        ? await apiGet<StorePrice[]>('/api/live-prices' + qs({ stores: storeIds, keys: keys.slice(i, i + 100) })).then((d) => ({ data: d, error: d ? null : 'api' }))
+        : await supabase.from('store_prices').select(COLS).in('store_id', storeIds).in('product_key', keys.slice(i, i + 100))
       if (error) return   // 表還沒建或斷線：當作沒有，UI 維持「價格未知」
       for (const raw of (data ?? []) as unknown as StorePrice[]) {
         if (!raw.product_key || !fresh(raw)) continue
@@ -97,7 +102,9 @@ async function loadNameState(keys: string[]): Promise<void> {
   const next = new Map(nameState.value)
   const cutoff = Date.now() - NAME_RETRY_DAYS * 86400000
   for (let i = 0; i < keys.length; i += 100) {
-    const { data, error } = await supabase.from('name_matches').select('chain,product_key,status,searched_at').in('product_key', keys.slice(i, i + 100))
+    const { data, error } = useD1()
+      ? await apiGet<Array<{ chain: string; product_key: string; status: string; searched_at: string }>>('/api/name-matches' + qs({ keys: keys.slice(i, i + 100) })).then((d) => ({ data: d, error: d ? null : 'api' }))
+      : await supabase.from('name_matches').select('chain,product_key,status,searched_at').in('product_key', keys.slice(i, i + 100))
     if (error) return
     for (const r of (data ?? []) as Array<{ chain: string; product_key: string; status: string; searched_at: string }>) {
       const k = `${r.chain}|${r.product_key}`
@@ -113,13 +120,39 @@ async function resolveIds(keys: string[], force = false): Promise<void> {
   const need = force ? keys : keys.filter((k) => !idsOf.has(k))
   for (let i = 0; i < need.length; i += 100) {
     const chunk = need.slice(i, i + 100)
-    const { data, error } = await supabase.from('product_ids').select('chain,product_id,product_key').in('product_key', chunk)
+    const { data, error } = useD1()
+      ? await apiGet<Array<{ chain: string; product_id: string; product_key: string }>>('/api/chain-items' + qs({ keys: chunk })).then((d) => ({ data: d, error: d ? null : 'api' }))
+      : await supabase.from('product_ids').select('chain,product_id,product_key').in('product_key', chunk)
     if (error) return
     for (const k of chunk) idsOf.set(k, [])
     for (const r of (data ?? []) as Array<{ chain: string; product_id: string; product_key: string }>) idsOf.get(r.product_key)!.push({ chain: r.chain, product_id: r.product_id })
   }
 }
 const chainGroup = (storeId: string) => (storeId.startsWith('woolworths:') ? ['woolworths'] : ['newworld', 'paknsave'])
+
+export interface PriceRequestItem { store_id: string; product_ids?: string[]; product_keys?: string[]; queries?: string[] }
+/**
+ * 送單：Supabase 走 RPC request_prices（p_caller 帶裝置 id）；d1 走 POST /api/price-requests（cookie 登入；回 { ids }，跟 items 對齊、跳過的是 null）。
+ * 錯誤統一成 { message }，503 paused 時 message 含 'paused'（呼叫端用這個把即時查價關掉）。useFreeText 的自由輸入搜尋也用這個。
+ */
+export async function requestPrices(items: PriceRequestItem[]): Promise<{ data: Array<string | null> | null; error: { message: string } | null }> {
+  if (useD1()) {
+    const { status, data } = await apiFetch<{ ids?: Array<string | null>; error?: string }>('POST', '/api/price-requests', { items })
+    if (status >= 200 && status < 300 && Array.isArray(data?.ids)) return { data: data.ids, error: null }
+    return { data: null, error: { message: data?.error ?? `status ${status}` } }
+  }
+  const { data, error } = await supabase.rpc('request_prices', { p_caller: `d:${deviceId()}`, p_items: items })
+  return { data: Array.isArray(data) ? (data as string[]) : null, error: error ? { message: error.message } : null }
+}
+/** 單的狀態：Supabase RPC price_request_status；d1 GET /api/price-requests/status?ids= */
+export async function requestStatus(ids: string[]): Promise<{ data: Array<{ id: string; status: string; ahead: number }> | null; error: unknown }> {
+  if (useD1()) {
+    const d = await apiGet<Array<{ id: string; status: string; ahead: number }>>('/api/price-requests/status' + qs({ ids }))
+    return { data: d, error: d ? null : 'api' }
+  }
+  const { data, error } = await supabase.rpc('price_request_status', { p_ids: ids })
+  return { data: (data ?? null) as Array<{ id: string; status: string; ahead: number }> | null, error }
+}
 
 /** 點「一站」時：這些（店, key）沒價格 → 送單去問。有編號的送編號；沒編號、也還沒用名字配過的，送 key 讓後端用名字配（規則）。 */
 async function request(pairs: Array<{ storeId: string; key: string }>): Promise<void> {
@@ -153,7 +186,7 @@ async function request(pairs: Array<{ storeId: string; key: string }>): Promise<
   const nextPending = new Set(pending.value)
   for (const b of byStore.values()) for (const p of b.pairs) nextPending.add(p)
   pending.value = nextPending
-  const { data, error } = await supabase.rpc('request_prices', { p_caller: `d:${deviceId()}`, p_items: items })
+  const { data, error } = await requestPrices(items)
   if (error || !Array.isArray(data)) {   // 額度滿了／後端沒開：當作沒問到
     if (error && /paused/.test(error.message)) useSiteSettings().livePrices.value = false   // 剛被後台關掉
     const back = new Set(pending.value)
@@ -162,9 +195,10 @@ async function request(pairs: Array<{ storeId: string; key: string }>): Promise<
     return
   }
   const stores = [...byStore.keys()]
-  ;(data as string[]).forEach((id, i) => {
+  ;(data as Array<string | null>).forEach((id, i) => {   // d1 版跳過的位置是 null（店不在、三個都空）
     const b = byStore.get(stores[i]!)
-    if (b) tracking.set(id, { pairs: b.pairs, since: now })
+    if (b && id) tracking.set(id, { pairs: b.pairs, since: now })
+    else if (b) { const back = new Set(pending.value); for (const p of b.pairs) back.delete(p); pending.value = back }
   })
   void poll()
 }
@@ -177,7 +211,7 @@ async function poll(): Promise<void> {
     while (tracking.size) {
       await new Promise((r) => setTimeout(r, 2000))
       const ids = [...tracking.keys()]
-      const { data, error } = await supabase.rpc('price_request_status', { p_ids: ids })
+      const { data, error } = await requestStatus(ids)
       const now = Date.now()
       const finished: string[] = []
       let anyDone = false

@@ -1,8 +1,10 @@
 // Web Push 訂閱（Phase 3；2026-09-07 決定先只做推播、不寄 Email）。
 // 訂閱存 push_subscriptions（RLS：只能碰自己的）；週一抓完由 src/notify.ts 用 VAPID 私鑰推，notifications 表同週不重發。
 // iPhone 只有「加入主畫面」再從那裡開的 App 才能訂閱，Safari 分頁裡開不了；Android／電腦瀏覽器直接可以。
+// 全國版階段 4（docs/stage4-contract.md §3）：資料來源是 d1 時改打 Worker 的 PUT/DELETE /api/me/push（Worker 順便改 users.notify_push）。
 import { ref, watch } from 'vue'
 import { supabase } from '../lib/supabase'
+import { apiDelete, apiFetch, useD1 } from '../lib/api'
 import { useAuth } from './useAuth'
 
 export type PushState = 'unsupported' | 'ios-not-installed' | 'denied' | 'off' | 'on' | 'busy'
@@ -37,9 +39,14 @@ async function enable(): Promise<void> {
     const reg = await navigator.serviceWorker.getRegistration()
     if (!reg) throw new Error('service worker not registered')
     const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: VAPID }))
-    const { error: e } = await supabase.from('push_subscriptions').upsert({ user_id: uid, endpoint: sub.endpoint, keys: sub.toJSON().keys }, { onConflict: 'endpoint' })
-    if (e) throw e
-    await supabase.from('profiles').update({ notify_push: true }).eq('id', uid)
+    if (useD1()) {
+      const { status, data } = await apiFetch<{ error?: string }>('PUT', '/api/me/push', { endpoint: sub.endpoint, keys: sub.toJSON().keys })
+      if (status < 200 || status >= 300) throw new Error(data?.error ?? `push subscription not saved (${status})`)
+    } else {
+      const { error: e } = await supabase.from('push_subscriptions').upsert({ user_id: uid, endpoint: sub.endpoint, keys: sub.toJSON().keys }, { onConflict: 'endpoint' })
+      if (e) throw e
+      await supabase.from('profiles').update({ notify_push: true }).eq('id', uid)
+    }
     state.value = 'on'
   } catch (e) {
     error.value = String((e as Error).message ?? e)
@@ -53,8 +60,12 @@ async function disable(): Promise<void> {
   try {
     const reg = await navigator.serviceWorker.getRegistration()
     const sub = await reg?.pushManager.getSubscription()
-    if (sub) { await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint); await sub.unsubscribe() }
-    if (uid) await supabase.from('profiles').update({ notify_push: false }).eq('id', uid)
+    if (useD1()) {
+      if (sub) { await apiDelete('/api/me/push', { endpoint: sub.endpoint }); await sub.unsubscribe() }
+    } else {
+      if (sub) { await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint); await sub.unsubscribe() }
+      if (uid) await supabase.from('profiles').update({ notify_push: false }).eq('id', uid)
+    }
   } finally {
     await refresh()
   }

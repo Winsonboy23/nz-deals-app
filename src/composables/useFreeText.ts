@@ -4,8 +4,11 @@
 //  候選 1 個直接採用；多個開面板讓人點一次；0 個就照原樣當自由輸入。
 // 採用：特價來的 key 一定在 products → 直接 assignKey；其他先看 product_ids 有沒有這個編號（有就沿用那把 key），
 // 沒有才叫 adopt_product 補 products / product_ids（list_items.product_key 有外鍵，key 不在 products 裡 useSync 會把整批清單的 key 清掉）。
+// 全國版階段 4（docs/stage4-contract.md §5、§6）：資料來源是 d1 時改打 Worker（/api/products/search、/api/chain-items/by-id、/api/search-results、
+// POST /api/adopt-product；送單與盯單走 useStorePrices 的 requestPrices / requestStatus）。**D1 沒有 catalog**：那幾段在 d1 當查無結果，不打 Supabase。
 import { computed, ref, watch, type Ref } from 'vue'
 import { supabase } from '../lib/supabase'
+import { apiFetch, apiGet, apiProducts, qs, useD1 } from '../lib/api'
 import { chainOf, displayName } from '../lib/format'
 import { MIN_SCORE, matchScore, parseQuery, type Query } from '../lib/search'
 import { cleanWords, searchWords } from '../lib/nameClean'
@@ -17,7 +20,7 @@ import { useSpecials } from './useSpecials'
 import { useStores } from './useStores'
 import { useAuth } from './useAuth'
 import { useSiteSettings } from './useSiteSettings'
-import { deviceId } from './useStorePrices'
+import { requestPrices, requestStatus } from './useStorePrices'
 import { t } from './useI18n'
 
 export interface Picker {
@@ -143,7 +146,7 @@ async function enRows(text: string, storeIds: string[]): Promise<CandRow[]> {
   }
   // catalog：清洗過的前兩個字都要在品名裡（跟 useCatalog.byKeyword 一樣），再用上面的分數過濾
   const words = searchWords(text).map(likeSafe).filter((w) => w.length >= 3)
-  if (words.length) {
+  if (words.length && !useD1()) {   // d1 沒有 catalog
     let qb = supabase.from('catalog').select(CAT_COLS).in('store_id', storeIds)
     for (const w of words) qb = qb.ilike('name', `%${w}%`)
     const { data, error } = await qb.limit(1000)
@@ -159,7 +162,9 @@ async function enRows(text: string, storeIds: string[]): Promise<CandRow[]> {
 /** family_name_zh 對到的同類 → 分數（對到的字佔同類名稱越多越高） */
 async function zhFamilies(w: string): Promise<Map<string, number>> {
   const fams = new Map<string, number>()
-  const { data } = await supabase.from('products').select('family_key,family_name_zh').ilike('family_name_zh', `%${w}%`).not('family_key', 'is', null).limit(500)
+  const data = useD1()
+    ? ((await apiGet<Array<{ key: string; family_key: string | null; family_name_zh: string | null }>>('/api/products/search' + qs({ zh: w, limit: 500 }))) ?? []).filter((r) => r.family_key && r.family_name_zh)
+    : (await supabase.from('products').select('family_key,family_name_zh').ilike('family_name_zh', `%${w}%`).not('family_key', 'is', null).limit(500)).data
   for (const r of (data ?? []) as Array<{ family_key: string; family_name_zh: string }>) {
     const sc = 1 + 0.5 * Math.min(1, w.length / Math.max(1, r.family_name_zh.length))
     fams.set(r.family_key, Math.max(fams.get(r.family_key) ?? 0, sc))
@@ -182,9 +187,12 @@ async function zhRows(text: string, storeIds: string[]): Promise<CandRow[]> {
       if (sc) out.push(fromSpecial(s, sc, s.family_key!))
     }
   }
-  const { data } = await supabase.from('products').select('key,family_key').in('family_key', [...fams.keys()].slice(0, 50)).limit(1000)
+  const famList = [...fams.keys()].slice(0, 50)
+  const data = useD1()
+    ? await apiProducts({ families: famList })
+    : (await supabase.from('products').select('key,family_key').in('family_key', famList).limit(1000)).data
   const famOf = new Map(((data ?? []) as Array<{ key: string; family_key: string }>).map((r) => [r.key, r.family_key]))
-  const keys = [...famOf.keys()].slice(0, 300)
+  const keys = useD1() ? [] : [...famOf.keys()].slice(0, 300)   // d1 沒有 catalog
   for (let i = 0; i < keys.length; i += 100) {
     const { data: rows } = await supabase.from('catalog').select(CAT_COLS).in('store_id', storeIds).in('product_key', keys.slice(i, i + 100)).limit(1000)
     for (const r of (rows ?? []) as CatRow[]) {
@@ -203,7 +211,7 @@ async function waitFor(ids: string[]): Promise<string[]> {
   const done: string[] = []
   while (open.size && Date.now() - since < GIVE_UP_MS) {
     await sleep(2000)
-    const { data, error } = await supabase.rpc('price_request_status', { p_ids: [...open] })
+    const { data, error } = await requestStatus([...open])
     if (error) continue
     const rows = (data ?? []) as Array<{ id: string; status: string }>
     const seen = new Set(rows.map((r) => r.id))
@@ -228,14 +236,17 @@ interface SearchCand {
 async function runRemote(term: string): Promise<Cand[]> {
   const stores = selectedStores.value.slice(0, 3)
   if (!stores.length) return []
-  const { data, error } = await supabase.rpc('request_prices', { p_caller: `d:${deviceId()}`, p_items: stores.map((s) => ({ store_id: s.id, queries: [term] })) })
-  if (error || !Array.isArray(data) || !data.length) {
+  const { data, error } = await requestPrices(stores.map((s) => ({ store_id: s.id, queries: [term] })))
+  const ids = (data ?? []).filter((id): id is string => !!id)
+  if (error || !ids.length) {
     if (error && /paused/.test(error.message)) livePrices.value = false   // 剛被後台關掉
     return []
   }
-  const done = await waitFor(data as string[])
+  const done = await waitFor(ids)
   if (!done.length) return []
-  const { data: res } = await supabase.from('search_results').select('store_id,candidates').in('request_id', done).eq('term', term)
+  const res = useD1()
+    ? await apiGet<Array<{ store_id: string; candidates: SearchCand[] | null }>>('/api/search-results' + qs({ ids: done, term }))
+    : (await supabase.from('search_results').select('store_id,candidates').in('request_id', done).eq('term', term)).data
   const q = parseQuery(term)
   const rows: CandRow[] = []
   for (const r of (res ?? []) as Array<{ store_id: string; candidates: SearchCand[] | null }>) {
@@ -266,12 +277,15 @@ function remoteCands(text: string): Promise<Cand[]> {
 async function idsKey(productId: string, storeId: string): Promise<string | null> {
   const chain = chainOf(storeId)
   const group = chainGroup(storeId) === 'woolworths' ? ['woolworths'] : ['newworld', 'paknsave']
-  const { data } = await supabase.from('product_ids').select('chain,product_key').eq('product_id', productId).in('chain', group)
+  const data = useD1()
+    ? await apiGet<Array<{ chain: string; product_key: string }>>('/api/chain-items/by-id' + qs({ product_id: productId, chains: group }))
+    : (await supabase.from('product_ids').select('chain,product_key').eq('product_id', productId).in('chain', group)).data
   const rows = (data ?? []) as Array<{ chain: string; product_key: string }>
   return (rows.find((r) => r.chain === chain) ?? rows[0])?.product_key ?? null
 }
 /** 網站搜到的商品在 catalog 有沒有（有的話它的 key 是字典的 key、分類也有） */
 async function catalogHint(productId: string, storeId: string): Promise<{ key: string | null; category_id: string | null } | null> {
+  if (useD1()) return null   // d1 沒有 catalog
   const { data } = await supabase.from('catalog').select('store_id,product_key,category_id').eq('product_id', productId).limit(20)
   const rows = ((data ?? []) as Array<{ store_id: string; product_key: string | null; category_id: string | null }>).filter((r) => chainGroup(r.store_id) === chainGroup(storeId))
   const r = rows.find((x) => x.product_key) ?? rows[0]
@@ -296,9 +310,12 @@ async function keyFor(c: Cand): Promise<string | null> {
     console.warn('[freetext] adopt_product 不收這把 key：', pkey)
     return null
   }
-  const { error } = await supabase.rpc('adopt_product', {
-    p_chain: chainOf(r.store_id), p_product_id: r.product_id, p_key: pkey, p_name: displayName(candSpecial(r)), p_category_id: cat, p_store_id: r.store_id,
-  })
+  const error = useD1()
+    ? await apiFetch<{ error?: string }>('POST', '/api/adopt-product', { chain: chainOf(r.store_id), product_id: r.product_id, key: pkey, name: displayName(candSpecial(r)), category_id: cat, store_id: r.store_id })
+        .then((x) => (x.status >= 200 && x.status < 300 ? null : { message: x.data?.error ?? `status ${x.status}` }))
+    : (await supabase.rpc('adopt_product', {
+        p_chain: chainOf(r.store_id), p_product_id: r.product_id, p_key: pkey, p_name: displayName(candSpecial(r)), p_category_id: cat, p_store_id: r.store_id,
+      })).error
   if (error) {
     console.warn('[freetext] adopt_product', error.message)
     return null

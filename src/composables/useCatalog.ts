@@ -2,6 +2,7 @@
 // 資料：catalog 表（試點 11 家整個貨架、只有食品、每週翻一次、公開讀）＋ 這週的特價（比 catalog 新，同一個商品優先用特價的價）。
 // 順序：① 同類 family_key（products 表）→ ② 一個都沒有才用清洗過的品名關鍵字（ilike），而且分類前兩層要一樣。
 // 查詢都批次（一次 in(...) 多個 key、多家店）；候選放記憶體（店 + 清單 key），切店或清單變了只補缺的，那家特價重抓過才重算那家。
+// 全國版階段 4：D1 沒有 catalog 表，資料來源是 d1 時 catalog 的查詢直接當查無結果（只剩這週特價裡的同類／關鍵字候選），不打 Supabase。
 import { shallowRef } from 'vue'
 import { supabase } from '../lib/supabase'
 import { apiProducts, useD1 } from '../lib/api'
@@ -121,6 +122,7 @@ async function fetchFamilies(fams: string[]): Promise<void> {
 }
 async function fetchCatalog(storeIds: string[], keys: string[]): Promise<CatalogRow[]> {
   const out: CatalogRow[] = []
+  if (useD1()) return out   // d1 沒有 catalog
   for (let i = 0; i < keys.length; i += CHUNK) {
     const { data, error } = await supabase.from('catalog').select(CAT_COLS).in('store_id', storeIds).in('product_key', keys.slice(i, i + CHUNK)).limit(1000)
     if (error) break
@@ -146,10 +148,13 @@ async function byKeyword(item: CatalogItem, stores: StoreData[]): Promise<Map<st
     const need = l2 && c2 ? min : 0.8
     return coverage(words, cleanWords(`${brand ?? ''} ${candName}`)) >= need
   }
-  let q = supabase.from('catalog').select(CAT_COLS).in('store_id', stores.map((d) => d.store.id))
-  if (l2) q = q.like('category_id', `${l2}/%`).or(sw.map((w) => `name.ilike.%${w}%`).join(','))
-  else for (const w of sw) q = q.ilike('name', `%${w}%`)
-  const { data } = await q.limit(l2 ? 600 : 30 * stores.length)
+  let data: CatalogRow[] | null = null
+  if (!useD1()) {   // d1 沒有 catalog：只看這週特價
+    let q = supabase.from('catalog').select(CAT_COLS).in('store_id', stores.map((d) => d.store.id))
+    if (l2) q = q.like('category_id', `${l2}/%`).or(sw.map((w) => `name.ilike.%${w}%`).join(','))
+    else for (const w of sw) q = q.ilike('name', `%${w}%`)
+    data = (await q.limit(l2 ? 600 : 30 * stores.length)).data as CatalogRow[] | null
+  }
   for (const d of stores) {
     const list = out.get(d.store.id)!
     // 這週特價裡的（catalog 一週翻一次，新上的特價可能還沒進去）

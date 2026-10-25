@@ -36,24 +36,55 @@ export function apiBase(): string {
 /** 本機 vite dev 沒有 Worker（除非 VITE_API_BASE 指到 wrangler dev）→ /api 不能用 */
 export const apiAvailable = (): boolean => !import.meta.env.DEV || !!apiBase()
 
-/** GET /api/...；失敗回 null（呼叫端自己決定要不要退回 Supabase） */
-export async function apiGet<T>(path: string): Promise<T | null> {
+/** 登入相關的網址（階段 4：登入狀態是 Worker 的 HttpOnly cookie kw_session，所以每個請求都 credentials: 'include'） */
+export const authUrl = (path: string): string => apiBase() + path
+
+/**
+ * 打 Worker、把 HTTP 狀態一起回來（需要分辨 401 / 429 / 503 的呼叫端用；docs/stage4-contract.md §0）。
+ * 網路錯誤 status = 0、data = null。非 2xx 時 data 是 `{ error: '<code>', ... }`。
+ */
+export async function apiFetch<T>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<{ status: number; data: T | null }> {
   try {
-    const res = await fetch(apiBase() + path, { headers: { accept: 'application/json' } })
-    if (!res.ok) return null
-    return (await res.json()) as T
+    const headers: Record<string, string> = { accept: 'application/json' }
+    if (body !== undefined) headers['content-type'] = 'application/json'
+    const res = await fetch(apiBase() + path, { method, headers, credentials: 'include', body: body === undefined ? undefined : JSON.stringify(body) })
+    const data = (await res.json().catch(() => null)) as T | null
+    return { status: res.status, data }
   } catch {
-    return null
+    return { status: 0, data: null }
   }
 }
+
+/** GET /api/...；失敗回 null（呼叫端自己決定要不要退回 Supabase） */
+export async function apiGet<T>(path: string): Promise<T | null> {
+  const { status, data } = await apiFetch<T>('GET', path)
+  return status >= 200 && status < 300 ? data : null
+}
 export async function apiPost<T>(path: string, body: unknown): Promise<T | null> {
-  try {
-    const res = await fetch(apiBase() + path, { method: 'POST', headers: { accept: 'application/json', 'content-type': 'application/json' }, body: JSON.stringify(body) })
-    if (!res.ok) return null
-    return (await res.json()) as T
-  } catch {
-    return null
+  const { status, data } = await apiFetch<T>('POST', path, body)
+  return status >= 200 && status < 300 ? data : null
+}
+export async function apiPut<T>(path: string, body: unknown): Promise<T | null> {
+  const { status, data } = await apiFetch<T>('PUT', path, body)
+  return status >= 200 && status < 300 ? data : null
+}
+export async function apiPatch<T>(path: string, body: unknown): Promise<T | null> {
+  const { status, data } = await apiFetch<T>('PATCH', path, body)
+  return status >= 200 && status < 300 ? data : null
+}
+export async function apiDelete<T>(path: string, body?: unknown): Promise<T | null> {
+  const { status, data } = await apiFetch<T>('DELETE', path, body)
+  return status >= 200 && status < 300 ? data : null
+}
+/** 網址參數（陣列用逗號接） */
+export const qs = (params: Record<string, string | number | string[] | undefined>): string => {
+  const sp = new URLSearchParams()
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined) continue
+    sp.set(k, Array.isArray(v) ? v.join(',') : String(v))
   }
+  const s = sp.toString()
+  return s ? `?${s}` : ''
 }
 
 /** products 列（D1 版，跟 Supabase products 的欄位一樣多幾個） */

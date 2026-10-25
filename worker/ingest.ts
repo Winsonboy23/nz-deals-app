@@ -156,4 +156,212 @@ ingest.post('/prune', async (c) => {
   return c.json({ db_cutoff: dbCut, deleted: { chain_prices: res[0].meta.changes, store_prices: res[1].meta.changes, store_specials: res[2].meta.changes }, r2_cutoff: r2Cut, r2_deleted: r2Deleted })
 })
 
+// ═══ 階段 4（docs/stage4-contract.md §5 Mac mini 端）：即時查價領單／回填、心跳、開關、推播資料、週一批次目標 ═══
+//
+//   POST /ingest/price-requests/claim          {chain, limit?} → {requests:[{id, store_id, product_ids, product_keys, queries, created_at}]}（原子地 pending → running）
+//   POST /ingest/price-requests/result         {ids, status, error?, live_prices?, search_results?, name_matches?, chain_items?} → 各表 upsert、單標 done/failed
+//   POST /ingest/price-requests/reset-running  啟動時：running → pending → {reset}
+//   GET  /ingest/price-requests/pending-count  {pending}
+//   POST /ingest/heartbeat                     {name, info} → heartbeats upsert
+//   GET  /ingest/settings                      {key: value}
+//   GET  /ingest/push/digests?week=            一人一筆推播資料
+//   POST /ingest/push/sent | /push/remove      記錄已推／刪失效訂閱
+//   GET  /ingest/push/subscriptions            全部訂閱（測試推播）
+//   GET  /ingest/price-targets                 週一批次要查的 [{store_id, product_ids, product_keys}]
+//   POST /ingest/prune-requests                刪一天前 done／failed 的單（search_results 跟著 cascade）
+//
+// price_requests.items 存 JSON {product_ids, product_keys}；D1 沒有 error 欄，失敗原因存 result（JSON {error}）。
+
+const CHAINS = ['newworld', 'paknsave', 'woolworths']
+const CHAIN_NAME: Record<string, string> = { newworld: 'New World', woolworths: 'Woolworths', paknsave: "PAK'nSAVE" }
+const STAGE4_SPECS: Record<string, Spec> = {
+  live_prices: { table: 'live_prices', cols: ['store_id', 'product_id', 'product_key', 'available', 'price', 'price_unit', 'was_price', 'is_special', 'club_only', 'multi_buy', 'unit_price', 'unit_price_unit', 'name', 'fetched_at', 'source'], pk: ['store_id', 'product_id'] },
+  search_results: { table: 'search_results', cols: ['request_id', 'store_id', 'term', 'candidates', 'created_at'], pk: ['request_id', 'term'] },
+  name_matches: { table: 'name_matches', cols: ['chain_id', 'product_key', 'status', 'candidate_product_id', 'score', 'candidates', 'searched_at'], pk: ['chain_id', 'product_key'] },
+}
+const parseJson = <T>(s: string | null | undefined, fallback: T): T => { if (s == null) return fallback; try { return JSON.parse(s) as T } catch { return fallback } }
+const strList = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [])
+const chainOf = (storeId: string) => storeId.slice(0, storeId.indexOf(':'))
+
+interface ReqRow { id: string; store_id: string; items: string; queries: string | null; created_at: string }
+const flatten = (r: ReqRow) => {
+  const it = parseJson<{ product_ids?: string[]; product_keys?: string[] }>(r.items, {})
+  return { id: r.id, store_id: r.store_id, product_ids: strList(it.product_ids), product_keys: strList(it.product_keys), queries: strList(parseJson(r.queries, [])), created_at: r.created_at }
+}
+
+ingest.post('/price-requests/claim', async (c) => {
+  const b = (await c.req.json().catch(() => ({}))) as { chain?: string; limit?: number }
+  if (!b.chain || !CHAINS.includes(b.chain)) return c.json({ error: 'chain 要是 newworld / paknsave / woolworths' }, 400)
+  const limit = Math.max(1, Math.min(100, Number(b.limit ?? 100) || 100))
+  const { results } = await c.env.DB.prepare(
+    "update price_requests set status = 'running', claimed_at = ?1 where id in (select id from price_requests where status = 'pending' and store_id like ?2 order by created_at limit ?3) returning id, store_id, items, queries, created_at",
+  ).bind(now(), `${b.chain}:%`, limit).all<ReqRow>()
+  return c.json({ requests: results.map(flatten) })
+})
+
+interface ResultBody {
+  ids?: unknown; status?: string; error?: string
+  live_prices?: Row[]; search_results?: Row[]; name_matches?: Row[]; chain_items?: Row[]
+}
+ingest.post('/price-requests/result', async (c) => {
+  const b = (await c.req.json().catch(() => null)) as ResultBody | null
+  if (!b || (b.status !== 'done' && b.status !== 'failed')) return c.json({ error: "status 要是 'done' 或 'failed'" }, 400)
+  const ids = strList(b.ids)
+  const rowsOf = (v: unknown): Row[] => (Array.isArray(v) ? v.filter((r): r is Row => !!r && typeof r === 'object' && !Array.isArray(r)).slice(0, MAX_ROWS) : [])
+  const t = now()
+  const live = rowsOf(b.live_prices).map((r): Row => ({ ...r, available: r.available ?? true, fetched_at: r.fetched_at ?? t, source: r.source ?? 'live' }))
+  const search = rowsOf(b.search_results).map((r): Row => ({ ...r, candidates: r.candidates ?? [], created_at: r.created_at ?? t }))
+  const names = rowsOf(b.name_matches)
+  const items = rowsOf(b.chain_items).filter((r) => r.chain_id && r.product_id && r.product_key)
+  const upserted = {
+    live_prices: await upsertRows(c.env, STAGE4_SPECS.live_prices, live.filter((r) => r.store_id && r.product_id)),
+    search_results: await upsertRows(c.env, STAGE4_SPECS.search_results, search.filter((r) => r.request_id && r.store_id && r.term)),
+    name_matches: await upsertRows(c.env, STAGE4_SPECS.name_matches, names.filter((r) => r.chain_id && r.product_key && r.status)),
+    chain_items: 0,
+  }
+  if (items.length) {   // 已有不動（不讓編號改指到別的 key）
+    const stmt = c.env.DB.prepare('insert into chain_items (chain_id, product_id, product_key, seen_at) values (?, ?, ?, ?) on conflict (chain_id, product_id) do nothing')
+    for (let i = 0; i < items.length; i += BATCH) await c.env.DB.batch(items.slice(i, i + BATCH).map((r) => stmt.bind(r.chain_id, r.product_id, r.product_key, t)))
+    upserted.chain_items = items.length
+  }
+  let changed = 0
+  if (ids.length) {
+    const result = b.status === 'failed' ? JSON.stringify({ error: String(b.error ?? '').slice(0, 500) }) : null
+    const r = await c.env.DB.prepare('update price_requests set status = ?, done_at = ?, result = ? where id in (select value from json_each(?))').bind(b.status, t, result, JSON.stringify(ids)).run()
+    changed = r.meta.changes
+  }
+  return c.json({ ok: true, requests: changed, upserted })
+})
+
+ingest.post('/price-requests/reset-running', async (c) => {
+  const r = await c.env.DB.prepare("update price_requests set status = 'pending', claimed_at = null where status = 'running'").run()
+  return c.json({ reset: r.meta.changes })
+})
+
+ingest.get('/price-requests/pending-count', async (c) => {
+  const row = await c.env.DB.prepare("select count(*) as n from price_requests where status = 'pending'").first<{ n: number }>()
+  return c.json({ pending: row?.n ?? 0 })
+})
+
+// heartbeats 不在 0001 / 0002（契約列了但 migration 沒建）：第一次寫的時候建，之後的 migration 用 create table if not exists 也不會撞
+ingest.post('/heartbeat', async (c) => {
+  const b = (await c.req.json().catch(() => ({}))) as { name?: string; info?: unknown }
+  if (!b.name || typeof b.name !== 'string' || b.name.length > 60) return c.json({ error: 'name 不對' }, 400)
+  await c.env.DB.prepare('create table if not exists heartbeats (name text primary key, at text not null, info text)').run()
+  await c.env.DB.prepare('insert into heartbeats (name, at, info) values (?, ?, ?) on conflict (name) do update set at = excluded.at, info = excluded.info').bind(b.name, now(), sqlVal(b.info)).run()
+  return c.json({ ok: true })
+})
+
+ingest.get('/settings', async (c) => {
+  const { results } = await c.env.DB.prepare('select key, value from settings').all<{ key: string; value: string | null }>()
+  return c.json(Object.fromEntries(results.map((r) => [r.key, r.value])))
+})
+
+// ── 推播 ─────────────────────────────────────────────────────────────────────
+ingest.get('/push/digests', async (c) => {
+  const week = c.req.query('week') ?? ''
+  if (!WEEK.test(week)) return c.json({ error: 'week 要是 YYYY-MM-DD' }, 400)
+  const { results: users } = await c.env.DB.prepare(`
+    select u.id, u.lang from users u
+    where exists (select 1 from push_subscriptions p where p.user_id = u.id)
+      and not exists (select 1 from notifications n where n.user_id = u.id and n.week_start = ?1 and n.kind = 'weekly_digest')`).bind(week).all<{ id: string; lang: string | null }>()
+  if (!users.length) return c.json([])
+  const uids = JSON.stringify(users.map((u) => u.id))
+  const [subs, stores, totals, hits] = await c.env.DB.batch([
+    c.env.DB.prepare('select user_id, endpoint, keys from push_subscriptions where user_id in (select value from json_each(?1))').bind(uids),
+    c.env.DB.prepare('select user_id, store_id from user_stores where user_id in (select value from json_each(?1)) order by position').bind(uids),
+    c.env.DB.prepare(`
+      select us.user_id, sum(json_array_length(ss.product_keys)) as total from user_stores us
+      join store_specials ss on ss.store_id = us.store_id and ss.week_start = ?2
+      where us.user_id in (select value from json_each(?1)) group by us.user_id`).bind(uids, week),
+    // 關注的 key 在他的店這週有特價：店價優先、沒有就連鎖價
+    c.env.DB.prepare(`
+      select w.user_id, w.product_key, us.store_id, p.display_name as name, coalesce(sp.price, cp.price) as price, coalesce(sp.multi_buy, cp.multi_buy) as multi_buy
+      from watches w
+      join user_stores us on us.user_id = w.user_id
+      join store_specials ss on ss.store_id = us.store_id and ss.week_start = ?2
+      left join products p on p.key = w.product_key
+      left join store_prices sp on sp.store_id = us.store_id and sp.week_start = ?2 and sp.product_key = w.product_key
+      left join chain_prices cp on cp.chain_id = substr(us.store_id, 1, instr(us.store_id, ':') - 1) and cp.week_start = ?2 and cp.product_key = w.product_key
+      where w.user_id in (select value from json_each(?1))
+        and exists (select 1 from json_each(ss.product_keys) k where k.value = w.product_key)
+        and coalesce(sp.price, cp.price) is not null`).bind(uids, week),
+  ])
+  type SubR = { user_id: string; endpoint: string; keys: string }
+  type HitR = { user_id: string; product_key: string; store_id: string; name: string | null; price: number; multi_buy: string | null }
+  const byUser = <T extends { user_id: string }>(rows: T[]) => { const m = new Map<string, T[]>(); for (const r of rows) (m.get(r.user_id) ?? m.set(r.user_id, []).get(r.user_id)!).push(r); return m }
+  const subsBy = byUser(subs.results as SubR[])
+  const storesBy = byUser(stores.results as { user_id: string; store_id: string }[])
+  const totalBy = new Map((totals.results as { user_id: string; total: number | null }[]).map((r) => [r.user_id, Number(r.total ?? 0)]))
+  const hitsBy = byUser(hits.results as HitR[])
+  return c.json(users.map((u) => {
+    const best = new Map<string, { name: string; price: number; store: string }>()
+    for (const h of hitsBy.get(u.id) ?? []) {   // 每樣取最便宜的店；多件優惠算湊滿的平均價（同 notify.ts）
+      const mb = parseJson<{ qty?: number; total?: number } | null>(h.multi_buy, null)
+      const p = mb?.qty && mb.total ? mb.total / mb.qty : Number(h.price)
+      const cur = best.get(h.product_key)
+      if (!cur || p < cur.price) best.set(h.product_key, { name: h.name ?? h.product_key, price: p, store: CHAIN_NAME[chainOf(h.store_id)] ?? h.store_id })
+    }
+    return {
+      user_id: u.id, lang: u.lang ?? 'zh',
+      subs: (subsBy.get(u.id) ?? []).map((s) => ({ endpoint: s.endpoint, keys: parseJson<unknown>(s.keys, {}) })),
+      stores: (storesBy.get(u.id) ?? []).map((s) => s.store_id),
+      total: totalBy.get(u.id) ?? 0,
+      hits: [...best.values()],
+    }
+  }))
+})
+
+ingest.post('/push/sent', async (c) => {
+  const b = (await c.req.json().catch(() => ({}))) as { user_id?: string; week_start?: string; kind?: string; payload?: unknown }
+  if (!b.user_id || !b.week_start || !WEEK.test(b.week_start) || !b.kind) return c.json({ error: 'user_id / week_start / kind 不對' }, 400)
+  await c.env.DB.prepare('insert into notifications (id, user_id, week_start, kind, payload, sent_at) values (?, ?, ?, ?, ?, ?)').bind(crypto.randomUUID(), b.user_id, b.week_start, b.kind, sqlVal(b.payload), now()).run()
+  return c.json({ ok: true })
+})
+
+ingest.post('/push/remove', async (c) => {
+  const b = (await c.req.json().catch(() => ({}))) as { endpoint?: string }
+  if (!b.endpoint || typeof b.endpoint !== 'string') return c.json({ error: 'endpoint 不對' }, 400)
+  const r = await c.env.DB.prepare('delete from push_subscriptions where endpoint = ?').bind(b.endpoint).run()
+  return c.json({ removed: r.meta.changes })
+})
+
+ingest.get('/push/subscriptions', async (c) => {
+  const { results } = await c.env.DB.prepare('select p.user_id, p.endpoint, p.keys, u.lang from push_subscriptions p join users u on u.id = p.user_id').all<{ user_id: string; endpoint: string; keys: string; lang: string | null }>()
+  return c.json(results.map((r) => ({ user_id: r.user_id, endpoint: r.endpoint, keys: parseJson<unknown>(r.keys, {}), lang: r.lang ?? 'zh' })))
+})
+
+// ── 週一批次查價的目標：每個人的清單 ∪ 關注 × 他的店；有編號的給 product_ids，沒編號的給 product_keys 讓 worker 用名字配 ──
+ingest.get('/price-targets', async (c) => {
+  const { results } = await c.env.DB.prepare(`
+    with ks as (
+      select l.user_id, li.product_key as key from list_items li join lists l on l.id = li.list_id where li.product_key is not null
+      union
+      select user_id, product_key from watches
+    )
+    select distinct us.store_id, ks.key from ks join user_stores us on us.user_id = ks.user_id`).all<{ store_id: string; key: string }>()
+  if (!results.length) return c.json([])
+  const keys = [...new Set(results.map((r) => r.key))]
+  const idsBy = new Map<string, string[]>()   // `${chain}|${key}` → product_ids
+  for (let i = 0; i < keys.length; i += 500) {
+    const { results: rows } = await c.env.DB.prepare('select chain_id, product_id, product_key from chain_items where product_key in (select value from json_each(?))').bind(JSON.stringify(keys.slice(i, i + 500))).all<{ chain_id: string; product_id: string; product_key: string }>()
+    for (const r of rows) { const k = `${r.chain_id}|${r.product_key}`; (idsBy.get(k) ?? idsBy.set(k, []).get(k)!).push(r.product_id) }
+  }
+  const group = (chain: string) => (chain === 'woolworths' ? ['woolworths'] : ['newworld', 'paknsave'])
+  const byStore = new Map<string, { ids: Set<string>; keys: Set<string> }>()
+  for (const r of results) {
+    const s = byStore.get(r.store_id) ?? byStore.set(r.store_id, { ids: new Set(), keys: new Set() }).get(r.store_id)!
+    const ids = group(chainOf(r.store_id)).flatMap((ch) => idsBy.get(`${ch}|${r.key}`) ?? [])
+    if (ids.length) for (const id of ids) s.ids.add(id)
+    else s.keys.add(r.key)
+  }
+  return c.json([...byStore.entries()].map(([store_id, s]) => ({ store_id, product_ids: [...s.ids], product_keys: [...s.keys] })))
+})
+
+ingest.post('/prune-requests', async (c) => {
+  const cutoff = new Date(Date.now() - 86400000).toISOString()
+  const r = await c.env.DB.prepare("delete from price_requests where status in ('done', 'failed') and created_at < ?").bind(cutoff).run()
+  return c.json({ cutoff, deleted: r.meta.changes })
+})
+
 export default ingest

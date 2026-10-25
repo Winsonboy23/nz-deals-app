@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ProductThumb from '../components/ProductThumb.vue'
 import { supabase } from '../lib/supabase'
-import { apiProducts, useD1 } from '../lib/api'
+import { apiGet, apiProducts, useD1 } from '../lib/api'
 import { useList } from '../composables/useList'
 import { useSpecials } from '../composables/useSpecials'
 import { t } from '../composables/useI18n'
@@ -46,8 +46,14 @@ async function loadPics(keys: string[]): Promise<void> {
 
 onMounted(async () => {
   const token = String(route.params.token ?? '')
-  const { data } = await supabase.from('shopping_lists').select('id,name,list_items(id,product_key,free_text,qty,checked,position)').eq('share_token', token).limit(1)
-  const list = data?.[0]
+  let list: { name: string; list_items: unknown } | undefined
+  if (useD1()) {   // 階段 4：Worker 的公開端點 GET /api/lists/:token → { name, items }
+    const d = await apiGet<{ name: string; items: Row[] }>(`/api/lists/${encodeURIComponent(token)}`)
+    if (d) list = { name: d.name, list_items: d.items ?? [] }
+  } else {
+    const { data } = await supabase.from('shopping_lists').select('id,name,list_items(id,product_key,free_text,qty,checked,position)').eq('share_token', token).limit(1)
+    list = data?.[0]
+  }
   if (!list) { state.value = 'missing'; return }
   name.value = list.name
   rows.value = ((list.list_items ?? []) as Array<Row & { position: number | null }>).sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
