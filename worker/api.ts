@@ -7,6 +7,7 @@
 //   GET  /api/settings                  [{key, value}]
 //   GET  /api/recipes                   published 的食譜 {id, week_start, reviewed, data}
 //   POST /api/products {keys?, families?}   products（含同類名字），最多 500 個
+//   GET  /api/products?keys=a,b&families=   同上（給爬蟲 price-worker 用，階段 4 契約 §10；階段 6 切換前它要靠這個拿 display_name）
 //   GET  /api/history/:key?stores=a,b   近 8 週這個商品在這幾家店的價格 {store_id, week_start, price, multi_buy}
 // /api/specials/:store 在 index.ts（Supabase 代理 + src=d1 讀 R2 快照）。
 import { Hono } from 'hono'
@@ -47,10 +48,14 @@ api.get('/recipes', async (c) => {
 })
 
 const PRODUCT_COLS = 'p.key, p.display_name, p.brand, p.size, p.category_id, p.family_key, p.is_food, p.image_url, f.name_en as family_name_en, f.name_zh as family_name_zh'
+const pickKeys = (v: unknown): string[] => (Array.isArray(v) ? (v as unknown[]).filter((k): k is string => typeof k === 'string' && KEY.test(k)).slice(0, 500) : [])
+const splitKeys = (v: string | undefined): string[] => pickKeys((v ?? '').split(',').map((s) => s.trim()).filter(Boolean))
+api.get('/products', (c) => productsQuery(c, splitKeys(c.req.query('keys')), splitKeys(c.req.query('families'))))
 api.post('/products', async (c) => {
   const b = (await c.req.json().catch(() => null)) as { keys?: unknown; families?: unknown } | null
-  const keys = Array.isArray(b?.keys) ? (b!.keys as unknown[]).filter((k): k is string => typeof k === 'string' && KEY.test(k)).slice(0, 500) : []
-  const fams = Array.isArray(b?.families) ? (b!.families as unknown[]).filter((k): k is string => typeof k === 'string' && KEY.test(k)).slice(0, 500) : []
+  return productsQuery(c, pickKeys(b?.keys), pickKeys(b?.families))
+})
+async function productsQuery(c: { env: Env; json: (b: unknown, s?: 200 | 400, h?: Record<string, string>) => Response }, keys: string[], fams: string[]) {
   if (!keys.length && !fams.length) return c.json({ error: 'keys 或 families 至少一個' }, 400)
   const out: unknown[] = []
   if (keys.length) {
@@ -62,7 +67,7 @@ api.post('/products', async (c) => {
     out.push(...results)
   }
   return c.json(out.map((r) => ({ ...(r as { is_food: number }), is_food: !!(r as { is_food: number }).is_food })), 200, { 'cache-control': 'no-store' })
-})
+}
 
 api.get('/history/:key', async (c) => {
   const key = c.req.param('key')

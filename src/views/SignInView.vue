@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import { t } from '../composables/useI18n'
 
 const router = useRouter()
+const route = useRoute()
 const { signIn, isIn } = useAuth()
+/** Worker 登入失敗會 302 回 #/signin?error=<code>（docs/stage4-contract.md §2）；認得的碼用白話講，其他照碼顯示 */
+const KNOWN = ['access_denied', 'missing_config', 'bad_state', 'no_state']
+const signInError = computed(() => {
+  const code = String(route.query.error ?? '').replace(/[^a-z_]/g, '').slice(0, 40)
+  if (!code) return ''
+  return KNOWN.includes(code) ? t(`auth.err.${code === 'no_state' ? 'bad_state' : code}`) : t('auth.err.other', { code })
+})
 /** Facebook 鈕：後台 settings.facebook_login = 'on' 才出現（Supabase 的 Facebook provider 設好之前按了會失敗） */
 const { facebookLogin } = useSiteSettings()
 const logo = import.meta.env.BASE_URL + 'brand/kitewise-logo-a.svg'
@@ -33,6 +41,7 @@ async function go(provider: 'google' | 'facebook') {
       <img :src="logo" alt="KiteWise" style="display: block; width: 100%; height: auto; margin-top: 12px" />
       <div class="h1" style="margin-top: 18px">{{ facebookLogin ? t('common.signIn') : t('auth.title') }}</div>
       <div class="sub" style="margin-top: 8px; font-size: 15px; line-height: 1.5">{{ t('auth.guestNote') }}</div>
+      <div v-if="signInError" class="note" style="margin-top: 12px; color: #b00020">{{ signInError }}</div>
     </div>
     <div class="pad" style="margin-top: 22px">
       <div class="box">

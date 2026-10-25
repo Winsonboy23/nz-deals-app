@@ -180,6 +180,6 @@ Supabase → D1：`profiles` → `users.lang/island/notify_push`；`user_stores`
 - `/ingest/price-targets`：那家連鎖群沒有 chain_items 編號的 key 才放進 `product_keys`（讓 Mac mini 用名字配）。
 - `ai_usage.day` 照 Edge Function 用 UTC 日期（0001 註解寫 NZ，先不改）。
 - `/auth/google` 多帶 `prompt=select_account`；非 localhost 的 redirect_uri 一律 https。
-- Mac mini 的 D1 軌還讀 Supabase 兩樣東西：`product_ids`（編號 → key）、`products.display_name`（名字配對）。階段 6 切換前要補 `GET /api/chain-items?ids=` 與 `GET /api/products?keys=`（或直接用 `POST /api/products`）。
-- 單子 claim 後若 result 送不出去會卡在 running 直到 worker 重啟的 reset-running；之後可讓 prune-requests 順便把 claimed_at > 10 分鐘的 running 退回 pending。
-- App 的 `SignInView` 還沒顯示 `?error=<code>`。
+- Mac mini 的 D1 軌還讀 Supabase 兩樣東西：`product_ids`（編號 → key）、`products.display_name`（名字配對）。**10-26 補好**：`GET /api/chain-items?ids=a,b`（≤ 300 個編號，可跟 keys= 一起）、`GET /api/products?keys=a,b&families=`（≤ 500）。爬蟲那邊改讀這兩個就能不碰 Supabase。
+- 單子 claim 後若 result 送不出去會卡在 running：**10-26 起 `POST /ingest/prune-requests` 會把 claimed_at 超過 10 分鐘的 running 退回 pending**（回 `reset_stuck`），不用等 worker 重啟。
+- ~~App 的 `SignInView` 還沒顯示 `?error=<code>`~~ 10-26 做了：access_denied／missing_config／bad_state 用白話，其他顯示碼（`auth.err.*` 字串）。

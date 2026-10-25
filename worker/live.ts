@@ -5,6 +5,7 @@
 //   GET  /api/live-prices?stores=&keys=      live_prices 列（Supabase store_prices 的形狀）
 //   GET  /api/name-matches?keys=             [{ chain, product_key, status, searched_at }]
 //   GET  /api/chain-items?keys=              [{ chain, product_id, product_key }]（= Supabase product_ids）
+//   GET  /api/chain-items?ids=               同上，用超市編號查（給 price-worker，階段 4 契約 §10）；keys 和 ids 可以一起給
 //   GET  /api/chain-items/by-id?product_id=&chains=   [{ chain, product_key }]
 //   GET  /api/search-results?ids=&term=      [{ store_id, candidates }]
 //   GET  /api/products/search?zh=&limit=     [{ key, family_key, family_name_zh }]
@@ -126,9 +127,12 @@ live.get('/name-matches', async (c) => {
 
 live.get('/chain-items', async (c) => {
   const keys = list(c.req.query('keys'), KEY, 200)
-  if (!keys.length) return c.json([], 200, NO_STORE)
-  const { results } = await c.env.DB.prepare('select chain_id as chain, product_id, product_key from chain_items where product_key in (select value from json_each(?))').bind(JSON.stringify(keys)).all()
-  return c.json(results, 200, NO_STORE)
+  const ids = list(c.req.query('ids'), /^[A-Za-z0-9-]{1,40}$/, 300)
+  if (!keys.length && !ids.length) return c.json([], 200, NO_STORE)
+  const out: unknown[] = []
+  if (keys.length) out.push(...(await c.env.DB.prepare('select chain_id as chain, product_id, product_key from chain_items where product_key in (select value from json_each(?))').bind(JSON.stringify(keys)).all()).results)
+  if (ids.length) out.push(...(await c.env.DB.prepare('select chain_id as chain, product_id, product_key from chain_items where product_id in (select value from json_each(?))').bind(JSON.stringify(ids)).all()).results)
+  return c.json(out, 200, NO_STORE)
 })
 
 live.get('/chain-items/by-id', async (c) => {

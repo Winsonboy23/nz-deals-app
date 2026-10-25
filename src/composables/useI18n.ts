@@ -28,6 +28,11 @@ const DICT: Record<string, { en: string; zh: string }> = {
   'auth.guestNote': { en: 'Comparing prices works without signing in. Signing in only saves things.', zh: '不登入也能比價。登入只是為了存東西。' },
   'auth.merged': { en: 'Signed in. Your guest stores and list were merged into this account.', zh: '登入了。訪客時選的店和清單已合併到帳號。' },
   'auth.signOut': { en: 'Sign out', zh: '登出' },
+  // Google 登入失敗（Worker /auth/callback 302 回 #/signin?error=<code>，階段 4 契約 §2）
+  'auth.err.access_denied': { en: 'You cancelled the Google sign-in. Try again when you are ready.', zh: '你在 Google 那頁取消了。想登入再按一次就好。' },
+  'auth.err.missing_config': { en: 'Sign-in is not set up on the server yet.', zh: '伺服器還沒設定好登入。' },
+  'auth.err.bad_state': { en: 'The sign-in link expired. Please try again.', zh: '登入連結過期了，請再按一次。' },
+  'auth.err.other': { en: 'Google sign-in failed ({code}). Please try again.', zh: 'Google 登入失敗（{code}），請再試一次。' },
   'auth.signedInAs': { en: 'Signed in with {p}', zh: '已用 {p} 登入' },
   'auth.inApp': {
     en: "This is Facebook's in-app browser, so Google sign-in will fail. Please open this page in your browser: on iPhone tap ⋯ at the bottom right → Open in Safari; on Android tap ⋮ at the top right → Open in Chrome",

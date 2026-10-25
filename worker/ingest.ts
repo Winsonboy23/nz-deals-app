@@ -223,7 +223,7 @@ ingest.post('/prune', async (c) => {
 //   POST /ingest/push/sent | /push/remove      記錄已推／刪失效訂閱
 //   GET  /ingest/push/subscriptions            全部訂閱（測試推播）
 //   GET  /ingest/price-targets                 週一批次要查的 [{store_id, product_ids, product_keys}]
-//   POST /ingest/prune-requests                刪一天前 done／failed 的單（search_results 跟著 cascade）
+//   POST /ingest/prune-requests                刪一天前 done／failed 的單（search_results 跟著 cascade）；claim 超過 10 分鐘還 running 的退回 pending
 //
 // price_requests.items 存 JSON {product_ids, product_keys}；D1 沒有 error 欄，失敗原因存 result（JSON {error}）。
 
@@ -415,8 +415,12 @@ ingest.get('/price-targets', async (c) => {
 
 ingest.post('/prune-requests', async (c) => {
   const cutoff = new Date(Date.now() - 86400000).toISOString()
-  const r = await c.env.DB.prepare("delete from price_requests where status in ('done', 'failed') and created_at < ?").bind(cutoff).run()
-  return c.json({ cutoff, deleted: r.meta.changes })
+  const stuck = new Date(Date.now() - 10 * 60000).toISOString()   // 領走後 result 沒送回來（worker 中途掛了）：退回 pending 讓下一輪重做
+  const [del, reset] = await c.env.DB.batch([
+    c.env.DB.prepare("delete from price_requests where status in ('done', 'failed') and created_at < ?").bind(cutoff),
+    c.env.DB.prepare("update price_requests set status = 'pending', claimed_at = null where status = 'running' and claimed_at < ?").bind(stuck),
+  ])
+  return c.json({ cutoff, deleted: del.meta.changes, reset_stuck: reset.meta.changes })
 })
 
 export default ingest
