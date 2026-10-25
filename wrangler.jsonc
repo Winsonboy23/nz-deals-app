@@ -18,7 +18,9 @@
     "directory": "./dist",
     // 找不到的路徑回 404，不要回 index.html：App 用 hash 路由，真正的路徑只有 /、/privacy.html、/delete-data.html
     "not_found_handling": "none",
-    "run_worker_first": ["/api/*", "/auth/*", "/ingest/*", "/admin/*"]
+    "run_worker_first": ["/api/*", "/auth/*", "/ingest/*", "/admin", "/admin/*"],
+    // 階段 5：/admin 的 index.html 由 Worker 出（worker/admin.ts 用這個綁定拿）
+    "binding": "ASSETS"
   },
   // 全國版資料庫與快照（docs/national-plan.md §2、§2.6）
   "d1_databases": [
@@ -31,6 +33,9 @@
   "limits": { "cpu_ms": 200 },
   // 公開值（anon key 本來就在前端 bundle 裡），不是機密。機密（INGEST_TOKEN 等）用 `wrangler secret put`。
   "vars": {
+    // 階段 5（docs/stage5-contract.md）：後台的 Cloudflare Access。兩個都是公開值；空字串 = 沒開 Access（本機），Worker 退回 kw_session + admins 表
+    "ACCESS_TEAM_DOMAIN": "orange-base-53db.cloudflareaccess.com",
+    "ACCESS_AUD": "046d6462c3b128b9778621dc9dd470c938ea29248ced8e2f90b1ecd409fbf799",
     // 階段 4（docs/stage4-contract.md）：Google OAuth 用戶端 id 是公開值；DEV_LOGIN 正式一定空字串（.dev.vars 設 1 才開 /auth/dev-login）
     "GOOGLE_CLIENT_ID": "991666308220-asq2eknlnbh7e5f3m84p5809sgbjedel.apps.googleusercontent.com",
     "DEV_LOGIN": "",

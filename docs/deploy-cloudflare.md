@@ -14,6 +14,7 @@
   - 型別檢查：`pnpm typecheck:worker`。
 - D1 `kitewise`（binding `DB`，OC 區）、R2 `kitewise-data`（binding `DATA`）。表用 `migrations/*.sql` 管，**只加不刪**：
   `pnpm d1:local`（本機副本）／`pnpm d1:remote`（正式）。deploy 不會自動跑 migration，加了新檔要手動 `pnpm d1:remote`。
+- **後台 `/admin`**（階段 5，2026-10-26）：Cloudflare Access 應用程式「KiteWise 後台」擋 `kitewise.nz/admin`（Zero Trust → Access 控制 → 應用程式；原則 KiteWise admins 列管理員 email，登入用 One-time PIN 寄到信箱）。`wrangler.jsonc` vars `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD`（AUD 在應用程式的概觀頁）讓 Worker 驗 JWT；email 還要在 D1 `admins` 表。要加管理員：Access 原則加 email **和** `admins` 表加一列，兩邊都要。
 - 機密只用 `npx wrangler secret put <NAME>`（目前：`INGEST_TOKEN`）。費用保險：`wrangler.jsonc` 的 `limits.cpu_ms = 50`。
 - 回應標頭：`public/_headers`（assets 永久快取；index、sw.js、manifest 不快取）。
 - 自動部署：`.github/workflows/deploy-cloudflare.yml`，推到 main 就 build + deploy。

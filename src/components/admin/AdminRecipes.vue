@@ -7,6 +7,8 @@
 //  改成功就叫 App 重讀一次表（useRecipes().loadRecipes），切到食譜頁就是新的，不用重新整理。
 import { computed, onMounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
+import { useD1 } from '../../lib/api'
+import { adminDelete, adminErr, adminGet, adminPatch, adminPost } from '../../lib/adminApi'
 import { nzMonday } from '../../lib/week'
 import { recipeImg, useRecipes, type Appliance, type Bi, type Block, type Recipe } from '../../composables/useRecipes'
 import { babyRisks } from '../../lib/baby'
@@ -66,6 +68,11 @@ const say = (id: string, text: string, bad = true) => {
 }
 
 async function load() {
+  if (useD1()) {   // 階段 5（docs/stage5-contract.md §2）：全部（含未上架）
+    try { rows.value = await adminGet<Row[]>('/recipes') } catch (e) { err.value = adminErr(e) }
+    loading.value = false
+    return
+  }
   const { data, error } = await supabase
     .from('recipes')
     .select('id,week_start,source,published,reviewed,data')
@@ -107,8 +114,19 @@ function failed(id: string, res: { error: { message: string } | null; data: unkn
 }
 
 /** 上架／審過：直接改那一欄；兩個都會改 App 看到的（審過才顯示寶寶支線），所以都叫 App 重讀 */
+/** d1 版：PATCH 失敗就在那一列下面寫原因（跟 failed() 一樣的位置） */
+async function d1Patch(id: string, body: unknown): Promise<boolean> {
+  try { await adminPatch(`/recipes/${encodeURIComponent(id)}`, body); return true } catch (e) { say(id, adminErr(e) === 'not_found' ? '這道已經被刪了' : adminErr(e)); return false }
+}
 async function flip(r: Row, key: 'published' | 'reviewed') {
   const v = !r[key]
+  if (useD1()) {
+    if (!(await d1Patch(r.id, { [key]: v }))) return
+    r[key] = v
+    say(r.id, '', false)
+    void loadRecipes()
+    return
+  }
   const res = await supabase.from('recipes').update({ [key]: v, updated_at: new Date().toISOString() }).eq('id', r.id).select('id')
   if (failed(r.id, res)) return
   r[key] = v
@@ -133,6 +151,14 @@ async function bulk(g: Group) {
   }
   confirming.value = ''
   busy.value = true
+  if (useD1()) {
+    try { await adminPost('/recipes/bulk', { ids: g.rows.map((r) => r.id), published: g.bulk === 'publish' }) } catch (e) { busy.value = false; return say(g.title, adminErr(e)) }
+    busy.value = false
+    say(g.title, '', false)
+    await load()
+    void loadRecipes()
+    return
+  }
   const res = await supabase
     .from('recipes')
     .update({ published: g.bulk === 'publish', updated_at: new Date().toISOString() })
@@ -274,8 +300,12 @@ async function save(r: Row) {
     tip: d.tipZh.trim() || d.tipEn.trim() ? { zh: d.tipZh.trim(), en: d.tipEn.trim() } : undefined,
     steps: { zh: lines(d.stepsZh), en: lines(d.stepsEn) },
   }
-  const res = await supabase.from('recipes').update({ data, updated_at: new Date().toISOString() }).eq('id', r.id).select('id')
-  if (failed(r.id, res)) return
+  if (useD1()) {
+    if (!(await d1Patch(r.id, { data }))) return
+  } else {
+    const res = await supabase.from('recipes').update({ data, updated_at: new Date().toISOString() }).eq('id', r.id).select('id')
+    if (failed(r.id, res)) return
+  }
   r.data = data
   open.value = ''
   warn.value = ''
@@ -285,8 +315,12 @@ async function save(r: Row) {
 
 async function remove(r: Row) {
   if (!confirm(`刪掉「${r.data.title?.zh || r.id}」？刪了就沒有了（常備庫的可以重跑匯入腳本補回來）。`)) return
-  const res = await supabase.from('recipes').delete().eq('id', r.id).select('id')
-  if (failed(r.id, res)) return
+  if (useD1()) {
+    try { await adminDelete(`/recipes/${encodeURIComponent(r.id)}`) } catch (e) { return say(r.id, adminErr(e)) }
+  } else {
+    const res = await supabase.from('recipes').delete().eq('id', r.id).select('id')
+    if (failed(r.id, res)) return
+  }
   rows.value = rows.value.filter((x) => x.id !== r.id)
   open.value = ''
   void loadRecipes()

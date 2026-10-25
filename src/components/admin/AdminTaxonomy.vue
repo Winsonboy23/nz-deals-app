@@ -4,6 +4,8 @@
 //  下半 — 分類中文（taxonomy_zh）兩欄可改，失焦就存。
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
+import { useD1 } from '../../lib/api'
+import { adminErr, adminGet, adminPost, adminPut } from '../../lib/adminApi'
 import { useCategories } from '../../composables/useCategories'
 import type { Category } from '../../lib/types'
 import Loading from '../Loading.vue'
@@ -44,6 +46,16 @@ const done = ref<Record<string, boolean>>({})
 const rowKey = (u: Un) => `${u.chain}|${u.path}`
 
 async function loadUnmapped() {
+  if (useD1()) {   // 階段 5（docs/stage5-contract.md §2）
+    try {
+      const r = await adminGet<{ run_at: string; unmapped: Un[] }>('/taxonomy/unmapped')
+      runAt.value = r.run_at
+      unmapped.value = r.unmapped
+    } catch (e) {
+      err.value = adminErr(e)
+    }
+    return
+  }
   const { data, error } = await supabase.from('crawl_runs').select('started_at,report').order('started_at', { ascending: false }).limit(1)
   if (error) {
     err.value = error.message
@@ -62,6 +74,12 @@ async function saveMap(u: Un) {
   }
   err.value = ''
   const level = u.path.split('>').length >= 3 ? 3 : 2
+  if (useD1()) {
+    try { await adminPost('/taxonomy/map', { level, ww_path: u.path, fs_path: fs, note: `後台 ${today}` }) } catch (e) { err.value = adminErr(e); return }
+    done.value = { ...done.value, [rowKey(u)]: true }
+    void loadManual()
+    return
+  }
   const { error } = await supabase.from('taxonomy_map').upsert(
     { level, ww_path: u.path, fs_path: fs, status: 'manual', note: `後台 ${today}`, updated_at: new Date().toISOString() },
     { onConflict: 'level,ww_path' },
@@ -84,6 +102,10 @@ interface MapRow {
 }
 const manual = ref<MapRow[]>([])
 async function loadManual() {
+  if (useD1()) {
+    try { manual.value = await adminGet<MapRow[]>('/taxonomy/manual') } catch (e) { err.value = adminErr(e) }
+    return
+  }
   const { data, error } = await supabase
     .from('taxonomy_map')
     .select('level,ww_path,fs_path,note,updated_at')
@@ -104,6 +126,10 @@ interface Job {
 }
 const jobs = ref<Job[]>([])
 async function loadJobs() {
+  if (useD1()) {
+    try { jobs.value = await adminGet<Job[]>('/jobs?kind=recat_week&limit=5') } catch { /* 沒權限時別的 load 已經寫過錯誤 */ }
+    return
+  }
   const { data } = await supabase
     .from('admin_jobs')
     .select('id,kind,status,log,created_at')
@@ -113,6 +139,11 @@ async function loadJobs() {
   jobs.value = (data ?? []) as Job[]
 }
 async function recat() {
+  if (useD1()) {
+    try { await adminPost('/jobs', { rows: [{ kind: 'recat_week', payload: {} }] }) } catch (e) { err.value = adminErr(e); return }
+    await loadJobs()
+    return
+  }
   const { error } = await supabase.from('admin_jobs').insert({ kind: 'recat_week', payload: {} })
   if (error) {
     err.value = error.message
@@ -135,6 +166,10 @@ const zhShown = computed(() => {
   return zh.value.filter((r) => r.name.toLowerCase().includes(q) || r.zh.includes(zhQuery.value.trim()))
 })
 async function loadZh() {
+  if (useD1()) {
+    try { zh.value = await adminGet<ZhRow[]>('/taxonomy/zh') } catch (e) { err.value = adminErr(e) }
+    return
+  }
   const { data, error } = await supabase.from('taxonomy_zh').select('name,zh').order('name')
   if (error) err.value = error.message
   zh.value = (data ?? []) as ZhRow[]
@@ -142,6 +177,12 @@ async function loadZh() {
 async function saveZh(r: ZhRow, e: Event) {
   const v = (e.target as HTMLInputElement).value.trim()
   if (!v || v === r.zh) return
+  if (useD1()) {
+    try { await adminPut('/taxonomy/zh', { name: r.name, zh: v }) } catch (e) { err.value = adminErr(e); return }
+    r.zh = v
+    zhSaved.value = { ...zhSaved.value, [r.name]: true }
+    return
+  }
   const { error } = await supabase.from('taxonomy_zh').update({ zh: v, updated_at: new Date().toISOString() }).eq('name', r.name)
   if (error) {
     err.value = error.message

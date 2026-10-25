@@ -2,6 +2,8 @@
 // 後台「即時查價現況」（docs/admin-spec.md §2.3）：查價單、名字配對統計、Mac mini 心跳。每 30 秒重讀。
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
+import { useD1 } from '../../lib/api'
+import { adminErr, adminGet } from '../../lib/adminApi'
 import { useStores } from '../../composables/useStores'
 import { nzMonday, nzToday } from '../../lib/week'
 import Loading from '../Loading.vue'
@@ -79,6 +81,19 @@ const fmtTime = (iso: string) => new Date(iso).toLocaleString('zh-TW', { hour12:
 
 async function load() {
   now.value = Date.now()
+  if (useD1()) {   // 階段 5：一次拿齊（docs/stage5-contract.md §2 GET /admin/api/live）
+    try {
+      const r = await adminGet<{ requests: Req[]; heartbeat: { at: string; info: any } | null; health: Health[]; name_counts: Record<string, number> }>('/live')
+      reqs.value = r.requests
+      beat.value = r.heartbeat
+      health.value = r.health
+      counts.value = r.name_counts
+    } catch (e) {
+      err.value = adminErr(e)
+    }
+    loading.value = false
+    return
+  }
   const since = new Date(Date.now() - 7 * 86400000).toISOString()
   const [{ data: rows, error }, { data: hb }, { data: hl }] = await Promise.all([
     supabase.from('price_requests').select('*').gte('created_at', since).order('created_at', { ascending: false }).limit(500),

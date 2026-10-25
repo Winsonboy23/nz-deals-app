@@ -7,6 +7,12 @@
 //   POST /ingest/products | chain-items | chain-prices | store-prices | store-specials | store-items   {rows:[…]} → {upserted}
 //   POST /ingest/snapshot/:store/:week     重建 R2 快照 → {rows, bytes}
 //   POST /ingest/prune                     {keep_weeks} 刪舊週（D1 三張價格表 + R2 快照留 2 週）
+//   階段 5（docs/stage5-contract.md §3）：
+//   POST /ingest/product-dict | family-dict | taxonomy-map   {rows:[…]} → {upserted}（family-dict 同時套到 products / families）
+//   GET  /ingest/taxonomy-map              全部列
+//   POST /ingest/admin-jobs/claim          {kinds?, limit?} → {jobs}（pending → running）
+//   POST /ingest/admin-jobs/:id/result     {status: done|failed, log?}
+//   POST /ingest/health                    {at?, load, top, chrome, orphan, mem_free_mb}
 import { Hono } from 'hono'
 import type { Env } from './env'
 import { writeSnapshot } from './snapshot'
@@ -28,6 +34,10 @@ const SPECS: Record<string, Spec> = {
   'store-prices': { table: 'store_prices', cols: ['store_id', ...PRICE_COLS], pk: ['store_id', 'product_key', 'week_start'] },
   'store-specials': { table: 'store_specials', cols: ['store_id', 'week_start', 'product_keys'], pk: ['store_id', 'week_start'] },
   'store-items': { table: 'store_items', cols: ['store_id', 'product_key', 'seen_at'], pk: ['store_id', 'product_key'] },
+  // 階段 5：三本字典（= Supabase product_dict / family_dict / taxonomy_map）
+  'product-dict': { table: 'product_dict', cols: ['dict_key', 'product_key', 'matched_to', 'confidence', 'source', 'updated_at'], pk: ['dict_key'] },
+  'family-dict': { table: 'family_dict', cols: ['product_key', 'family_key', 'name_en', 'name_zh', 'confidence', 'source', 'cat2', 'updated_at'], pk: ['product_key'] },
+  'taxonomy-map': { table: 'taxonomy_map', cols: ['level', 'ww_path', 'fs_path', 'ww_key', 'status', 'score', 'note', 'updated_at'], pk: ['level', 'ww_path'] },
 }
 const MAX_ROWS = 1000
 const BATCH = 100                       // 一次 D1 batch 幾條 statement
@@ -71,14 +81,59 @@ const now = () => new Date().toISOString()
 const ingest = new Hono<{ Bindings: Env }>()
 
 // ── 批次 upsert ──────────────────────────────────────────────────────────────
-ingest.post('/:kind{products|chain-items|chain-prices|store-prices|store-specials|store-items}', async (c) => {
-  const spec = SPECS[c.req.param('kind')]
+ingest.post('/:kind{products|chain-items|chain-prices|store-prices|store-specials|store-items|product-dict|family-dict|taxonomy-map}', async (c) => {
+  const kind = c.req.param('kind')
+  const spec = SPECS[kind]
   const rows = await readRows(c)
   if (typeof rows === 'string') return c.json({ error: rows }, 400)
   const bad = rows.findIndex((r) => spec.pk.some((k) => r[k] === undefined || r[k] === null || r[k] === ''))
   if (bad >= 0) return c.json({ error: `第 ${bad} 列缺主鍵 ${spec.pk.join('+')}` }, 400)
   const upserted = await upsertRows(c.env, spec, rows)
+  if (kind === 'family-dict') {   // 字典是正本，products.family_key / families 是套用結果：一起改
+    const fams = new Map<string, Row>()
+    for (const r of rows) if (typeof r.family_key === 'string') fams.set(r.family_key, r)
+    const famStmt = c.env.DB.prepare('insert into families (key, name_en, name_zh) values (?, ?, ?) on conflict (key) do update set name_en = coalesce(excluded.name_en, families.name_en), name_zh = coalesce(excluded.name_zh, families.name_zh)')
+    const prodStmt = c.env.DB.prepare('update products set family_key = ? where key = ?')
+    const stmts = [...[...fams.values()].map((r) => famStmt.bind(r.family_key, sqlVal(r.name_en), sqlVal(r.name_zh))), ...rows.map((r) => prodStmt.bind(r.family_key, r.product_key))]
+    for (let i = 0; i < stmts.length; i += BATCH) await c.env.DB.batch(stmts.slice(i, i + BATCH))
+  }
   return c.json({ upserted })
+})
+
+ingest.get('/taxonomy-map', async (c) => {
+  const { results } = await c.env.DB.prepare('select level, ww_path, fs_path, ww_key, status, score, note, updated_at from taxonomy_map order by level, ww_path').all()
+  return c.json(results)
+})
+
+// ── 派工單（後台插、Mac mini 領）──────────────────────────────────────────────
+ingest.post('/admin-jobs/claim', async (c) => {
+  const b = (await c.req.json().catch(() => ({}))) as { kinds?: unknown; limit?: number }
+  const kinds = Array.isArray(b.kinds) ? b.kinds.filter((k): k is string => typeof k === 'string').slice(0, 20) : []
+  const limit = Math.max(1, Math.min(50, Number(b.limit ?? 10) || 10))
+  const sql = kinds.length
+    ? "update admin_jobs set status = 'running', started_at = ?1 where id in (select id from admin_jobs where status = 'pending' and kind in (select value from json_each(?2)) order by created_at limit ?3) returning id, kind, payload, created_at"
+    : "update admin_jobs set status = 'running', started_at = ?1 where id in (select id from admin_jobs where status = 'pending' order by created_at limit ?3) returning id, kind, payload, created_at"
+  const stmt = c.env.DB.prepare(sql)
+  const { results } = await (kinds.length ? stmt.bind(now(), JSON.stringify(kinds), limit) : stmt.bind(now(), null, limit)).all<{ id: string; kind: string; payload: string | null; created_at: string }>()
+  return c.json({ jobs: results.map((j) => ({ ...j, payload: parseJson<unknown>(j.payload, {}) })) })
+})
+ingest.post('/admin-jobs/:id/result', async (c) => {
+  const b = (await c.req.json().catch(() => ({}))) as { status?: string; log?: unknown }
+  if (b.status !== 'done' && b.status !== 'failed') return c.json({ error: "status 要是 'done' 或 'failed'" }, 400)
+  const r = await c.env.DB.prepare('update admin_jobs set status = ?, finished_at = ?, result = ? where id = ?').bind(b.status, now(), typeof b.log === 'string' ? b.log.slice(0, 2000) : sqlVal(b.log), c.req.param('id')).run()
+  if (!r.meta.changes) return c.json({ error: 'job 不存在' }, 404)
+  return c.json({ ok: true })
+})
+
+// ── Mac mini 健康（ops/health.sh 每 10 分鐘一列；留 7 天）──────────────────────
+ingest.post('/health', async (c) => {
+  const b = (await c.req.json().catch(() => ({}))) as { at?: string; load?: unknown; top?: unknown; chrome?: unknown; orphan?: unknown; mem_free_mb?: unknown }
+  const at = typeof b.at === 'string' && b.at ? b.at : now()
+  await c.env.DB.batch([
+    c.env.DB.prepare('insert into health (at, load, top, chrome, orphan, mem_free_mb) values (?, ?, ?, ?, ?, ?) on conflict (at) do update set load = excluded.load, top = excluded.top, chrome = excluded.chrome, orphan = excluded.orphan, mem_free_mb = excluded.mem_free_mb').bind(at, sqlVal(Number(b.load)), sqlVal(b.top), sqlVal(b.chrome), sqlVal(b.orphan), sqlVal(b.mem_free_mb)),
+    c.env.DB.prepare('delete from health where at < ?').bind(new Date(Date.now() - 7 * 86400000).toISOString()),
+  ])
+  return c.json({ ok: true })
 })
 
 // ── 一次抓取：開始／每店／結束 ──────────────────────────────────────────────

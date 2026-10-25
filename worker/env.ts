@@ -2,6 +2,8 @@
 export type Env = {
   DB: D1Database
   DATA: R2Bucket
+  /** 靜態檔（wrangler.jsonc assets.binding）：/admin 要從這裡拿 index.html */
+  ASSETS: Fetcher
   SUPABASE_URL: string
   SUPABASE_ANON_KEY: string
   /** 爬蟲與 price-worker 用的鑰匙，`wrangler secret put INGEST_TOKEN` */
@@ -17,4 +19,9 @@ export type Env = {
   OPENAI_API_KEY?: string
   /** AI 食譜用的模型，預設 gpt-5.4-mini */
   OPENAI_RECIPE_MODEL?: string
+  // ── 階段 5（docs/stage5-contract.md）：後台 /admin 的 Cloudflare Access ──
+  /** Zero Trust 的 team domain，例如 kitewise.cloudflareaccess.com（wrangler.jsonc vars；沒設就退回 kw_session） */
+  ACCESS_TEAM_DOMAIN?: string
+  /** Access 應用程式的 AUD tag（公開值） */
+  ACCESS_AUD?: string
 }

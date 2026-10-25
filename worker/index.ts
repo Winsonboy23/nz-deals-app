@@ -4,7 +4,7 @@
 // 其他路徑由 static assets 直接出檔，不經過這裡。
 //
 // 現在真的有功能的：GET /api/specials/:store（Supabase 快取代理，10-25 以前就有，原樣搬進來）、GET /api/health、
-// /ingest/*（階段 2，worker/ingest.ts：爬蟲寫 D1 + 重建 R2 快照，Bearer token 沒帶就 401）。/auth、/admin 先回 501，之後的階段再填。
+// /ingest/*（階段 2，worker/ingest.ts：爬蟲寫 D1 + 重建 R2 快照，Bearer token 沒帶就 401）。/auth（階段 4）、/admin（階段 5，worker/admin.ts）。
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import type { Env } from './env'
@@ -15,6 +15,7 @@ import me, { publicLists } from './me'
 import { HTTPException } from 'hono/http-exception'
 import ai from './ai'
 import live from './live'
+import admin from './admin'
 import { snapshotKey } from './snapshot'
 import { nzMonday } from './week'
 
@@ -159,7 +160,7 @@ app.route('/api/me', me)
 app.route('/api', publicLists)   // GET /api/lists/:token（分享清單，公開）
 app.route('/api', ai)
 app.route('/api', live)
-app.all('/admin/*', (c) => c.json({ error: 'not implemented', stage: 5 }, 501))
+app.route('/admin', admin)   // 階段 5（docs/stage5-contract.md）：後台 index.html + /admin/api/*，Access JWT 或 kw_session + admins 表
 app.route('/api', api)
 
 app.notFound((c) => c.json({ error: 'not found' }, 404))

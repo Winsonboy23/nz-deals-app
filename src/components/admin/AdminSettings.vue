@@ -3,6 +3,8 @@
 // 另一區是每週食譜的設定 recipe_weekly（值是 JSON 字串）：Mac mini 每週一跑爬蟲 repo 的 src/recipes-weekly.ts 照它產食譜，預設值跟那邊的 DEFAULT_CFG 一樣。
 import { computed, onMounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
+import { useD1 } from '../../lib/api'
+import { adminErr, adminGet, adminPost, adminPut } from '../../lib/adminApi'
 import { useSiteSettings } from '../../composables/useSiteSettings'
 import Loading from '../Loading.vue'
 
@@ -73,13 +75,19 @@ function rwValue(): string {
 }
 
 async function load() {
-  const { data, error } = await supabase.from('settings').select('key,value')
-  if (error) {
-    err.value = error.message
-    loading.value = false
-    return
+  let rows: Array<{ key: string; value: string }> = []
+  if (useD1()) {   // 階段 5（docs/stage5-contract.md §2）
+    try { rows = await adminGet<Array<{ key: string; value: string }>>('/settings') } catch (e) { err.value = adminErr(e); loading.value = false; return }
+  } else {
+    const { data, error } = await supabase.from('settings').select('key,value')
+    if (error) {
+      err.value = error.message
+      loading.value = false
+      return
+    }
+    rows = (data ?? []) as Array<{ key: string; value: string }>
   }
-  const v = new Map(((data ?? []) as Array<{ key: string; value: string }>).map((r) => [r.key, r.value]))
+  const v = new Map(rows.map((r) => [r.key, r.value]))
   livePrices.value = v.get('live_prices') !== 'off'
   aiRecipes.value = v.get('ai_recipes') !== 'off'
   aiCap.value = v.get('ai_daily_cap') ?? '300'
@@ -109,10 +117,14 @@ async function save() {
     { key: 'announce', value: announce.value, updated_at: now },
     { key: 'recipe_weekly', value: rwValue(), updated_at: now },
   ]
-  const { error } = await supabase.from('settings').upsert(rows, { onConflict: 'key' })
-  if (error) {
-    err.value = error.message
-    return
+  if (useD1()) {
+    try { await adminPut('/settings', { rows: rows.map((r) => ({ key: r.key, value: r.value })) }) } catch (e) { err.value = adminErr(e); return }
+  } else {
+    const { error } = await supabase.from('settings').upsert(rows, { onConflict: 'key' })
+    if (error) {
+      err.value = error.message
+      return
+    }
   }
   err.value = ''
   rwBad.value = false
@@ -127,6 +139,12 @@ async function save() {
 
 async function restart() {
   if (!confirm('要叫 Mac mini 上的 price-worker 重啟嗎？（launchd 會自動把它開回來）')) return
+  if (useD1()) {
+    try { await adminPost('/jobs', { rows: [{ kind: 'restart_worker', payload: {} }] }) } catch (e) { err.value = adminErr(e); return }
+    restarted.value = true
+    setTimeout(() => (restarted.value = false), 4000)
+    return
+  }
   const { error } = await supabase.from('admin_jobs').insert({ kind: 'restart_worker', payload: {} })
   if (error) {
     err.value = error.message

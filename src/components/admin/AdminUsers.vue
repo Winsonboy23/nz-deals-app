@@ -3,6 +3,8 @@
 // 加上通知記錄、AI 食譜用量與最近生成的。只看不改。
 import { computed, onMounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
+import { useD1 } from '../../lib/api'
+import { adminErr, adminGet } from '../../lib/adminApi'
 import Loading from '../Loading.vue'
 
 const err = ref('')
@@ -47,6 +49,25 @@ const emailOf = computed(() => new Map(users.value.map((u) => [u.id, u.email])))
 const who = (id: string) => emailOf.value.get(id) ?? id.slice(0, 8)
 
 async function load() {
+  if (useD1()) {   // 階段 5：Worker 一次算好（docs/stage5-contract.md §2 GET /admin/api/users）
+    try {
+      type DU = U & { lang: string | null; pushed: boolean; stores: string[]; list_count: number; watch_count: number }
+      const r = await adminGet<{ users: DU[]; notifications: Note[]; ai_usage: Usage[]; ai_recipes: Recipe[] }>('/users')
+      users.value = r.users.map((u) => ({ id: u.id, email: u.email ?? '', created_at: u.created_at, last_sign_in_at: u.last_sign_in_at }))
+      lang.value = new Map(r.users.map((u) => [u.id, u.lang ?? '—']))
+      stores.value = new Map(r.users.map((u) => [u.id, u.stores]))
+      listCount.value = new Map(r.users.map((u) => [u.id, u.list_count]))
+      watchCount.value = new Map(r.users.map((u) => [u.id, u.watch_count]))
+      pushed.value = new Set(r.users.filter((u) => u.pushed).map((u) => u.id))
+      notes.value = r.notifications
+      usage.value = r.ai_usage
+      recipes.value = r.ai_recipes
+    } catch (e) {
+      err.value = adminErr(e)
+    }
+    loading.value = false
+    return
+  }
   const { data: us, error } = await supabase.rpc('admin_users')
   if (error) {
     err.value = error.message

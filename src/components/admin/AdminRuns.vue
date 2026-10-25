@@ -2,6 +2,8 @@
 // 後台「每週報告 + 重跑」（docs/admin-spec.md §2.2）：crawl_runs / crawl_stores 列表，三顆按鈕都是插一張 admin_jobs。
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
+import { useD1 } from '../../lib/api'
+import { adminErr, adminGet, adminPost } from '../../lib/adminApi'
 import { useStores } from '../../composables/useStores'
 import Loading from '../Loading.vue'
 
@@ -59,6 +61,11 @@ const fmtMs = (ms: number | null) => (ms == null ? '—' : ms < 60000 ? `${Math.
 const num = (n: number | null) => (n == null ? '—' : n.toLocaleString('en-NZ'))
 
 async function loadRuns() {
+  if (useD1()) {   // 階段 5（docs/stage5-contract.md §2）
+    try { runs.value = await adminGet<Run[]>('/runs') } catch (e) { err.value = adminErr(e) }
+    runsLoading.value = false
+    return
+  }
   const { data, error } = await supabase.from('crawl_runs').select('*').order('started_at', { ascending: false }).limit(20)
   if (error) err.value = error.message
   runs.value = (data ?? []) as Run[]
@@ -71,6 +78,10 @@ async function toggleRun(r: Run) {
   }
   openId.value = r.id
   if (runStores.value[r.id]) return
+  if (useD1()) {
+    try { runStores.value = { ...runStores.value, [r.id]: await adminGet<RunStore[]>(`/runs/${r.id}/stores`) } } catch (e) { err.value = adminErr(e) }
+    return
+  }
   const { data, error } = await supabase.from('crawl_stores').select('*').eq('run_id', r.id).order('ok')
   if (error) err.value = error.message
   runStores.value = { ...runStores.value, [r.id]: (data ?? []) as RunStore[] }
@@ -83,12 +94,21 @@ function pick(storeId: string) {
 }
 
 async function loadJobs() {
+  if (useD1()) {
+    try { jobs.value = await adminGet<Job[]>('/jobs?limit=20') } catch (e) { err.value = adminErr(e) }
+    return
+  }
   const { data, error } = await supabase.from('admin_jobs').select('*').order('created_at', { ascending: false }).limit(20)
   if (error) err.value = error.message
   jobs.value = (data ?? []) as Job[]
 }
 async function addJobs(rows: { kind: string; payload?: any }[]) {
   if (!rows.length) return
+  if (useD1()) {
+    try { await adminPost('/jobs', { rows }) } catch (e) { err.value = adminErr(e); return }
+    await loadJobs()
+    return
+  }
   const { error } = await supabase.from('admin_jobs').insert(rows)
   if (error) {
     err.value = error.message

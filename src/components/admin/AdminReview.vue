@@ -6,6 +6,8 @@ import AdminFamily from './AdminFamily.vue'
 import ProductThumb from '../ProductThumb.vue'
 import Loading from '../Loading.vue'
 import { supabase } from '../../lib/supabase'
+import { useD1 } from '../../lib/api'
+import { adminErr, adminGet, adminPost } from '../../lib/adminApi'
 import { money } from '../../lib/format'
 import type { Special } from '../../lib/types'
 
@@ -66,6 +68,21 @@ async function sideRow(productId: string) {
 
 async function loadPairs() {
   pairsLoading.value = true
+  if (useD1()) {   // 階段 5：Worker 一次把兩邊的名字、價格、圖都帶回來（docs/stage5-contract.md §2）
+    try {
+      type P = { dict_key: string; product_key: string; confidence: number; matched_to: string; display_name: string | null; a: any; b: any }
+      const rows = await adminGet<P[]>('/review/pairs')
+      pairs.value = rows.map((r) => {
+        const aid = r.dict_key.split('|')[1]
+        const fallback = r.display_name ?? r.product_key.replace(/_/g, ' ')
+        return { dictKey: r.dict_key, productKey: r.product_key, confidence: r.confidence, matchedTo: r.matched_to, a: toSpecial(r.a, aid, 'newworld:?', fallback), b: toSpecial(r.b, r.matched_to, 'woolworths:?', fallback), aMissing: !r.a, bMissing: !r.b, sent: '' as const }
+      })
+    } catch (e) {
+      err.value = adminErr(e)
+    }
+    pairsLoading.value = false
+    return
+  }
   const { data, error } = await supabase
     .from('product_dict')
     .select('dict_key,product_key,confidence,matched_to')
@@ -107,6 +124,11 @@ async function loadPairs() {
 }
 
 async function decidePair(p: Pair, same: boolean) {
+  if (useD1()) {
+    try { await adminPost('/review/pairs/decide', { dict_key: p.dictKey, same }) } catch (e) { err.value = adminErr(e); return }
+    p.sent = same ? 'same' : 'diff'
+    return
+  }
   const { error } = await supabase.from('admin_jobs').insert({ kind: 'decide_pair', payload: { dict_key: p.dictKey, same } })
   if (error) {
     err.value = error.message
@@ -142,6 +164,16 @@ const chainLabel = (c: string) => (c === 'woolworths' ? 'Woolworths' : "New Worl
 
 async function loadNames() {
   namesLoading.value = true
+  if (useD1()) {
+    try {
+      const rows = await adminGet<Array<{ chain: string; product_key: string; name: string; term: string; candidates: Cand[]; status: string }>>('/review/names')
+      nameRows.value = rows.map((r) => ({ chain: r.chain, productKey: r.product_key, name: r.name, term: r.term, candidates: r.candidates, status: r.status, sent: '' as const }))
+    } catch (e) {
+      err.value = adminErr(e)
+    }
+    namesLoading.value = false
+    return
+  }
   const { data, error } = await supabase
     .from('name_matches')
     .select('chain,product_key,status,candidates,term,searched_at')
@@ -178,6 +210,11 @@ function candSpecial(r: NameRow, c: Cand): Special {
 }
 
 async function nameSame(r: NameRow, c: Cand) {
+  if (useD1()) {
+    try { await adminPost('/review/names/same', { chain: r.chain, product_key: r.productKey, product_id: c.product_id }) } catch (e) { err.value = adminErr(e); return }
+    r.sent = 'same'
+    return
+  }
   const chains = r.chain === 'woolworths' ? ['woolworths'] : ['newworld', 'paknsave']
   const { error: e1 } = await supabase
     .from('product_ids')
@@ -198,6 +235,11 @@ async function nameSame(r: NameRow, c: Cand) {
   r.sent = 'same'
 }
 async function nameNone(r: NameRow) {
+  if (useD1()) {
+    try { await adminPost('/review/names/none', { chain: r.chain, product_key: r.productKey }) } catch (e) { err.value = adminErr(e); return }
+    r.sent = 'diff'
+    return
+  }
   const { error } = await supabase
     .from('name_matches')
     .update({ status: 'none', decided_by: 'manual' })

@@ -31,6 +31,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         globIgnores: ['**/zxing-*.js'],   // 掃會員卡截圖用的 ZXing 約 480 kB，只有掃的時候才下載，不預存（2026-09-30）
         navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/admin/],   // 階段 5：/admin 一律走網路，Cloudflare Access 才攔得到（SW 不要用快取的 index.html 頂上去）
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/(a\.fsimg\.co\.nz|assets\.woolworths\.com\.au)\/.*/i,

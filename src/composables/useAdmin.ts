@@ -3,6 +3,8 @@
 import { ref, watch } from 'vue'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './useAuth'
+import { useD1 } from '../lib/api'
+import { adminGet } from '../lib/adminApi'
 
 /** null = 還在查（登入狀態還沒回來也算），true / false = 查完了 */
 const isAdmin = ref<boolean | null>(null)
@@ -12,6 +14,12 @@ export function useAdmin() {
   const { user, ready } = useAuth()
   if (!started) {
     started = true
+    // 階段 5（docs/stage5-contract.md）：d1 時問 Worker。正式站是 Cloudflare Access 先擋、Worker 再驗 email 在 admins；
+    // 本機（沒設 Access）是 kw_session + admins。跟 Supabase 登入狀態無關，所以不等 ready。
+    if (useD1()) {
+      void adminGet<{ admin: boolean }>('/me').then((r) => { isAdmin.value = !!r.admin }).catch(() => { isAdmin.value = false })
+      return { isAdmin }
+    }
     watch(
       [ready, user],
       async () => {

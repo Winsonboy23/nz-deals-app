@@ -6,6 +6,8 @@
 // 這頁只求能用。
 import { onMounted, onUnmounted, ref } from 'vue'
 import { supabase } from '../../lib/supabase'
+import { apiProducts, useD1 } from '../../lib/api'
+import { adminErr, adminGet, adminPost } from '../../lib/adminApi'
 import Loading from '../Loading.vue'
 
 const err = ref('')
@@ -27,6 +29,11 @@ async function loadNames(keys: string[]) {
   const need = keys.filter((k) => !names.value.has(k))
   if (!need.length) return
   const next = new Map(names.value)
+  if (useD1()) {   // 階段 5：商品名從 Worker 拿（POST /api/products，一次最多 500）
+    for (let i = 0; i < need.length; i += 500) for (const p of (await apiProducts({ keys: need.slice(i, i + 500) })) ?? []) next.set(p.key, p.display_name)
+    names.value = next
+    return
+  }
   for (let i = 0; i < need.length; i += 100) {
     const { data } = await supabase.from('products').select('key,display_name').in('key', need.slice(i, i + 100))
     for (const p of (data ?? []) as Array<{ key: string; display_name: string }>) next.set(p.key, p.display_name)
@@ -38,7 +45,18 @@ const nameOf = (k: string) => names.value.get(k) ?? k.replace(/_/g, ' ')
 /* ---------- ① 沒把握的 ---------- */
 const low = ref<FRow[]>([])
 const lowLoading = ref(true)
+/** d1 版的列多帶 display_name，直接塞進 names */
+function takeNames(rows: Array<FRow & { display_name?: string | null }>) {
+  const next = new Map(names.value)
+  for (const r of rows) if (r.display_name) next.set(r.product_key, r.display_name)
+  names.value = next
+}
 async function loadLow() {
+  if (useD1()) {
+    try { low.value = await adminGet<FRow[]>('/family/low'); takeNames(low.value) } catch (e) { err.value = adminErr(e) }
+    lowLoading.value = false
+    return
+  }
   const { data, error } = await supabase.from('family_dict').select(COLS).lt('confidence', 0.6).order('confidence').limit(200)
   if (error) err.value = error.message
   low.value = (data ?? []) as FRow[]
@@ -50,6 +68,11 @@ async function loadLow() {
 const big = ref<Array<{ family_key: string; n: number }>>([])
 const bigLoading = ref(true)
 async function loadBig() {
+  if (useD1()) {
+    try { big.value = await adminGet<Array<{ family_key: string; n: number }>>(`/family/big?min=${BIG}`) } catch (e) { err.value = adminErr(e) }
+    bigLoading.value = false
+    return
+  }
   const count = new Map<string, number>()
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase.from('family_dict').select('family_key').range(from, from + 999)
@@ -78,9 +101,14 @@ async function toggleFamily(fk: string) {
   }
   open.value = fk
   if (members.value[fk]) return
-  const { data, error } = await supabase.from('family_dict').select(COLS).eq('family_key', fk).limit(500)
-  if (error) err.value = error.message
-  const rows = (data ?? []) as FRow[]
+  let rows: FRow[] = []
+  if (useD1()) {
+    try { rows = await adminGet<FRow[]>(`/family/${encodeURIComponent(fk)}/members`); takeNames(rows) } catch (e) { err.value = adminErr(e) }
+  } else {
+    const { data, error } = await supabase.from('family_dict').select(COLS).eq('family_key', fk).limit(500)
+    if (error) err.value = error.message
+    rows = (data ?? []) as FRow[]
+  }
   members.value = { ...members.value, [fk]: rows }
   if (!rename.value[fk]) rename.value = { ...rename.value, [fk]: { en: rows[0]?.name_en ?? '', zh: rows[0]?.name_zh ?? '' } }
   await loadNames(rows.map((r) => r.product_key))
@@ -93,6 +121,10 @@ const msg = ref('')
 /** 改完之後叫 worker 把 family_dict 寫進 products 的三欄 */
 async function apply(productKeys: string[], what: string) {
   if (!productKeys.length) return
+  if (useD1()) {   // 階段 5：Worker 已經直接改了 products / families，不用派工
+    msg.value = `${what}：${productKeys.length} 樣，已套用`
+    return
+  }
   const { error } = await supabase.from('admin_jobs').insert({ kind: 'family_apply', payload: { product_keys: productKeys } })
   if (error) {
     err.value = error.message
@@ -107,6 +139,13 @@ const rename = ref<Record<string, { en: string; zh: string }>>({})
 async function doRename(fk: string) {
   const d = rename.value[fk]
   if (!d || (!d.en && !d.zh)) return
+  if (useD1()) {
+    let keys: string[] = []
+    try { keys = (await adminPost<{ keys: string[] }>('/family/rename', { family_key: fk, name_en: d.en, name_zh: d.zh })).keys } catch (e) { err.value = adminErr(e); return }
+    for (const list of Object.values(members.value)) for (const r of list) if (r.family_key === fk) { r.name_en = d.en || null; r.name_zh = d.zh || null }
+    await apply(keys, `改名 ${fk}`)
+    return
+  }
   const { data, error } = await supabase
     .from('family_dict')
     .update({ name_en: d.en || null, name_zh: d.zh || null, ...STAMP() })
@@ -126,6 +165,16 @@ const moveTo = ref<Record<string, string>>({})
 async function doMove(r: FRow) {
   const target = (moveTo.value[r.product_key] ?? '').trim()
   if (!target || target === r.family_key) return
+  if (useD1()) {
+    let got: { name_en: string | null; name_zh: string | null }
+    try { got = await adminPost('/family/move', { product_key: r.product_key, to: target }) } catch (e) { err.value = adminErr(e) === 'target_missing' ? `沒有「${target}」這個同類（要先有一樣東西在裡面）` : adminErr(e); return }
+    err.value = ''
+    r.family_key = target
+    r.name_en = got.name_en
+    r.name_zh = got.name_zh
+    await apply([r.product_key], `搬到 ${target}`)
+    return
+  }
   const { data: t } = await supabase.from('family_dict').select('name_en,name_zh').eq('family_key', target).limit(1)
   const got = ((t ?? [])[0] ?? null) as { name_en: string | null; name_zh: string | null } | null
   if (!got) {
@@ -152,6 +201,14 @@ const mergeTo = ref<Record<string, string>>({})
 async function doMerge(fk: string) {
   const target = (mergeTo.value[fk] ?? '').trim()
   if (!target || target === fk) return
+  if (useD1()) {
+    let keys: string[] = []
+    try { keys = (await adminPost<{ keys: string[] }>('/family/merge', { from: fk, to: target })).keys } catch (e) { err.value = adminErr(e) === 'target_missing' ? `沒有「${target}」這個同類` : adminErr(e); return }
+    err.value = ''
+    big.value = big.value.filter((b) => b.family_key !== fk)
+    await apply(keys, `合併 ${fk} → ${target}`)
+    return
+  }
   const { data: t } = await supabase.from('family_dict').select('name_en,name_zh').eq('family_key', target).limit(1)
   const got = ((t ?? [])[0] ?? null) as { name_en: string | null; name_zh: string | null } | null
   if (!got) {
@@ -183,6 +240,10 @@ interface Job {
 }
 const jobs = ref<Job[]>([])
 async function loadJobs() {
+  if (useD1()) {
+    try { jobs.value = await adminGet<Job[]>('/jobs?kind=family_apply&limit=10') } catch { /* 沒權限時 loadLow 已經寫過錯誤 */ }
+    return
+  }
   const { data } = await supabase
     .from('admin_jobs')
     .select('id,status,log,created_at,payload')

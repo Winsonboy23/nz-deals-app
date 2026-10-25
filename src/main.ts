@@ -9,6 +9,9 @@ import { OLD_HOST, encodePayload, exportGuestData, safeReturnPath } from './lib/
 // www.kitewise.co.nz 一律導到沒有 www 的主網址：兩個網址的 localStorage 是分開的，留兩個入口會讓人的店和清單分家（2026-10-01）。
 if (location.hostname === 'www.kitewise.co.nz') location.replace('https://kitewise.co.nz' + location.pathname + location.search + location.hash)
 
+// 階段 5：後台的真路徑是 /admin（Cloudflare Access 擋這個路徑），App 用 hash 路由，進來先把 hash 設成 #/admin
+if (location.pathname.replace(/\/$/, '') === '/admin' && !location.hash.startsWith('#/admin')) location.replace('/admin' + location.search + '#/admin')
+
 // Nothing to compare until stores are picked, so the picker is the front door.
 router.beforeEach((to) => {
   if (['/stores', '/admin', '/migrate', '/privacy', '/delete-data'].includes(to.path)) return true   // 後台不用選店；搬家頁要先把舊網址的店搬進來；隱私權政策、刪除資料說明是給 Meta 審核的公開網址
