@@ -6,10 +6,12 @@
 //   POST /ingest/run/:id/finish            {finished_at, stores_total, stores_ok, stores_failed, rows, requests, report}
 //   POST /ingest/products | chain-items | chain-prices | store-prices | store-specials | store-items   {rows:[…]} → {upserted}
 //   POST /ingest/snapshot/:store/:week     重建 R2 快照 → {rows, bytes}
-//   POST /ingest/prune                     {keep_weeks} 刪舊週（D1 三張價格表 + R2 快照留 2 週）
+//   POST /ingest/prune                     {keep_weeks} 刪舊週（D1 三張價格表 + R2 快照留 2 週；price_changes 留 30 天）
+//   POST /ingest/price-changes             {rows:[…]} 變動記錄（階段 6 第 1 塊，爬蟲每店比對出的新上架／改價／下架；≤ 1,000 列）
 //   階段 5（docs/stage5-contract.md §3）：
 //   POST /ingest/product-dict | family-dict | taxonomy-map   {rows:[…]} → {upserted}（family-dict 同時套到 products / families）
 //   GET  /ingest/taxonomy-map              全部列
+//   GET  /ingest/product-dict | family-dict ?after=&limit=   字典整份分頁讀（階段 6 第 2 塊，爬蟲 loadDict / loadFamilies 改讀這裡）
 //   POST /ingest/admin-jobs/claim          {kinds?, limit?} → {jobs}（pending → running）
 //   POST /ingest/admin-jobs/:id/result     {status: done|failed, log?}
 //   POST /ingest/health                    {at?, load, top, chrome, orphan, mem_free_mb}
@@ -101,6 +103,18 @@ ingest.post('/:kind{products|chain-items|chain-prices|store-prices|store-special
   return c.json({ upserted })
 })
 
+// 階段 6 第 2 塊：字典正本改 D1，爬蟲開工先整份讀回來。用主鍵分頁（?after=<上一頁最後的主鍵>&limit=5000），全部回完 next 是 null。
+ingest.get('/product-dict', async (c) => {
+  const after = c.req.query('after') ?? '', limit = Math.max(1, Math.min(10000, Number(c.req.query('limit') ?? 5000) || 5000))
+  const { results } = await c.env.DB.prepare('select dict_key, product_key, matched_to, confidence, source, updated_at from product_dict where dict_key > ? order by dict_key limit ?').bind(after, limit).all<{ dict_key: string }>()
+  return c.json({ rows: results, next: results.length === limit ? results[results.length - 1].dict_key : null })
+})
+ingest.get('/family-dict', async (c) => {
+  const after = c.req.query('after') ?? '', limit = Math.max(1, Math.min(10000, Number(c.req.query('limit') ?? 5000) || 5000))
+  const { results } = await c.env.DB.prepare('select product_key, family_key, name_en, name_zh, confidence, source, cat2, updated_at from family_dict where product_key > ? order by product_key limit ?').bind(after, limit).all<{ product_key: string }>()
+  return c.json({ rows: results, next: results.length === limit ? results[results.length - 1].product_key : null })
+})
+
 ingest.get('/taxonomy-map', async (c) => {
   const { results } = await c.env.DB.prepare('select level, ww_path, fs_path, ww_key, status, score, note, updated_at from taxonomy_map order by level, ww_path').all()
   return c.json(results)
@@ -180,6 +194,18 @@ ingest.post('/run/:id/finish', async (c) => {
   return c.json({ ok: true })
 })
 
+// ── 變動記錄（階段 6 第 1 塊）────────────────────────────────────────────────
+const CHANGE_COLS = ['at', 'store_id', 'chain', 'product_id', 'product_key', 'name', 'kind', 'old_price', 'new_price', 'old_text', 'new_text', 'old_promo', 'new_promo']
+ingest.post('/price-changes', async (c) => {
+  const rows = await readRows(c)
+  if (typeof rows === 'string') return c.json({ error: rows }, 400)
+  const bad = rows.findIndex((r) => !r.at || !r.store_id || !r.product_id || !['added', 'changed', 'removed'].includes(String(r.kind)))
+  if (bad >= 0) return c.json({ error: `第 ${bad} 列缺 at / store_id / product_id 或 kind 不對` }, 400)
+  const stmt = c.env.DB.prepare(`insert into price_changes (${CHANGE_COLS.join(', ')}) values (${CHANGE_COLS.map(() => '?').join(', ')})`)
+  for (let i = 0; i < rows.length; i += BATCH) await c.env.DB.batch(rows.slice(i, i + BATCH).map((r) => stmt.bind(...CHANGE_COLS.map((k) => sqlVal(k === 'chain' ? r.chain ?? String(r.store_id).split(':')[0] : r[k])))))
+  return c.json({ inserted: rows.length })
+})
+
 // ── R2 快照 ──────────────────────────────────────────────────────────────────
 ingest.post('/snapshot/:store/:week', async (c) => {
   const storeId = c.req.param('store'), week = c.req.param('week')
@@ -200,6 +226,7 @@ ingest.post('/prune', async (c) => {
     c.env.DB.prepare('delete from chain_prices where week_start < ?').bind(dbCut),
     c.env.DB.prepare('delete from store_prices where week_start < ?').bind(dbCut),
     c.env.DB.prepare('delete from store_specials where week_start < ?').bind(dbCut),
+    c.env.DB.prepare('delete from price_changes where at < ?').bind(new Date(Date.now() - 30 * 86400000).toISOString()),   // 階段 6：變動記錄留 30 天
   ])
   let r2Deleted = 0
   let cursor: string | undefined

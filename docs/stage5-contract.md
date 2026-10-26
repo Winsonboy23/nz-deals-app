@@ -81,7 +81,7 @@
 
 **✅ 10-26 Mac mini 已接上**（爬蟲 repo commit 5fe71cf）：`src/d1.ts`（HTTP 工具）、`price-worker.ts` 的 `d1AdminLoop`（每 10 秒 claim 一張、同一個 runJob、result 回報）、`saveDict` / `saveFamilies` 寫回 Supabase 的那幾列同批鏡射到 D1、`loadTaxonomyMap` 載入時整份鏡射、`ops/health.sh` 同一筆也送 `/ingest/health`。實測：D1 插一張單 10 秒內領走並回報；health 一列；taxonomy_map 659 列 updated_at 刷新。
 
-**雙寫期間的方向是 Supabase → D1，單向。** 字典（跨店配對、同類、分類對照）在 D1 版後台（kitewise.nz/admin）改了**不會**流回 Supabase；分類對照更會在下次 price-worker／爬蟲啟動時被 Supabase 那份整個蓋掉。所以**階段 6 切換前，字典類的修改請在 `?src=supabase` 的舊後台做**；派工單（重跑、查價、重啟、回填）兩邊的後台都可以。
+~~**雙寫期間的方向是 Supabase → D1，單向。**……~~ **10-26 階段 6 第 2 塊起反過來：D1 是字典正本**（Mac mini `PRIMARY=d1`）。爬蟲開工從 D1 讀三本字典、改了先寫 D1 再順手寫 Supabase。**字典類修改請在 D1 後台（kitewise.nz/admin）做**，Supabase 舊後台改的不會回流。派工單兩邊後台都可以。
 
 `admin_jobs` 的 kind 與 payload 跟 Supabase 版一樣（refetch_store {store_id}、prices、notify_test、decide_pair {dict_key, same}、recat_week、family_apply {product_keys}、restart_worker）。
 
