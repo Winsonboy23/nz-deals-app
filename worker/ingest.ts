@@ -12,6 +12,11 @@
 //   POST /ingest/product-dict | family-dict | taxonomy-map   {rows:[…]} → {upserted}（family-dict 同時套到 products / families）
 //   GET  /ingest/taxonomy-map              全部列
 //   GET  /ingest/product-dict | family-dict ?after=&limit=   字典整份分頁讀（階段 6 第 2 塊，爬蟲 loadDict / loadFamilies 改讀這裡）
+//   階段 6 第 3 塊（抓完後處理改讀 D1）：
+//   GET  /ingest/products?after=&limit=        {rows:[{key, display_name, category_id, family_key}], next}（familyPass）
+//   GET  /ingest/chain-items?chain=&after=&limit=   {rows:[chain_items ＋ products 的名字分類], next}（recat 用 category_path）
+//   GET  /ingest/item?chains=a,b&product_id=   一個編號在這群連鎖的列（decide_pair 要兩邊的名字規格）
+//   GET  /ingest/specials-stores?week=         這週有 store_specials 的店（回填分類後逐店重建快照）
 //   POST /ingest/admin-jobs/claim          {kinds?, limit?} → {jobs}（pending → running）
 //   POST /ingest/admin-jobs/:id/result     {status: done|failed, log?}
 //   POST /ingest/health                    {at?, load, top, chrome, orphan, mem_free_mb}
@@ -30,9 +35,10 @@ interface Spec {
 
 const PRICE_COLS = ['product_key', 'week_start', 'price', 'regular_price', 'member_price', 'multi_buy', 'badges', 'price_unit', 'unit_price', 'unit_price_unit', 'promo_type']
 const SPECS: Record<string, Spec> = {
-  'products': { table: 'products', cols: ['key', 'display_name', 'brand', 'size', 'category_id', 'family_key', 'is_food', 'image_url'], pk: ['key'], keep: ['brand', 'size', 'category_id', 'family_key', 'image_url'] },
+  // is_food 也 keep：階段 6 的後處理只送 {key, display_name, family_key} 或 {…, category_id} 這種部分列，不帶 is_food（not null）就留舊值；新列沒帶就 default 1（coalesce 到 null 會撞 not null，所以 upsertSql 另外處理）
+  'products': { table: 'products', cols: ['key', 'display_name', 'brand', 'size', 'category_id', 'family_key', 'is_food', 'image_url'], pk: ['key'], keep: ['brand', 'size', 'category_id', 'family_key', 'image_url', 'is_food'] },
   // 階段 6：貨架價也在這張表（docs/national-plan.md §2.2）。特價那次不帶 shelf_*（送 null），coalesce 留舊值；翻貨架那次帶
-  'chain-items': { table: 'chain_items', cols: ['chain_id', 'product_id', 'product_key', 'name_listed', 'url', 'seen_at', 'shelf_price', 'shelf_price_unit', 'shelf_unit_price', 'shelf_unit_price_unit', 'shelf_size', 'shelf_at'], pk: ['chain_id', 'product_id'], keep: ['name_listed', 'url', 'shelf_price', 'shelf_price_unit', 'shelf_unit_price', 'shelf_unit_price_unit', 'shelf_size', 'shelf_at'] },
+  'chain-items': { table: 'chain_items', cols: ['chain_id', 'product_id', 'product_key', 'name_listed', 'url', 'seen_at', 'shelf_price', 'shelf_price_unit', 'shelf_unit_price', 'shelf_unit_price_unit', 'shelf_size', 'shelf_at', 'category_path'], pk: ['chain_id', 'product_id'], keep: ['name_listed', 'url', 'shelf_price', 'shelf_price_unit', 'shelf_unit_price', 'shelf_unit_price_unit', 'shelf_size', 'shelf_at', 'category_path'] },
   'chain-prices': { table: 'chain_prices', cols: ['chain_id', ...PRICE_COLS], pk: ['chain_id', 'product_key', 'week_start'] },
   'store-prices': { table: 'store_prices', cols: ['store_id', ...PRICE_COLS], pk: ['store_id', 'product_key', 'week_start'] },
   'store-specials': { table: 'store_specials', cols: ['store_id', 'week_start', 'product_keys'], pk: ['store_id', 'week_start'] },
@@ -64,7 +70,7 @@ function upsertSql(s: Spec) {
 async function upsertRows(env: Env, s: Spec, rows: Row[]) {
   const stmt = env.DB.prepare(upsertSql(s))
   for (let i = 0; i < rows.length; i += BATCH) {
-    await env.DB.batch(rows.slice(i, i + BATCH).map((r) => stmt.bind(...s.cols.map((c) => sqlVal(r[c])))))
+    await env.DB.batch(rows.slice(i, i + BATCH).map((r) => stmt.bind(...s.cols.map((c) => (s.table === 'products' && c === 'is_food' && r[c] == null) ? 1 : sqlVal(r[c])))))   // products.is_food not null：沒帶當 1（已有的列 keep 留舊值）
   }
   return rows.length
 }
@@ -113,6 +119,33 @@ ingest.get('/family-dict', async (c) => {
   const after = c.req.query('after') ?? '', limit = Math.max(1, Math.min(10000, Number(c.req.query('limit') ?? 5000) || 5000))
   const { results } = await c.env.DB.prepare('select product_key, family_key, name_en, name_zh, confidence, source, cat2, updated_at from family_dict where product_key > ? order by product_key limit ?').bind(after, limit).all<{ product_key: string }>()
   return c.json({ rows: results, next: results.length === limit ? results[results.length - 1].product_key : null })
+})
+
+ingest.get('/products', async (c) => {
+  const after = c.req.query('after') ?? '', limit = Math.max(1, Math.min(10000, Number(c.req.query('limit') ?? 5000) || 5000))
+  const { results } = await c.env.DB.prepare('select key, display_name, category_id, family_key from products where key > ? order by key limit ?').bind(after, limit).all<{ key: string }>()
+  return c.json({ rows: results, next: results.length === limit ? results[results.length - 1].key : null })
+})
+const ITEM_COLS = 'ci.chain_id, ci.product_id, ci.product_key, ci.name_listed, ci.category_path, ci.shelf_size, ci.shelf_price, ci.shelf_price_unit, p.display_name, p.brand, p.size, p.category_id'
+ingest.get('/chain-items', async (c) => {
+  const chain = c.req.query('chain') ?? ''
+  if (!CHAINS.includes(chain)) return c.json({ error: 'chain 要是 newworld / paknsave / woolworths' }, 400)
+  const after = c.req.query('after') ?? '', limit = Math.max(1, Math.min(10000, Number(c.req.query('limit') ?? 5000) || 5000))
+  const { results } = await c.env.DB.prepare(`select ${ITEM_COLS} from chain_items ci left join products p on p.key = ci.product_key where ci.chain_id = ? and ci.product_id > ? order by ci.product_id limit ?`).bind(chain, after, limit).all<{ product_id: string }>()
+  return c.json({ rows: results, next: results.length === limit ? results[results.length - 1].product_id : null })
+})
+ingest.get('/item', async (c) => {
+  const pid = (c.req.query('product_id') ?? '').trim()
+  const chains = (c.req.query('chains') ?? '').split(',').map((x) => x.trim()).filter((x) => CHAINS.includes(x))
+  if (!pid || pid.length > 40 || !chains.length) return c.json({ error: 'product_id / chains 不對' }, 400)
+  const row = await c.env.DB.prepare(`select ${ITEM_COLS} from chain_items ci left join products p on p.key = ci.product_key where ci.product_id = ? and ci.chain_id in (select value from json_each(?)) order by ci.seen_at desc limit 1`).bind(pid, JSON.stringify(chains)).first()
+  return c.json(row ?? null)
+})
+ingest.get('/specials-stores', async (c) => {
+  const week = c.req.query('week') ?? ''
+  if (!WEEK.test(week)) return c.json({ error: 'week 要是 YYYY-MM-DD' }, 400)
+  const { results } = await c.env.DB.prepare('select store_id from store_specials where week_start = ? order by store_id').bind(week).all<{ store_id: string }>()
+  return c.json(results.map((r) => r.store_id))
 })
 
 ingest.get('/taxonomy-map', async (c) => {
