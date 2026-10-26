@@ -9,6 +9,10 @@
 //   POST /api/products {keys?, families?}   products（含同類名字），最多 500 個
 //   GET  /api/products?keys=a,b&families=   同上（給爬蟲 price-worker 用，階段 4 契約 §10；階段 6 切換前它要靠這個拿 display_name）
 //   GET  /api/history/:key?stores=a,b   近 8 週這個商品在這幾家店的價格 {store_id, week_start, price, multi_buy}
+//   階段 6（2026-10-26，docs/national-plan.md §2.2）：貨架價在 chain_items.shelf_*，回 App 原本 Supabase catalog 的列形狀（store_id 照問的店填）
+//   GET  /api/catalog?stores=a,b&keys=k1,k2          這些 key 在這幾家店（＝它們的連鎖）的貨架價
+//   GET  /api/catalog/search?stores=&words=w1,w2&l2=&limit=   品名含全部字（可限分類前兩層）
+//   GET  /api/catalog/hint?product_id=&store=        這個編號在這群連鎖的 key 和分類（採用商品時用）
 // /api/specials/:store 在 index.ts（Supabase 代理 + src=d1 讀 R2 快照）。
 import { Hono } from 'hono'
 import type { Env } from './env'
@@ -88,6 +92,58 @@ api.get('/history/:key', async (c) => {
     where coalesce(sp.price, cp.price) is not null
     order by h.week_start, h.store_id`).bind(key, since, JSON.stringify(stores)).all<{ store_id: string; week_start: string; price: number; multi_buy: string | null }>()
   return json(c, results.map((r) => ({ ...r, multi_buy: r.multi_buy ? JSON.parse(r.multi_buy) : null })), 300)
+})
+
+// ── 貨架價（階段 6） ─────────────────────────────────────────────────────────
+const SHELF_COLS = 'ci.chain_id, ci.product_id, ci.product_key, ci.name_listed, ci.shelf_price, ci.shelf_price_unit, ci.shelf_unit_price, ci.shelf_unit_price_unit, ci.shelf_size, ci.shelf_at, p.display_name, p.brand, p.size, p.category_id, p.image_url'
+interface ShelfRow { chain_id: string; product_id: string; product_key: string; name_listed: string | null; shelf_price: number; shelf_price_unit: string | null; shelf_unit_price: number | null; shelf_unit_price_unit: string | null; shelf_size: string | null; shelf_at: string | null; display_name: string | null; brand: string | null; size: string | null; category_id: string | null; image_url: string | null }
+const chainOf = (storeId: string) => storeId.slice(0, storeId.indexOf(':'))
+const storesOf = (v: string | undefined) => (v ?? '').split(',').map((s) => s.trim()).filter((s) => STORE_ID.test(s)).slice(0, 5)
+/** 每家問的店各複製一份（同連鎖同價）；App 的 catalog 列是按店來的 */
+function fanOut(rows: ShelfRow[], stores: string[]) {
+  const out = []
+  for (const r of rows) for (const st of stores) if (chainOf(st) === r.chain_id) out.push({
+    store_id: st, product_id: r.product_id, product_key: r.product_key, name: r.name_listed ?? r.display_name ?? r.product_key.replace(/_/g, ' '), brand: r.brand,
+    size: r.shelf_size ?? r.size, price: r.shelf_price, price_unit: r.shelf_price_unit ?? 'each', unit_price: r.shelf_unit_price, unit_price_unit: r.shelf_unit_price_unit,
+    category_id: r.category_id, image_url: r.chain_id === 'woolworths' ? r.image_url : null, seen_at: r.shelf_at,
+  })
+  return out
+}
+const likeSafe = (w: string) => w.replace(/[\\%_]/g, (m) => '\\' + m)
+
+api.get('/catalog', async (c) => {
+  const stores = storesOf(c.req.query('stores'))
+  const keys = (c.req.query('keys') ?? '').split(',').map((s) => s.trim()).filter((k) => KEY.test(k)).slice(0, 300)
+  if (!stores.length || !keys.length) return c.json([], 200, { 'cache-control': 'no-store' })
+  const chains = [...new Set(stores.map(chainOf))]
+  const { results } = await c.env.DB.prepare(`select ${SHELF_COLS} from chain_items ci left join products p on p.key = ci.product_key where ci.shelf_price is not null and ci.chain_id in (select value from json_each(?1)) and ci.product_key in (select value from json_each(?2))`)
+    .bind(JSON.stringify(chains), JSON.stringify(keys)).all<ShelfRow>()
+  return c.json(fanOut(results, stores), 200, { 'cache-control': 'public, max-age=300' })
+})
+
+api.get('/catalog/search', async (c) => {
+  const stores = storesOf(c.req.query('stores'))
+  const words = (c.req.query('words') ?? '').split(',').map((s) => s.trim().toLowerCase()).filter((w) => w.length >= 2 && w.length <= 40).slice(0, 4)
+  const l2 = c.req.query('l2') ?? ''
+  const limit = Math.max(1, Math.min(1000, Number(c.req.query('limit') ?? 300) || 300))
+  if (!stores.length || !words.length) return c.json([], 200, { 'cache-control': 'no-store' })
+  if (l2 && !/^[a-z0-9-]+\/[a-z0-9-]+$/.test(l2)) return c.json({ error: 'l2 不對' }, 400)
+  const chains = [...new Set(stores.map(chainOf))]
+  const conds = words.map((_, i) => `lower(coalesce(ci.name_listed, p.display_name)) like ?${i + 3} escape '\\'`)
+  const sql = `select ${SHELF_COLS} from chain_items ci left join products p on p.key = ci.product_key where ci.shelf_price is not null and ci.chain_id in (select value from json_each(?1)) and ${conds.join(' and ')}` + (l2 ? ` and p.category_id like ?${words.length + 3} escape '\\'` : '') + ` limit ?2`
+  const binds: (string | number)[] = [JSON.stringify(chains), limit, ...words.map((w) => `%${likeSafe(w)}%`)]
+  if (l2) binds.push(`${likeSafe(l2)}/%`)
+  const { results } = await c.env.DB.prepare(sql).bind(...binds).all<ShelfRow>()
+  return c.json(fanOut(results, stores), 200, { 'cache-control': 'public, max-age=300' })
+})
+
+api.get('/catalog/hint', async (c) => {
+  const pid = (c.req.query('product_id') ?? '').trim(), store = c.req.query('store') ?? ''
+  if (!pid || pid.length > 40 || !STORE_ID.test(store)) return c.json(null, 200, { 'cache-control': 'no-store' })
+  const group = chainOf(store) === 'woolworths' ? ['woolworths'] : ['newworld', 'paknsave']
+  const row = await c.env.DB.prepare('select ci.product_key as key, p.category_id from chain_items ci left join products p on p.key = ci.product_key where ci.product_id = ?1 and ci.chain_id in (select value from json_each(?2)) order by p.category_id is null limit 1')
+    .bind(pid, JSON.stringify(group)).first<{ key: string; category_id: string | null }>()
+  return c.json(row ?? null, 200, { 'cache-control': 'no-store' })
 })
 
 export default api

@@ -146,11 +146,17 @@ async function enRows(text: string, storeIds: string[]): Promise<CandRow[]> {
   }
   // catalog：清洗過的前兩個字都要在品名裡（跟 useCatalog.byKeyword 一樣），再用上面的分數過濾
   const words = searchWords(text).map(likeSafe).filter((w) => w.length >= 3)
-  if (words.length && !useD1()) {   // d1 沒有 catalog
-    let qb = supabase.from('catalog').select(CAT_COLS).in('store_id', storeIds)
-    for (const w of words) qb = qb.ilike('name', `%${w}%`)
-    const { data, error } = await qb.limit(1000)
-    if (error) console.warn('[freetext] catalog', error.message)
+  if (words.length) {
+    let data: CatRow[] | null = null
+    if (useD1()) {   // 階段 6：貨架價在 chain_items，Worker 搜（它自己會跳脫 % _，這裡的 likeSafe 對它無害）
+      data = await apiGet<CatRow[]>('/api/catalog/search' + qs({ stores: storeIds, words: searchWords(text).filter((w) => w.length >= 3), limit: 1000 }))
+    } else {
+      let qb = supabase.from('catalog').select(CAT_COLS).in('store_id', storeIds)
+      for (const w of words) qb = qb.ilike('name', `%${w}%`)
+      const res = await qb.limit(1000)
+      if (res.error) console.warn('[freetext] catalog', res.error.message)
+      data = res.data as CatRow[] | null
+    }
     for (const r of (data ?? []) as CatRow[]) {
       const sc = score(r)
       if (sc) out.push(fromCatalog(r, sc))
@@ -192,9 +198,11 @@ async function zhRows(text: string, storeIds: string[]): Promise<CandRow[]> {
     ? await apiProducts({ families: famList })
     : (await supabase.from('products').select('key,family_key').in('family_key', famList).limit(1000)).data
   const famOf = new Map(((data ?? []) as Array<{ key: string; family_key: string }>).map((r) => [r.key, r.family_key]))
-  const keys = useD1() ? [] : [...famOf.keys()].slice(0, 300)   // d1 沒有 catalog
+  const keys = [...famOf.keys()].slice(0, 300)
   for (let i = 0; i < keys.length; i += 100) {
-    const { data: rows } = await supabase.from('catalog').select(CAT_COLS).in('store_id', storeIds).in('product_key', keys.slice(i, i + 100)).limit(1000)
+    const { data: rows } = useD1()
+      ? { data: await apiGet<CatRow[]>('/api/catalog' + qs({ stores: storeIds, keys: keys.slice(i, i + 100) })) }   // 階段 6
+      : await supabase.from('catalog').select(CAT_COLS).in('store_id', storeIds).in('product_key', keys.slice(i, i + 100)).limit(1000)
     for (const r of (rows ?? []) as CatRow[]) {
       const fam = r.product_key ? famOf.get(r.product_key) : undefined
       const sc = fam ? fams.get(fam) : undefined
@@ -285,7 +293,7 @@ async function idsKey(productId: string, storeId: string): Promise<string | null
 }
 /** 網站搜到的商品在 catalog 有沒有（有的話它的 key 是字典的 key、分類也有） */
 async function catalogHint(productId: string, storeId: string): Promise<{ key: string | null; category_id: string | null } | null> {
-  if (useD1()) return null   // d1 沒有 catalog
+  if (useD1()) return (await apiGet<{ key: string; category_id: string | null } | null>('/api/catalog/hint' + qs({ product_id: productId, store: storeId }))) ?? null   // 階段 6：chain_items
   const { data } = await supabase.from('catalog').select('store_id,product_key,category_id').eq('product_id', productId).limit(20)
   const rows = ((data ?? []) as Array<{ store_id: string; product_key: string | null; category_id: string | null }>).filter((r) => chainGroup(r.store_id) === chainGroup(storeId))
   const r = rows.find((x) => x.product_key) ?? rows[0]

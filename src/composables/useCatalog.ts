@@ -5,7 +5,7 @@
 // 全國版階段 4：D1 沒有 catalog 表，資料來源是 d1 時 catalog 的查詢直接當查無結果（只剩這週特價裡的同類／關鍵字候選），不打 Supabase。
 import { shallowRef } from 'vue'
 import { supabase } from '../lib/supabase'
-import { apiProducts, useD1 } from '../lib/api'
+import { apiGet, apiProducts, qs, useD1 } from '../lib/api'
 import { catLevel } from '../lib/format'
 import { cleanWords, coverage, searchWords } from '../lib/nameClean'
 import { unitRate, type Need } from '../lib/size'
@@ -122,9 +122,11 @@ async function fetchFamilies(fams: string[]): Promise<void> {
 }
 async function fetchCatalog(storeIds: string[], keys: string[]): Promise<CatalogRow[]> {
   const out: CatalogRow[] = []
-  if (useD1()) return out   // d1 沒有 catalog
   for (let i = 0; i < keys.length; i += CHUNK) {
-    const { data, error } = await supabase.from('catalog').select(CAT_COLS).in('store_id', storeIds).in('product_key', keys.slice(i, i + CHUNK)).limit(1000)
+    // 階段 6：d1 的貨架價在 chain_items.shelf_*（每連鎖一份），Worker 回成按店的列
+    const { data, error } = useD1()
+      ? await apiGet<CatalogRow[]>('/api/catalog' + qs({ stores: storeIds, keys: keys.slice(i, i + CHUNK) })).then((d) => ({ data: d, error: d ? null : 'api' }))
+      : await supabase.from('catalog').select(CAT_COLS).in('store_id', storeIds).in('product_key', keys.slice(i, i + CHUNK)).limit(1000)
     if (error) break
     out.push(...((data ?? []) as CatalogRow[]))
   }
@@ -149,7 +151,9 @@ async function byKeyword(item: CatalogItem, stores: StoreData[]): Promise<Map<st
     return coverage(words, cleanWords(`${brand ?? ''} ${candName}`)) >= need
   }
   let data: CatalogRow[] | null = null
-  if (!useD1()) {   // d1 沒有 catalog：只看這週特價
+  if (useD1()) {   // 階段 6：Worker 用品名字搜 chain_items（全部字都要在），可限分類前兩層
+    data = await apiGet<CatalogRow[]>('/api/catalog/search' + qs({ stores: stores.map((d) => d.store.id), words: sw, l2: l2 ?? undefined, limit: l2 ? 600 : 30 * stores.length }))
+  } else {
     let q = supabase.from('catalog').select(CAT_COLS).in('store_id', stores.map((d) => d.store.id))
     if (l2) q = q.like('category_id', `${l2}/%`).or(sw.map((w) => `name.ilike.%${w}%`).join(','))
     else for (const w of sw) q = q.ilike('name', `%${w}%`)

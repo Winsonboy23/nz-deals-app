@@ -104,6 +104,8 @@ async function fetchStore(store: Store): Promise<StoreData> {
     }
     return { store, week: viaProxy.week, stale: !!viaProxy.week && viaProxy.week !== thisWeek.value, rows: viaProxy.rows, error: null, fetchedAt }
   }
+  // 階段 6（2026-10-26）：d1 模式 Worker 拿不到就是錯（下面的自動重試會再來），不退回 Supabase
+  if (useD1()) return { store, week: null, stale: false, rows: [], error: 'worker', fetchedAt }
   // This week if the store has it, otherwise that store's most recent week.
   const head = await supabase
     .from('specials')

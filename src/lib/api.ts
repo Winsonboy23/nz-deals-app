@@ -1,8 +1,8 @@
 // 資料來源的開關 + 呼叫 Worker /api/*（全國版階段 3，2026-10-25；docs/national-plan.md §3、§6）。
 //
-// 開關 dataSource()：'supabase'（預設，現況）| 'd1'（讀 Cloudflare：特價走 R2 快照、店／分類／開關／食譜／商品名走 D1）。
+// 開關 dataSource()：'d1'（**2026-10-26 階段 6 起預設**：讀 Cloudflare）| 'supabase'（舊路，雙寫期間字典類修改還要用它的後台）。
 //   怎麼切：網址帶 ?src=d1 或 ?src=supabase（會記在這台裝置 localStorage nzd:src，之後開 App 都照這個）；
-//   或 build 時 VITE_DATA_SOURCE=d1 讓全站預設走 D1。沒設就是 supabase。
+//   或 build 時 VITE_DATA_SOURCE=supabase 把全站預設改回 Supabase。沒設就是 d1。
 // 階段 3 只切公開讀取；一站的貨架價（catalog）、即時查價、名字配對、使用者資料、後台還是 Supabase（階段 4／5）。
 //
 // apiBase()：Worker 在哪。正式站同網域（kitewise.nz 的 Worker 同時出靜態檔和 /api），所以是空字串；
@@ -24,7 +24,7 @@ export function dataSource(): DataSource {
   const fromQuery = fromUrl()
   let stored: string | null = null
   try { stored = localStorage.getItem(LS) } catch { /* ignore */ }
-  const env = (import.meta.env.VITE_DATA_SOURCE as string | undefined) === 'd1' ? 'd1' : 'supabase'
+  const env = (import.meta.env.VITE_DATA_SOURCE as string | undefined) === 'supabase' ? 'supabase' : 'd1'
   cached = fromQuery ?? (stored === 'd1' || stored === 'supabase' ? stored : env)
   return cached
 }

@@ -29,7 +29,8 @@ interface Spec {
 const PRICE_COLS = ['product_key', 'week_start', 'price', 'regular_price', 'member_price', 'multi_buy', 'badges', 'price_unit', 'unit_price', 'unit_price_unit', 'promo_type']
 const SPECS: Record<string, Spec> = {
   'products': { table: 'products', cols: ['key', 'display_name', 'brand', 'size', 'category_id', 'family_key', 'is_food', 'image_url'], pk: ['key'], keep: ['brand', 'size', 'category_id', 'family_key', 'image_url'] },
-  'chain-items': { table: 'chain_items', cols: ['chain_id', 'product_id', 'product_key', 'name_listed', 'url', 'seen_at'], pk: ['chain_id', 'product_id'], keep: ['name_listed', 'url'] },
+  // 階段 6：貨架價也在這張表（docs/national-plan.md §2.2）。特價那次不帶 shelf_*（送 null），coalesce 留舊值；翻貨架那次帶
+  'chain-items': { table: 'chain_items', cols: ['chain_id', 'product_id', 'product_key', 'name_listed', 'url', 'seen_at', 'shelf_price', 'shelf_price_unit', 'shelf_unit_price', 'shelf_unit_price_unit', 'shelf_size', 'shelf_at'], pk: ['chain_id', 'product_id'], keep: ['name_listed', 'url', 'shelf_price', 'shelf_price_unit', 'shelf_unit_price', 'shelf_unit_price_unit', 'shelf_size', 'shelf_at'] },
   'chain-prices': { table: 'chain_prices', cols: ['chain_id', ...PRICE_COLS], pk: ['chain_id', 'product_key', 'week_start'] },
   'store-prices': { table: 'store_prices', cols: ['store_id', ...PRICE_COLS], pk: ['store_id', 'product_key', 'week_start'] },
   'store-specials': { table: 'store_specials', cols: ['store_id', 'week_start', 'product_keys'], pk: ['store_id', 'week_start'] },
