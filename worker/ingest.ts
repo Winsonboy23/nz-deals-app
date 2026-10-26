@@ -17,6 +17,13 @@
 //   GET  /ingest/chain-items?chain=&after=&limit=   {rows:[chain_items ＋ products 的名字分類], next}（recat 用 category_path）
 //   GET  /ingest/item?chains=a,b&product_id=   一個編號在這群連鎖的列（decide_pair 要兩邊的名字規格）
 //   GET  /ingest/specials-stores?week=         這週有 store_specials 的店（回填分類後逐店重建快照）
+//   階段 6 第 5 塊（報告信、每週食譜改讀寫 D1）：
+//   GET  /ingest/report?started_at=&week=     報告信要的全部：待審數、心跳、24h 查價次數、24h 變動記錄、上一次抓取時間、分類數量變動、本週食譜待審、最新一次抓取（含每店）
+//   GET  /ingest/recipes?week=&source=&id=    食譜列（含未上架；data 解成物件）
+//   POST /ingest/recipes {rows}               upsert
+//   POST /ingest/recipes/:id/data {data, require_unreviewed?, require_no_baby?}   只換 data（寶寶支線補寫用的守門）
+//   POST /ingest/recipes/prune {week, keep_ids}   刪這週還沒人碰過的 AI 食譜（不在 keep_ids 裡的）
+//   PUT  /ingest/recipes/image/:week/:name    JPEG 原始 bytes → R2 recipes/<week>/<name> → {url}（公開 GET /api/recipes/img/<week>/<name>）
 //   POST /ingest/admin-jobs/claim          {kinds?, limit?} → {jobs}（pending → running）
 //   POST /ingest/admin-jobs/:id/result     {status: done|failed, log?}
 //   POST /ingest/health                    {at?, load, top, chrome, orphan, mem_free_mb}
@@ -146,6 +153,90 @@ ingest.get('/specials-stores', async (c) => {
   if (!WEEK.test(week)) return c.json({ error: 'week 要是 YYYY-MM-DD' }, 400)
   const { results } = await c.env.DB.prepare('select store_id from store_specials where week_start = ? order by store_id').bind(week).all<{ store_id: string }>()
   return c.json(results.map((r) => r.store_id))
+})
+
+// ── 報告信（階段 6 第 5 塊）────────────────────────────────────────────────
+ingest.get('/report', async (c) => {
+  const startedAt = c.req.query('started_at') || now()
+  const week = c.req.query('week') ?? ''
+  const since = new Date(Date.now() - 86400000).toISOString()
+  const [pairs, names, hb, live, changes, prev, trees, latest] = await c.env.DB.batch([
+    c.env.DB.prepare("select count(*) as n from product_dict where source = 'ai' and matched_to is not null and confidence < 0.8"),
+    c.env.DB.prepare("select count(*) as n from name_matches where status = 'review'"),
+    c.env.DB.prepare("select at, info from heartbeats where name = 'price-worker'"),
+    c.env.DB.prepare('select count(*) as n from price_requests where created_at > ?').bind(since),
+    c.env.DB.prepare('select at, chain, kind, name, store_id, old_text, new_text from price_changes where at > ? order by at desc limit 5000').bind(since),
+    c.env.DB.prepare("select started_at from crawl_runs where kind in ('daily', 'hourly', 'weekly') and started_at < ? and stores_ok > 1 order by started_at desc limit 1").bind(startedAt),
+    c.env.DB.prepare('select report from crawl_runs where started_at > ? and report is not null').bind(since),
+    c.env.DB.prepare('select * from crawl_runs where stores_ok > 1 order by started_at desc limit 1'),
+  ])
+  const n = (r: D1Result) => Number((r.results[0] as { n?: number } | undefined)?.n ?? 0)
+  const beat = hb.results[0] as { at: string; info: string | null } | undefined
+  const treeChanges = (trees.results as { report: string }[]).flatMap((r) => { const rep = parseJson<{ treeChanges?: unknown[] }>(r.report, {}); return Array.isArray(rep.treeChanges) ? rep.treeChanges : [] })
+  let recipes: { pending: number; baby: number } | null = null
+  if (WEEK.test(week)) {
+    const r = await c.env.DB.prepare("select count(*) as n, sum(json_extract(data, '$.baby_branch') is not null) as baby from recipes where week_start = ? and source = 'ai' and published = 0 and reviewed = 0").bind(week).first<{ n: number; baby: number | null }>()
+    recipes = { pending: Number(r?.n ?? 0), baby: Number(r?.baby ?? 0) }
+  }
+  const run = latest.results[0] as Record<string, unknown> | undefined
+  let latestRun: unknown = null
+  if (run) {
+    const { results: cs } = await c.env.DB.prepare('select cs.*, s.name as store_name from crawl_stores cs left join stores s on s.id = cs.store_id where cs.run_id = ?').bind(run.id as string).all<Record<string, unknown>>()
+    latestRun = { run: { ...run, report: parseJson<unknown>(run.report as string, null) }, stores: cs.map((r) => ({ ...r, ok: !!r.ok, suspect: !!r.suspect, ms: r.seconds == null ? null : Math.round(Number(r.seconds) * 1000) })) }
+  }
+  return c.json({
+    pairs: n(pairs), names: n(names), heartbeat: beat ? { at: beat.at, info: parseJson<unknown>(beat.info, null) } : null, liveReqs: n(live),
+    changes: changes.results, prevAt: (prev.results[0] as { started_at?: string } | undefined)?.started_at ?? null, treeChanges, recipes, latestRun,
+  })
+})
+
+// ── 食譜（階段 6 第 5 塊：recipes-weekly.ts 的讀寫）────────────────────────────
+const recipeRow = (r: { id: string; week_start: string | null; source: string; published: number; reviewed: number; data: string; updated_at: string | null }) =>
+  ({ id: r.id, week_start: r.week_start, source: r.source, published: !!r.published, reviewed: !!r.reviewed, data: parseJson<unknown>(r.data, null), updated_at: r.updated_at })
+type RecipeDb = Parameters<typeof recipeRow>[0]
+ingest.get('/recipes', async (c) => {
+  const week = c.req.query('week'), source = c.req.query('source'), id = c.req.query('id')
+  const conds: string[] = [], binds: string[] = []
+  if (id) { conds.push('id = ?'); binds.push(id) }
+  if (week) { if (!WEEK.test(week)) return c.json({ error: 'week 不對' }, 400); conds.push('week_start = ?'); binds.push(week) }
+  if (source) { conds.push('source = ?'); binds.push(source) }
+  const { results } = await c.env.DB.prepare('select id, week_start, source, published, reviewed, data, updated_at from recipes' + (conds.length ? ' where ' + conds.join(' and ') : '') + ' order by id').bind(...binds).all<RecipeDb>()
+  return c.json(results.map(recipeRow))
+})
+ingest.post('/recipes', async (c) => {
+  const rows = await readRows(c)
+  if (typeof rows === 'string') return c.json({ error: rows }, 400)
+  const bad = rows.findIndex((r) => typeof r.id !== 'string' || !r.data || typeof r.data !== 'object')
+  if (bad >= 0) return c.json({ error: `第 ${bad} 列缺 id 或 data` }, 400)
+  const stmt = c.env.DB.prepare('insert into recipes (id, week_start, source, published, reviewed, data, updated_at) values (?, ?, ?, ?, ?, ?, ?) on conflict (id) do update set week_start = excluded.week_start, source = excluded.source, published = excluded.published, reviewed = excluded.reviewed, data = excluded.data, updated_at = excluded.updated_at')
+  const t = now()
+  for (let i = 0; i < rows.length; i += BATCH) await c.env.DB.batch(rows.slice(i, i + BATCH).map((r) => stmt.bind(r.id, sqlVal(r.week_start), (r.source as string) ?? 'ai', r.published ? 1 : 0, r.reviewed ? 1 : 0, JSON.stringify(r.data), (r.updated_at as string) ?? t)))
+  return c.json({ upserted: rows.length })
+})
+ingest.post('/recipes/:id/data', async (c) => {
+  const b = (await c.req.json().catch(() => null)) as { data?: unknown; require_unreviewed?: boolean; require_no_baby?: boolean } | null
+  if (!b?.data || typeof b.data !== 'object') return c.json({ error: 'data 要是物件' }, 400)
+  let sql = 'update recipes set data = ?, updated_at = ? where id = ?'
+  if (b.require_unreviewed) sql += ' and published = 0 and reviewed = 0'
+  if (b.require_no_baby) sql += " and json_extract(data, '$.baby_branch') is null"
+  const r = await c.env.DB.prepare(sql).bind(JSON.stringify(b.data), now(), c.req.param('id')).run()
+  return c.json({ changed: r.meta.changes })
+})
+ingest.post('/recipes/prune', async (c) => {
+  const b = (await c.req.json().catch(() => ({}))) as { week?: string; keep_ids?: unknown }
+  if (!b.week || !WEEK.test(b.week)) return c.json({ error: 'week 不對' }, 400)
+  const keep = strList(b.keep_ids)
+  const r = await c.env.DB.prepare("delete from recipes where week_start = ? and source = 'ai' and published = 0 and reviewed = 0 and id not in (select value from json_each(?))").bind(b.week, JSON.stringify(keep)).run()
+  return c.json({ deleted: r.meta.changes })
+})
+ingest.put('/recipes/image/:week/:name', async (c) => {
+  const week = c.req.param('week'), name = c.req.param('name')
+  if (!WEEK.test(week) || !/^[a-z0-9-]{1,120}\.jpg$/i.test(name)) return c.json({ error: 'week / name 不對' }, 400)
+  const body = await c.req.arrayBuffer()
+  if (!body.byteLength || body.byteLength > 5 * 1024 * 1024) return c.json({ error: '圖要在 5 MB 內' }, 400)
+  const key = `recipes/${week}/${name}`
+  await c.env.DATA.put(key, body, { httpMetadata: { contentType: 'image/jpeg', cacheControl: 'public, max-age=31536000, immutable' } })
+  return c.json({ key, url: `${new URL(c.req.url).origin}/api/recipes/img/${week}/${name}`, bytes: body.byteLength })
 })
 
 ingest.get('/taxonomy-map', async (c) => {

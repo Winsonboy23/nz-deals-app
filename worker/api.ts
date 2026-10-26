@@ -146,4 +146,13 @@ api.get('/catalog/hint', async (c) => {
   return c.json(row ?? null, 200, { 'cache-control': 'no-store' })
 })
 
+// ── 食譜照片（階段 6 第 5 塊：recipes-weekly.ts 上傳到 R2 recipes/<week>/<name>，取代 Supabase Storage）──
+api.get('/recipes/img/:week/:name', async (c) => {
+  const week = c.req.param('week'), name = c.req.param('name')
+  if (!/^\d{4}-\d\d-\d\d$/.test(week) || !/^[a-z0-9-]{1,120}\.jpg$/i.test(name)) return c.json({ error: 'not found' }, 404)
+  const obj = await c.env.DATA.get(`recipes/${week}/${name}`)
+  if (!obj) return c.json({ error: 'not found' }, 404)
+  return new Response(obj.body, { status: 200, headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=31536000, immutable', etag: obj.httpEtag } })
+})
+
 export default api
