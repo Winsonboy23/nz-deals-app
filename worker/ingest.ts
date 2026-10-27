@@ -24,6 +24,10 @@
 //   POST /ingest/recipes/:id/data {data, require_unreviewed?, require_no_baby?}   只換 data（寶寶支線補寫用的守門）
 //   POST /ingest/recipes/prune {week, keep_ids}   刪這週還沒人碰過的 AI 食譜（不在 keep_ids 裡的）
 //   PUT  /ingest/recipes/image/:week/:name    JPEG 原始 bytes → R2 recipes/<week>/<name> → {url}（公開 GET /api/recipes/img/<week>/<name>）
+//   階段 6 第 6 塊（停雙寫，weekly 不再碰 Supabase）：
+//   GET  /ingest/last-runs?limit=6            最近幾次抓取的 report.trees 與每店 badges / tree（保命比對用）
+//   GET  /ingest/catalog-age                  每家店上次翻貨架的時間 [{id, catalog_at}]
+//   POST /ingest/catalog-done/:store          翻完貨架：stores.catalog_at = now
 //   POST /ingest/admin-jobs/claim          {kinds?, limit?} → {jobs}（pending → running）
 //   POST /ingest/admin-jobs/:id/result     {status: done|failed, log?}
 //   POST /ingest/health                    {at?, load, top, chrome, orphan, mem_free_mb}
@@ -239,6 +243,28 @@ ingest.put('/recipes/image/:week/:name', async (c) => {
   return c.json({ key, url: `${new URL(c.req.url).origin}/api/recipes/img/${week}/${name}`, bytes: body.byteLength })
 })
 
+// ── 停雙寫（階段 6 第 6 塊）：weekly 開頭要的上一次數字 ────────────────────────
+ingest.get('/last-runs', async (c) => {
+  const limit = Math.max(1, Math.min(20, Number(c.req.query('limit') ?? 6) || 6))
+  const { results: runs } = await c.env.DB.prepare('select id, kind, started_at, report from crawl_runs order by started_at desc limit ?').bind(limit).all<{ id: string; kind: string; started_at: string; report: string | null }>()
+  if (!runs.length) return c.json({ runs: [], stores: [] })
+  const { results: stores } = await c.env.DB.prepare('select run_id, store_id, ok, badges, tree from crawl_stores where run_id in (select value from json_each(?))').bind(JSON.stringify(runs.map((r) => r.id))).all<{ run_id: string; store_id: string; ok: number; badges: string | null; tree: string | null }>()
+  return c.json({
+    runs: runs.map((r) => { const rep = parseJson<{ trees?: unknown }>(r.report, {}); return { id: r.id, kind: r.kind, started_at: r.started_at, trees: rep.trees ?? null } }),
+    stores: stores.map((s) => ({ run_id: s.run_id, store_id: s.store_id, ok: !!s.ok, badges: parseJson<unknown>(s.badges, null), tree: parseJson<unknown>(s.tree, null) })),
+  })
+})
+ingest.get('/catalog-age', async (c) => {
+  const { results } = await c.env.DB.prepare('select id, catalog_at from stores').all<{ id: string; catalog_at: string | null }>()
+  return c.json(results)
+})
+ingest.post('/catalog-done/:store', async (c) => {
+  const storeId = c.req.param('store')
+  if (!STORE_ID.test(storeId)) return c.json({ error: 'store 不對' }, 400)
+  const r = await c.env.DB.prepare('update stores set catalog_at = ? where id = ?').bind(now(), storeId).run()
+  return c.json({ ok: true, changed: r.meta.changes })
+})
+
 ingest.get('/taxonomy-map', async (c) => {
   const { results } = await c.env.DB.prepare('select level, ww_path, fs_path, ww_key, status, score, note, updated_at from taxonomy_map order by level, ww_path').all()
   return c.json(results)
@@ -351,6 +377,7 @@ ingest.post('/prune', async (c) => {
     c.env.DB.prepare('delete from store_prices where week_start < ?').bind(dbCut),
     c.env.DB.prepare('delete from store_specials where week_start < ?').bind(dbCut),
     c.env.DB.prepare('delete from price_changes where at < ?').bind(new Date(Date.now() - 30 * 86400000).toISOString()),   // 階段 6：變動記錄留 30 天
+    c.env.DB.prepare('delete from ai_usage where day < ?').bind(new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)),   // AI 食譜次數只留 30 天（以前 weekly 對 Supabase 做的）
   ])
   let r2Deleted = 0
   let cursor: string | undefined
