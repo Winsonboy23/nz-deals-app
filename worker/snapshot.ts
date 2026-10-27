@@ -35,12 +35,14 @@ export async function buildSnapshot(env: Env, storeId: string, week: string) {
   const keys = parseJson<string[]>(sp.product_keys, [])
   const keysJson = JSON.stringify(keys)
 
-  // IN (...) 會超過 100 個綁定參數，改用 json_each 一個參數帶整包 key
+  // IN (...) 會超過 100 個綁定參數，改用 json_each 一個參數帶整包 key。
+  // 2026-10-28：要寫成 json_each 在前的 CROSS JOIN，強迫 SQLite 先掃 key 清單再走索引；原本 `表 join json_each` 會整張表掃、每列再對一次 key 清單，
+  // 一次快照讀 2,400 萬列（chain_items）＋860 萬列（chain_prices），北島 148 家一跑 D1 一天讀 62 億列（付費額度每月 250 億）。
   const [cp, spr, prods, items, st] = await Promise.all([
-    env.DB.prepare('select cp.* from chain_prices cp join json_each(?) k on k.value = cp.product_key where cp.chain_id = ? and cp.week_start = ?').bind(keysJson, chain, week).all<PriceRow>(),
+    env.DB.prepare('select cp.* from json_each(?) k cross join chain_prices cp on cp.product_key = k.value and cp.week_start = ? where cp.chain_id = ?').bind(keysJson, week, chain).all<PriceRow>(),
     env.DB.prepare('select * from store_prices where store_id = ? and week_start = ?').bind(storeId, week).all<PriceRow>(),
-    env.DB.prepare('select p.*, f.name_en as family_name_en, f.name_zh as family_name_zh from products p join json_each(?) k on k.value = p.key left join families f on f.key = p.family_key').bind(keysJson).all<ProductRow>(),
-    env.DB.prepare('select ci.product_key, ci.product_id, ci.url, ci.name_listed from chain_items ci join json_each(?) k on k.value = ci.product_key where ci.chain_id = ? order by ci.seen_at').bind(keysJson, chain).all<ItemRow>(),
+    env.DB.prepare('select p.*, f.name_en as family_name_en, f.name_zh as family_name_zh from json_each(?) k cross join products p on p.key = k.value left join families f on f.key = p.family_key').bind(keysJson).all<ProductRow>(),
+    env.DB.prepare('select ci.product_key, ci.product_id, ci.url, ci.name_listed from json_each(?) k cross join chain_items ci on ci.product_key = k.value where ci.chain_id = ? order by ci.seen_at').bind(keysJson, chain).all<ItemRow>(),
     env.DB.prepare('select last_fetched_at from stores where id = ?').bind(storeId).first<{ last_fetched_at: string | null }>(),
   ])
   const price = new Map<string, PriceRow>()

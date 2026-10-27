@@ -63,11 +63,11 @@ async function productsQuery(c: { env: Env; json: (b: unknown, s?: 200 | 400, h?
   if (!keys.length && !fams.length) return c.json({ error: 'keys 或 families 至少一個' }, 400)
   const out: unknown[] = []
   if (keys.length) {
-    const { results } = await c.env.DB.prepare(`select ${PRODUCT_COLS} from products p join json_each(?) k on k.value = p.key left join families f on f.key = p.family_key`).bind(JSON.stringify(keys)).all()
+    const { results } = await c.env.DB.prepare(`select ${PRODUCT_COLS} from json_each(?) k cross join products p on p.key = k.value left join families f on f.key = p.family_key`).bind(JSON.stringify(keys)).all()
     out.push(...results)
   }
   if (fams.length) {
-    const { results } = await c.env.DB.prepare(`select ${PRODUCT_COLS} from products p join json_each(?) k on k.value = p.family_key left join families f on f.key = p.family_key`).bind(JSON.stringify(fams)).all()
+    const { results } = await c.env.DB.prepare(`select ${PRODUCT_COLS} from json_each(?) k cross join products p on p.family_key = k.value left join families f on f.key = p.family_key`).bind(JSON.stringify(fams)).all()
     out.push(...results)
   }
   return c.json(out.map((r) => ({ ...(r as { is_food: number }), is_food: !!(r as { is_food: number }).is_food })), 200, { 'cache-control': 'no-store' })
