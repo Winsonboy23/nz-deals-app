@@ -15,10 +15,10 @@ export type Env = {
   GOOGLE_CLIENT_SECRET?: string
   /** '1' 才開 POST /auth/dev-login（只在 .dev.vars 設；正式是空字串） */
   DEV_LOGIN?: string
-  /** `wrangler secret put OPENAI_API_KEY` */
-  OPENAI_API_KEY?: string
-  /** AI 食譜用的模型，預設 gpt-5.4-mini */
-  OPENAI_RECIPE_MODEL?: string
+  /** `wrangler secret put ANTHROPIC_API_KEY`（2026-10-27 AI 食譜從 OpenAI 換成 Claude） */
+  ANTHROPIC_API_KEY?: string
+  /** AI 食譜用的模型，預設 claude-sonnet-5-5（wrangler.jsonc vars） */
+  CLAUDE_RECIPE_MODEL?: string
   // ── 階段 5（docs/stage5-contract.md）：後台 /admin 的 Cloudflare Access ──
   /** Zero Trust 的 team domain，例如 kitewise.cloudflareaccess.com（wrangler.jsonc vars；沒設就退回 kw_session） */
   ACCESS_TEAM_DOMAIN?: string

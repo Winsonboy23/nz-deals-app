@@ -1,7 +1,9 @@
 // POST /api/ai-recipe（全國版階段 4，docs/stage4-contract.md §4）：從 supabase/functions/ai-recipe/index.ts 搬過來。
 // prompt、schema、repair、invalidReason、cleanPrefs 一字不改；只換底層：
+//   模型 2026-10-27 從 OpenAI 換成 Claude（ANTHROPIC_API_KEY secret、CLAUDE_RECIPE_MODEL var；schema 拿掉 maxItems、id 可空改 anyOf，Claude 的 JSON 格式不收這兩種寫法）。
 //   登入 callerOf → session cookie（getUser）；額度 ai_usage_bump RPC → D1 ai_usage upsert；開關 settings → D1；紀錄 ai_recipes → D1（payload JSON 一列一道）。
 // 只註冊自己的路徑，不要 all('*')，不然會把 api.ts 的公開讀取全吃掉。
+import Anthropic from '@anthropic-ai/sdk'
 import { Hono } from 'hono'
 import type { Context } from 'hono'
 import type { Env } from './env'
@@ -61,9 +63,7 @@ const SCHEMA = {
   required: ['recipes'],
   properties: {
     recipes: {
-      type: 'array',
-      minItems: 0,
-      maxItems: 2,
+      type: 'array',   // 最多 2 道：Claude 的 schema 不收 maxItems，靠 prompt + 下面 .slice(0, 2)
       items: {
         type: 'object',
         additionalProperties: false,
@@ -84,7 +84,7 @@ const SCHEMA = {
               additionalProperties: false,
               required: ['id', 'name', 'qty', 'staple'],
               properties: {
-                id: { type: ['string', 'null'] },
+                id: { anyOf: [{ type: 'string' }, { type: 'null' }] },
                 name: { type: 'string' },
                 qty: { type: 'string' },
                 staple: { type: 'boolean' },
@@ -186,19 +186,19 @@ function invalidReason(r: Recipe, anchorIds: Set<string>, poolIds: Set<string>, 
 }
 
 async function ask(env: Env, system: string, user: unknown) {
-  const model = env.OPENAI_RECIPE_MODEL || 'gpt-5.4-mini'
-  const r = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}`, 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'system', content: system }, { role: 'user', content: JSON.stringify(user) }],
-      response_format: { type: 'json_schema', json_schema: { name: 'recipes', strict: true, schema: SCHEMA } },
-    }),
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY })
+  const msg = await client.messages.create({
+    model: env.CLAUDE_RECIPE_MODEL || 'claude-sonnet-5-5',
+    max_tokens: 8000,
+    system,
+    messages: [{ role: 'user', content: JSON.stringify(user) }],
+    output_config: { format: { type: 'json_schema', schema: SCHEMA }, effort: 'low' },   // low：使用者在等畫面，跟以前 mini 模型差不多快
   })
-  if (!r.ok) throw new Error(`openai ${r.status}: ${(await r.text()).slice(0, 300)}`)
-  const body = (await r.json()) as { choices: Array<{ message: { content: string } }> }
-  return JSON.parse(body.choices[0].message.content) as { recipes: Recipe[] }
+  if (msg.stop_reason === 'refusal') throw new Error('claude refusal')
+  if (msg.stop_reason === 'max_tokens') throw new Error('claude max_tokens')
+  const text = msg.content.find((b) => b.type === 'text')?.text
+  if (!text) throw new Error('claude empty')
+  return JSON.parse(text) as { recipes: Recipe[] }
 }
 
 /** 每道存一筆到 ai_recipes（payload JSON）；寫不進去就算了，不影響回應。回每筆的 id。超過 HISTORY_MAX 的舊紀錄刪掉。 */
@@ -258,7 +258,7 @@ const ai = new Hono<{ Bindings: Env }>()
 
 ai.post('/ai-recipe', async (c) => {
   const env = c.env
-  if (!env.OPENAI_API_KEY) return c.json({ error: 'server_not_configured' }, 500)
+  if (!env.ANTHROPIC_API_KEY) return c.json({ error: 'server_not_configured' }, 500)
 
   const cfg = await settings(env)   // 後台開關：關掉就整支停用
   if (cfg.ai_recipes === 'off') return c.json({ error: 'paused' }, 503)
