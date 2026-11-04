@@ -1,5 +1,6 @@
 // 我的 → 會員卡：使用者的超市會員卡，到店裡打開給店員掃。只存號碼、不存圖（截圖是個資；App 自己畫條碼，掃得比截圖穩）。
 // 只給登入者：存在 loyalty_cards（migrations/007-loyalty-cards.sql，RLS 只有本人讀寫），跨裝置都在；訪客是空的。登入狀態變了就重讀。
+// 2026-11-04 起錢包整個在「我的」頁（MeView），/me/cards 拿掉了。
 // 2026-10-01 Chris 規格：New World、PAK'nSAVE（和 Four Square）共用同一張 Club+（2026-06-15 上線，舊的 New World Clubcard 07-26 停用），
 // 兩家的卡合併成一張 'clubplus'（migrations/010-loyalty-clubplus.sql 把舊資料改掉）。
 // 全國版階段 4（docs/stage4-contract.md §3）：資料來源是 d1 時改打 Worker 的 /api/me/cards（cookie 登入；列的形狀一樣）。
@@ -79,6 +80,17 @@ async function add(c: NewCard): Promise<boolean> {
   return true
 }
 
+/** 改一張卡的內容（我的頁 ⋯ → 編輯）。存成功回 true；D1 走 PATCH（跟改順序同一條路，Worker 給哪些欄位改哪些）。 */
+async function update(id: string, c: NewCard): Promise<boolean> {
+  if (!user.value?.id) return false
+  const error = useD1()
+    ? await apiFetch('PATCH', `/api/me/cards/${encodeURIComponent(id)}`, c).then((r) => (r.status >= 200 && r.status < 300 ? null : r.status))
+    : (await supabase.from('loyalty_cards').update(c).eq('id', id)).error
+  if (error) return false
+  cards.value = cards.value.map((x) => (x.id === id ? { ...x, ...c } : x))
+  return true
+}
+
 async function remove(id: string): Promise<void> {
   cards.value = cards.value.filter((c) => c.id !== id)   // 先改畫面再打網路
   const error = useD1()
@@ -116,5 +128,5 @@ function start(): void {
 
 export function useCards() {
   start()
-  return { cards, loading, load, add, remove, move }
+  return { cards, loading, load, add, update, remove, move }
 }

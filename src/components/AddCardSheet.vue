@@ -1,13 +1,15 @@
 <script setup lang="ts">
 // 加一張會員卡：選哪種卡（Club+／Everyday Rewards／其他）→ 掃截圖／照片（或手動打號碼）→ 存。長相照 MatchSheet（.dim + .bsheet + 把手），根元素是一層 div，外面的 <Transition name="sheet"> 要講明時間。
 // 讀條碼：先試瀏覽器內建的 BarcodeDetector（Chrome Android 有），沒有或讀不到再動態載入 ZXing。iPhone Safari 沒有 BarcodeDetector，一律走 ZXing。
+// 給 card 就是編輯（我的頁 ⋯ → 編輯，2026-11-04）：欄位先填好，存的時候改那張而不是新增。
 import { computed, ref } from 'vue'
-import { cardCls, cardTitle, useCards, type CardChain } from '../composables/useCards'
+import { cardCls, cardTitle, useCards, type CardChain, type LoyaltyCard } from '../composables/useCards'
 import { t } from '../composables/useI18n'
 import { cleanCode, ean13Valid, toJsBarcodeFormat } from '../lib/barcode'
 
+const props = defineProps<{ card?: LoyaltyCard | null }>()
 const emit = defineEmits<{ done: []; dismiss: [] }>()
-const { add } = useCards()
+const { add, update } = useCards()
 
 /** 三種卡（2026-10-01）：紅超黃超共用一張 Club+、綠超的 Everyday Rewards、其他（要填名稱）。左邊一張小卡面、名字、副標 */
 const CHAINS: { id: CardChain; sub: () => string }[] = [
@@ -17,11 +19,11 @@ const CHAINS: { id: CardChain; sub: () => string }[] = [
 ]
 const chainLabel = (c: CardChain) => cardTitle({ chain: c, label: null })
 
-const chain = ref<CardChain | null>(null)
-const label = ref('')
-const code = ref('')
+const chain = ref<CardChain | null>(props.card?.chain ?? null)
+const label = ref(props.card?.label ?? '')
+const code = ref(props.card?.code ?? '')
 /** 掃到的格式（JsBarcode 名）；手動輸入就是 CODE128 */
-const format = ref('CODE128')
+const format = ref(props.card?.format ?? 'CODE128')
 const scan = ref<'idle' | 'reading' | 'ok' | 'fail'>('idle')
 const saving = ref(false)
 const failed = ref(false)
@@ -103,13 +105,14 @@ async function save(): Promise<void> {
   saving.value = true
   failed.value = false
   const c = clean.value
-  const ok = await add({
+  const body = {
     chain: chain.value,
     label: chain.value === 'other' ? label.value.trim() : null,
     code: c,
     // 掃到 EAN13 之後又改了號碼，檢查碼可能對不上 → 存 CODE128（畫得出來、一樣掃得到）
     format: format.value === 'EAN13' && !ean13Valid(c) ? 'CODE128' : format.value,
-  })
+  }
+  const ok = props.card ? await update(props.card.id, body) : await add(body)
   saving.value = false
   if (ok) emit('done')
   else failed.value = true
@@ -119,9 +122,9 @@ async function save(): Promise<void> {
 <template>
   <div>
     <div class="dim" @click="emit('dismiss')" />
-    <div class="bsheet" role="dialog" :aria-label="t('cards.addTitle')">
+    <div class="bsheet" role="dialog" :aria-label="t(card ? 'cards.editTitle' : 'cards.addTitle')">
       <button class="grab-btn" type="button" :aria-label="t('cards.cancel')" @click="emit('dismiss')"><div class="grab" /></button>
-      <div class="h2" style="font-size: 22px">{{ t('cards.addTitle') }}</div>
+      <div class="h2" style="font-size: 22px">{{ t(card ? 'cards.editTitle' : 'cards.addTitle') }}</div>
 
       <div class="sec" style="margin-top: 16px">{{ t('cards.which') }}</div>
       <div class="opts" role="radiogroup" :aria-label="t('cards.which')" style="margin-top: 8px">
