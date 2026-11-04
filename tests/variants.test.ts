@@ -32,8 +32,13 @@ test('variantRows：Chris 的 V 例子——同口味排一起、小容量在前
   ])
 })
 
+test('variantRows：V 的 Drink 字（大多數款都有）不算口味、500mL 統一成 500ml', () => {
+  const labels = variantRows(['V Energy Drink Blue 500mL', 'V Energy Drink Green Can 500mL', 'V Energy Drink Blue 10 x 250mL', 'V Energy Drink Strawberry Crush 250ml Cans 500mL'], (n) => n, ['energy', 'drink']).map((r) => r.label)
+  assert.deepEqual(labels, ['Blue · 500ml', 'Blue · 10 x 250ml', 'Green Can · 500ml', 'Strawberry Crush Cans · 500ml'])
+})
+
 test('variantRows：Nescafé 的字序不同當同口味、共同字 Sachets 不算口味', () => {
-  const labels = variantRows(['Nescafe Caramel Sachets 10 x 17g', 'Nescafe Sachets Caramel 26 Pack', 'Nescafe Sachets Mocha 10 x 18g'], (n) => n).map((r) => r.label)
+  const labels = variantRows(['Nescafe Caramel Sachets 10 x 17g', 'Nescafe Sachets Caramel 26 Pack', 'Nescafe Sachets Mocha 10 x 18g'], (n) => n, ['instant', 'latte', 'sachets']).map((r) => r.label)
   assert.deepEqual(labels, ['Caramel · 10 x 17g', 'Caramel · 26 Pack', 'Mocha · 10 x 18g'])
 })
 

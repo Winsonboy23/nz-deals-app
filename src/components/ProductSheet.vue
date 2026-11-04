@@ -37,7 +37,9 @@ const variants = computed(() => {
   if (!best.value) return []
   const all = [group.value!, ...variantsOf(best.value.special)]
   if (all.length < 2) return []
-  return variantRows(all, (g) => displayName(g.best.special)).map((r) => ({ key: r.item.key, label: r.label, current: r.item.key === group.value!.key }))
+  // 同類名的字（instant latte、energy drink）也不當口味
+  const ignore = (best.value.special.family_key ?? '').split('_').filter(Boolean)
+  return variantRows(all, (g) => displayName(g.best.special), ignore).map((r) => ({ key: r.item.key, label: r.label, current: r.item.key === group.value!.key }))
 })
 // 換口味／規格後，讓那排按鈕留在螢幕原位；面板不要跳回最上面（iOS Safari 沒有 scroll anchoring）。
 const sheetEl = ref<HTMLElement>()

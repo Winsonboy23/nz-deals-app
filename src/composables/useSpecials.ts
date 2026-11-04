@@ -281,9 +281,12 @@ function familyOffers(special: Special, limit = 8): Offer[] {
   return list.sort(byUnitThenPrice).slice(0, limit)
 }
 const norm = (b: string | null | undefined) => (b ?? '').trim().toLowerCase()
-/** 「同品牌 + 同第二層分類」的鑰匙（Nescafé × Coffee）；沒品牌或沒分類就只有自己 */
-const siblingKey = (sp: Special): string | null => { const b = norm(sp.brand); const c = catLevel(sp.category_id, 2); return b && c ? `${b}|${c}` : null }
-/** 同品牌同第二層分類 → 這週所有的款（每個 product_key 一個 Group） */
+/**
+ * 「同品牌 + 同類（family_key）」的鑰匙（Nescafé × instant_latte）；沒品牌或沒同類就只有自己。
+ * 11-05 上線時先用第二層分類，Cadbury 一張卡變 61 款、V 37 款，按鈕列太長；改回同類，口味／規格本來就是同一種東西的不同款。
+ */
+const siblingKey = (sp: Special): string | null => { const b = norm(sp.brand); const c = sp.family_key; return b && c ? `${b}|${c}` : null }
+/** 同品牌同類 → 這週所有的款（每個 product_key 一個 Group） */
 const siblings = computed<Map<string, Group[]>>(() => {
   const out = new Map<string, Group[]>()
   for (const g of groups.value.values()) {
@@ -296,15 +299,15 @@ const siblings = computed<Map<string, Group[]>>(() => {
   return out
 })
 /**
- * 同品牌、同第二層分類、不同口味／規格的其他商品（Moccona 二十幾種咖啡）。沒品牌就沒有。
- * 2026-11-05 起跟首頁卡片的「N 款」用同一個定義（以前這裡是同 family_key、卡片是同第二層分類，Nescafé 卡片寫 13 款、點進去只有 8 個；Chris 待修第 6 項）。
+ * 同品牌、同類、不同口味／規格的其他商品（Moccona 二十幾種咖啡）。沒品牌就沒有。
+ * 2026-11-05 起跟首頁卡片的「N 款」用同一個定義（以前卡片是算同第二層分類、這裡最多列 8 個，Nescafé 卡片寫 13 款、點進去只有 8 個；Chris 待修第 6 項）。
  */
 function variantsOf(special: Special): Group[] {
   const k = siblingKey(special)
   if (!k) return []
   return (siblings.value.get(k) ?? []).filter((g) => g.key !== special.product_key)
 }
-/** 這週最划算，但「同品牌 + 同第二層分類」只留最划算的一個（Woolworths 起司、Moccona 咖啡、Angel Bay 漢堡排各一格），並附「還有幾款」＝商品頁按鈕數。 */
+/** 這週最划算，但「同品牌 + 同類」只留最划算的一個（Woolworths 起司、Moccona 咖啡、Angel Bay 漢堡排各一格），並附「還有幾款」＝商品頁按鈕數。 */
 const topDeduped = computed<Array<{ g: Group; variants: number }>>(() => {
   const seen = new Set<string>()
   const out: Array<{ g: Group; variants: number }> = []
