@@ -127,6 +127,18 @@ input {
 .hscroll::-webkit-scrollbar {
   display: none;
 }
+/* 電腦上滑鼠按住拖橫滑列（lib/dragScroll.ts）：按住時字不反白、游標變抓取；卡片和圖不會被拖成鬼影（Safari 要這條，其他靠 dragstart 擋） */
+.hscroll.dragging,
+.hscroll.dragging * {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grabbing;
+}
+@media (hover: hover) and (pointer: fine) {
+  .hscroll > * {
+    -webkit-user-drag: none;
+  }
+}
 .pill {
   flex: none;
   white-space: nowrap;
