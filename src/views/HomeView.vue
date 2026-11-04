@@ -7,6 +7,7 @@ import AppHeader from '../components/AppHeader.vue'
 import SummaryCarousel from '../components/SummaryCarousel.vue'
 import ProductCard from '../components/ProductCard.vue'
 import MiniCard from '../components/MiniCard.vue'
+import RailArrows from '../components/RailArrows.vue'
 import StaleBanner from '../components/StaleBanner.vue'
 import PriceLine from '../components/PriceLine.vue'
 import { useSpecials } from '../composables/useSpecials'
@@ -119,9 +120,11 @@ const half = computed(() => {
         <div class="h2">{{ t('home.best') }}</div>
         <RouterLink class="link" to="/top10">{{ t('home.top10') }}</RouterLink>
       </div>
-      <div v-if="top10.length" class="hscroll snap rail best-rail">
-        <ProductCard v-for="x in top10" :key="x.g.key" :offer="x.g.best" :group="x.g" :variants="x.variants" />
-      </div>
+      <RailArrows v-if="top10.length">
+        <div class="hscroll snap rail best-rail">
+          <ProductCard v-for="x in top10" :key="x.g.key" :offer="x.g.best" :group="x.g" :variants="x.variants" />
+        </div>
+      </RailArrows>
       <div v-else class="pad">
         <div class="note sub">{{ t('home.noCompare') }}</div>
       </div>
@@ -132,22 +135,24 @@ const half = computed(() => {
           <div class="h2">{{ t('home.recipes') }}</div>
           <RouterLink class="link" to="/recipes">{{ t('home.allRecipes', { n: ranked.length }) }}</RouterLink>
         </div>
-        <div class="hscroll snap rail">
-          <RouterLink v-for="r in recipes6" :key="r.recipe.id" class="hr" :to="`/recipes/${r.recipe.id}`">
-            <div class="hr-img">
-              <img :src="recipeImg(r.recipe.image)" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" />
-              <span v-if="recipeTag(r.recipe)" class="hr-tag">{{ recipeTag(r.recipe) }}</span>
-              <span v-if="isIllustration(r.recipe)" class="hr-ill">{{ t('recipes.illustration') }}</span>
-            </div>
-            <div class="hr-body">
-              <div class="hr-t">{{ bi(r.recipe.title) }}</div>
-              <div class="hr-m">
-                ⏱ {{ t('recipes.minutes', { n: r.recipe.minutes }) }}<template v-if="Number.isFinite(r.perServe)"> · {{ t('recipes.perServe', { v: money(r.perServe) }) }}</template>
+        <RailArrows>
+          <div class="hscroll snap rail">
+            <RouterLink v-for="r in recipes6" :key="r.recipe.id" class="hr" :to="`/recipes/${r.recipe.id}`">
+              <div class="hr-img">
+                <img :src="recipeImg(r.recipe.image)" :alt="bi(r.recipe.title)" loading="lazy" decoding="async" />
+                <span v-if="recipeTag(r.recipe)" class="hr-tag">{{ recipeTag(r.recipe) }}</span>
+                <span v-if="isIllustration(r.recipe)" class="hr-ill">{{ t('recipes.illustration') }}</span>
               </div>
-              <div v-if="usesSpecial(r)" class="hr-sp ell">{{ t('home.usesSpecial', { n: usesSpecial(r) }) }}</div>
-            </div>
-          </RouterLink>
-        </div>
+              <div class="hr-body">
+                <div class="hr-t">{{ bi(r.recipe.title) }}</div>
+                <div class="hr-m">
+                  ⏱ {{ t('recipes.minutes', { n: r.recipe.minutes }) }}<template v-if="Number.isFinite(r.perServe)"> · {{ t('recipes.perServe', { v: money(r.perServe) }) }}</template>
+                </div>
+                <div v-if="usesSpecial(r)" class="hr-sp ell">{{ t('home.usesSpecial', { n: usesSpecial(r) }) }}</div>
+              </div>
+            </RouterLink>
+          </div>
+        </RailArrows>
       </template>
 
       <!-- 4 生鮮特價：肉 2、海鮮 2、蔬菜 2、水果 2；「更多」去分類頁 -->
@@ -156,14 +161,16 @@ const half = computed(() => {
           <div class="h2">{{ t('home.fresh') }}</div>
           <RouterLink class="link" to="/browse">{{ t('home.moreLink') }}</RouterLink>
         </div>
-        <div class="hscroll snap rail">
-          <MiniCard
-            v-for="r in fresh"
-            :key="r.store.id + r.special.product_id"
-            :offer="toOffer(r.store, r.special)"
-            kind="fresh"
-          />
-        </div>
+        <RailArrows>
+          <div class="hscroll snap rail">
+            <MiniCard
+              v-for="r in fresh"
+              :key="r.store.id + r.special.product_id"
+              :offer="toOffer(r.store, r.special)"
+              kind="fresh"
+            />
+          </div>
+        </RailArrows>
       </template>
 
       <!-- 5 瘋狂半價專區：兩欄 4 格，右上角實際折數 -->
