@@ -130,8 +130,8 @@ function clickCapture(e: MouseEvent) {
         <div class="sm-go">{{ t('home.sumListGo') }}</div>
       </RouterLink>
 
-      <!-- ④ 會員卡：登入才存得了；右邊畫兩張疊在一起的小卡 -->
-      <RouterLink class="sm-card" to="/me/cards">
+      <!-- ④ 會員卡：登入才存得了；右邊畫兩張疊在一起的小卡。錢包在「我的」頁（2026-11-04 起沒有獨立的 /me/cards） -->
+      <RouterLink class="sm-card" to="/me">
         <span class="sm-ic">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5.5" width="19" height="13" rx="2.5" /><path d="M2.5 10h19M6 15h5" /></svg>
         </span>

@@ -8,7 +8,7 @@
 //   PUT    /api/me/watches/:key   DELETE /api/me/watches/:key
 //   PUT    /api/me/push                 { endpoint, keys } → upsert + users.notify_push = 1
 //   DELETE /api/me/push                 { endpoint } → 刪 + users.notify_push = 0
-//   GET    /api/me/cards   POST /api/me/cards   PATCH /api/me/cards/:id { position }   DELETE /api/me/cards/:id
+//   GET    /api/me/cards   POST /api/me/cards   PATCH /api/me/cards/:id { position? | chain? label? code? format? }   DELETE /api/me/cards/:id
 //   GET    /api/me/ai-recipes   GET /api/me/ai-recipes/:id   DELETE /api/me/ai-recipes/:id
 //   PATCH  /api/me                      { lang?, island? }
 //   DELETE /api/me                      刪帳號（cascade）+ 清 cookie
@@ -235,13 +235,40 @@ me.post('/cards', async (c) => {
   if (!row) return c.json({ error: 'internal' }, 500)
   return c.json(toCard(row), 200, noStore)
 })
+// 改順序（position）或改內容（chain / label / code / format；我的頁 ⋯ → 編輯，2026-11-04）：給了哪些欄位就改哪些，驗法跟 POST 一樣
 me.patch('/cards/:id', async (c) => {
   const user = await requireUser(c)
   const id = c.req.param('id')
-  const b = await readBody<{ position?: unknown }>(c)
+  const b = await readBody<{ position?: unknown; chain?: unknown; label?: unknown; code?: unknown; format?: unknown }>(c)
   if (!ID.test(id)) return bad(c, 'id 不對')
-  if (typeof b?.position !== 'number' || !Number.isInteger(b.position) || b.position < 0) return bad(c, 'position 要是非負整數')
-  const r = await c.env.DB.prepare('update loyalty_cards set position = ? where id = ? and user_id = ?').bind(b.position, id, user.id).run()
+  const sets: string[] = []
+  const vals: unknown[] = []
+  if (b?.position !== undefined) {
+    if (typeof b.position !== 'number' || !Number.isInteger(b.position) || b.position < 0) return bad(c, 'position 要是非負整數')
+    sets.push('position = ?')
+    vals.push(b.position)
+  }
+  if (b?.chain !== undefined) {
+    if (typeof b.chain !== 'string' || !/^[a-z]{1,20}$/.test(b.chain)) return bad(c, 'chain 不對')
+    sets.push('chain = ?')
+    vals.push(b.chain)
+  }
+  if (b?.code !== undefined) {
+    if (typeof b.code !== 'string' || !b.code.trim() || b.code.length > 64) return bad(c, 'code 不對')
+    sets.push('number = ?')
+    vals.push(b.code.trim())
+  }
+  if (b?.format !== undefined) {
+    if (typeof b.format !== 'string' || !/^[A-Z0-9]{1,16}$/.test(b.format)) return bad(c, 'format 不對')
+    sets.push('format = ?')
+    vals.push(b.format)
+  }
+  if (b?.label !== undefined) {
+    sets.push('label = ?')
+    vals.push(typeof b.label === 'string' && b.label.trim() ? b.label.trim().slice(0, 60) : null)
+  }
+  if (!sets.length) return bad(c, '沒有要改的欄位')
+  const r = await c.env.DB.prepare(`update loyalty_cards set ${sets.join(', ')} where id = ? and user_id = ?`).bind(...vals, id, user.id).run()
   if (!r.meta.changes) return c.json({ error: 'not_found' }, 404)
   return c.json({ ok: true }, 200, noStore)
 })
