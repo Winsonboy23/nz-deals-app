@@ -280,34 +280,39 @@ function familyOffers(special: Special, limit = 8): Offer[] {
   const list = (families.value.get(special.family_key) ?? []).filter((o) => o.special.product_key !== special.product_key && (!norm(special.brand) || norm(o.special.brand) !== norm(special.brand)))
   return list.sort(byUnitThenPrice).slice(0, limit)
 }
-/** 同品牌、同類、不同口味／規格的其他商品（Moccona 三種咖啡）。沒品牌就沒有。 */
 const norm = (b: string | null | undefined) => (b ?? '').trim().toLowerCase()
-function variantsOf(special: Special): Group[] {
-  if (!special.family_key || !norm(special.brand)) return []
-  const seen = new Set<string>()
-  const out: Group[] = []
-  for (const o of families.value.get(special.family_key) ?? []) {
-    const k = o.special.product_key
-    if (!k || k === special.product_key || seen.has(k) || norm(o.special.brand) !== norm(special.brand)) continue
-    const g = groups.value.get(k)
-    if (!g) continue
-    seen.add(k)
-    out.push(g)
+/** 「同品牌 + 同第二層分類」的鑰匙（Nescafé × Coffee）；沒品牌或沒分類就只有自己 */
+const siblingKey = (sp: Special): string | null => { const b = norm(sp.brand); const c = catLevel(sp.category_id, 2); return b && c ? `${b}|${c}` : null }
+/** 同品牌同第二層分類 → 這週所有的款（每個 product_key 一個 Group） */
+const siblings = computed<Map<string, Group[]>>(() => {
+  const out = new Map<string, Group[]>()
+  for (const g of groups.value.values()) {
+    const k = siblingKey(g.best.special)
+    if (!k) continue
+    const list = out.get(k)
+    if (list) list.push(g)
+    else out.set(k, [g])
   }
-  return out.sort((a, b) => a.best.special.name.localeCompare(b.best.special.name))
+  return out
+})
+/**
+ * 同品牌、同第二層分類、不同口味／規格的其他商品（Moccona 二十幾種咖啡）。沒品牌就沒有。
+ * 2026-11-05 起跟首頁卡片的「N 款」用同一個定義（以前這裡是同 family_key、卡片是同第二層分類，Nescafé 卡片寫 13 款、點進去只有 8 個；Chris 待修第 6 項）。
+ */
+function variantsOf(special: Special): Group[] {
+  const k = siblingKey(special)
+  if (!k) return []
+  return (siblings.value.get(k) ?? []).filter((g) => g.key !== special.product_key)
 }
-/** 這週最划算，但「同品牌 + 同第二層分類」只留最划算的一個（Woolworths 起司、Moccona 咖啡、Angel Bay 漢堡排各一格），並附「還有幾款」。 */
+/** 這週最划算，但「同品牌 + 同第二層分類」只留最划算的一個（Woolworths 起司、Moccona 咖啡、Angel Bay 漢堡排各一格），並附「還有幾款」＝商品頁按鈕數。 */
 const topDeduped = computed<Array<{ g: Group; variants: number }>>(() => {
-  const keyOf = (g: Group) => { const sp = g.best.special; const b = norm(sp.brand); const c = catLevel(sp.category_id, 2); return b && c ? `${b}|${c}` : g.key }
-  const count = new Map<string, number>()
-  for (const g of top.value) { const k = keyOf(g); count.set(k, (count.get(k) ?? 0) + 1) }
   const seen = new Set<string>()
   const out: Array<{ g: Group; variants: number }> = []
   for (const g of top.value) {
-    const k = keyOf(g)
+    const k = siblingKey(g.best.special) ?? g.key
     if (seen.has(k)) continue
     seen.add(k)
-    out.push({ g, variants: count.get(k) ?? 1 })
+    out.push({ g, variants: siblings.value.get(k)?.length ?? 1 })
   }
   return out
 })

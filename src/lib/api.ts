@@ -14,7 +14,7 @@ const LS = 'nzd:src'
 function fromUrl(): DataSource | null {
   try {
     const v = new URLSearchParams(location.search).get('src')
-    if (v === 'd1' || v === 'supabase') { try { localStorage.setItem(LS, v) } catch { /* 隱私模式 */ } return v }
+    if (v === 'd1' || v === 'supabase') { if (v === 'd1') { try { localStorage.setItem(LS, v) } catch { /* 隱私模式 */ } } return v }
   } catch { /* SSR／測試沒有 location */ }
   return null
 }
@@ -25,7 +25,10 @@ export function dataSource(): DataSource {
   let stored: string | null = null
   try { stored = localStorage.getItem(LS) } catch { /* ignore */ }
   const env = (import.meta.env.VITE_DATA_SOURCE as string | undefined) === 'supabase' ? 'supabase' : 'd1'
-  cached = fromQuery ?? (stored === 'd1' || stored === 'supabase' ? stored : env)
+  // 2026-11-05：裝置上記住的 'supabase' 不再算數（Chris 待修第 7 項）。階段 6 之後爬蟲只寫 D1，Supabase 停在 10-26 那週；
+  // 後台以前要開 ?src=supabase，開過的手機就一直讀到舊資料、首頁三家店全寫「這週沒更新 26 Oct」。網址帶 ?src=supabase 這一次仍可以用（不存）。
+  if (stored === 'supabase') { stored = null; try { localStorage.removeItem(LS) } catch { /* ignore */ } }
+  cached = fromQuery ?? (stored === 'd1' ? stored : env)
   return cached
 }
 export const useD1 = (): boolean => dataSource() === 'd1'

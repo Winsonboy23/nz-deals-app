@@ -31,7 +31,10 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         globIgnores: ['**/zxing-*.js'],   // 掃會員卡截圖用的 ZXing 約 480 kB，只有掃的時候才下載，不預存（2026-09-30）
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/admin/],   // 階段 5：/admin 一律走網路，Cloudflare Access 才攔得到（SW 不要用快取的 index.html 頂上去）
+        // 階段 5：/admin 一律走網路，Cloudflare Access 才攔得到（SW 不要用快取的 index.html 頂上去）。
+        // 2026-11-05：/auth/* 也要（Chris 待修第 1 項）：手機 Chrome 按「Continue with Google」是整頁跳到 /auth/google，
+        // SW 把它當 App 的頁面、回快取的 index.html → 畫面閃白回首頁、Google 根本沒被叫到。/api、/ingest 順便列進去。
+        navigateFallbackDenylist: [/^\/admin/, /^\/auth\//, /^\/api\//, /^\/ingest\//],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/(a\.fsimg\.co\.nz|assets\.woolworths\.com\.au)\/.*/i,

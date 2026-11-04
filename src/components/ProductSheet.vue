@@ -14,6 +14,7 @@ import { useSync } from '../composables/useSync'
 import { catName, chainBadge, lang, t, useI18n } from '../composables/useI18n'
 import type { HistoryRow } from '../composables/useSpecials'
 import { shortDate } from '../lib/week'
+import { variantRows } from '../lib/variants'
 
 const props = defineProps<{ pkey: string }>()
 const emit = defineEmits<{ close: [] }>()
@@ -28,18 +29,15 @@ const group = computed(() => groupFor(props.pkey))
 const best = computed(() => group.value?.best)
 const rest = computed(() => group.value?.offers.slice(1) ?? [])
 const family = computed(() => (best.value ? familyOffers(best.value.special, 6) : []))
-/** 口味／規格切換：同品牌同類的其他商品，標籤只寫「不一樣的字」（Classic Medium Roast / Caramel）。 */
+/**
+ * 口味／規格切換（2026-11-05 Chris 待修第 5、6 項）：同品牌同第二層分類的全部款，順序固定（口味 → 容量，lib/variants.ts），
+ * 點了只變色不換位置；標籤統一「口味 · 規格」（Blue Guarana · 4 x 250ml）。全部列出來，數量跟首頁卡片的「N 款」一樣。
+ */
 const variants = computed(() => {
   if (!best.value) return []
-  // 現在這款也一起照名字排，順序才不會跟著點到誰而變（以前現在這款永遠排第一，點第四個就跳到第一）。
-  const all = [group.value!, ...variantsOf(best.value.special)].sort((a, b) => a.best.special.name.localeCompare(b.best.special.name))
+  const all = [group.value!, ...variantsOf(best.value.special)]
   if (all.length < 2) return []
-  const words = all.map((g) => displayName(g.best.special).split(/\s+/))
-  const common = new Set(words[0].filter((w) => words.every((ws) => ws.includes(w))))
-  const rows = all.map((g, i) => ({ key: g.key, label: words[i].filter((w) => !common.has(w)).join(' ') || displayName(g.best.special), current: g.key === group.value!.key }))
-  // Moccona 有 20 幾款，最多列 8 個：固定每 8 個一頁，列現在這款所在的那頁，點同頁的不會換頁。
-  const page = Math.floor(Math.max(0, rows.findIndex((r) => r.current)) / 8) * 8
-  return rows.slice(page, page + 8)
+  return variantRows(all, (g) => displayName(g.best.special)).map((r) => ({ key: r.item.key, label: r.label, current: r.item.key === group.value!.key }))
 })
 // 換口味／規格後，讓那排按鈕留在螢幕原位；面板不要跳回最上面（iOS Safari 沒有 scroll anchoring）。
 const sheetEl = ref<HTMLElement>()
