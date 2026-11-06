@@ -119,7 +119,10 @@ auth.get('/callback', async (c) => {
   const code = c.req.query('code'), state = c.req.query('state')
   if (!code || !state || !st?.state || state !== st.state || !st.verifier) return fail(c, 'bad_state')
 
-  // 2. 換 token（帶 PKCE verifier）
+  // 2. 換 token（帶 PKCE verifier）。
+  // 2026-11-06：手機 Chrome 有時把 callback 打兩次，第二次的 code 已經用掉、Google 回 invalid_grant，
+  // 但第一次其實已經登入了——這種情況直接當成功回 App，不要顯示 token_exchange 錯誤（Winson 實機遇到一次）。
+  const exchangeFailed = async (): Promise<Response> => (await getUser(c)) ? c.redirect(safeReturn(st.ret), 302) : fail(c, 'token_exchange')
   let idToken: string | undefined
   try {
     const r = await fetch(GOOGLE_TOKEN, {
@@ -127,11 +130,11 @@ auth.get('/callback', async (c) => {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ code, client_id: clientId, client_secret: secret, redirect_uri: redirectUri(c), grant_type: 'authorization_code', code_verifier: st.verifier }),
     })
-    if (!r.ok) { console.error('google token exchange', r.status, await r.text().catch(() => '')); return fail(c, 'token_exchange') }
+    if (!r.ok) { console.error('google token exchange', r.status, await r.text().catch(() => '')); return exchangeFailed() }
     idToken = ((await r.json()) as { id_token?: string }).id_token
   } catch (e) {
     console.error('google token exchange', e)
-    return fail(c, 'token_exchange')
+    return exchangeFailed()
   }
   if (!idToken) return fail(c, 'no_id_token')
 
